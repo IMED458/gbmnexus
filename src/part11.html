@@ -1,0 +1,207 @@
+
+/* ══ the public article page — editorial design, standalone ════ */
+function webCss(){ return [
+'*{box-sizing:border-box}',
+':root{--canvas:#fff;--canvas-soft:#f7f7f6;--ink:#0a0a0a;--ink-soft:#1a1a1a;--body:#5b5b5b;--hair:#e0e0e0;',
+'  --accent:#00786d;--accent-deep:#00524d;--red:#b9353a;',
+'  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;',
+'  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;',
+'  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;',
+'  --m:min(680px,100%);--wide:min(1080px,100%)}',
+'@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--canvas:#0e0f10;--canvas-soft:#17191a;--ink:#f2f2f0;',
+'  --ink-soft:#e6e6e3;--body:#a8aaa8;--hair:#2a2d2e;--accent:#4fbfb2;--accent-deep:#7ad6c9;--red:#e8767a}}',
+':root[data-theme="dark"]{--canvas:#0e0f10;--canvas-soft:#17191a;--ink:#f2f2f0;--ink-soft:#e6e6e3;--body:#a8aaa8;',
+'  --hair:#2a2d2e;--accent:#4fbfb2;--accent-deep:#7ad6c9;--red:#e8767a}',
+'html{-webkit-text-size-adjust:100%}',
+'body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--serif);font-size:19px;line-height:1.47;',
+'  text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}',
+'.wrap{width:var(--wide);margin:0 auto;padding:0 16px}',
+'.rule{border:0;border-top:1px solid var(--hair);margin:0}',
+/* masthead */
+'.mast{border-bottom:1px solid var(--hair);background:var(--canvas);position:sticky;top:0;z-index:20;backdrop-filter:saturate(1.2) blur(6px)}',
+'.mast .in{width:var(--wide);margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:16px}',
+'.mast img{height:30px;width:auto;display:block}',
+'.mast .sp{flex:1}',
+'.mast .iss{font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--body);',
+'  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46ch}',
+'@media(max-width:760px){.mast .iss{display:none}}',
+'.mast .doi{font-family:var(--mono);font-size:11px;color:var(--accent);text-decoration:none;border:1px solid var(--hair);padding:4px 8px}',
+'.mast .doi:hover{border-color:var(--accent)}',
+/* hero */
+'.hero{padding:48px 0 24px}',
+'.kick{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin-bottom:16px}',
+'.kick span{color:var(--body)}',
+'h1.title{font-family:var(--serif);font-size:clamp(32px,5.2vw,56px);line-height:1.03;letter-spacing:-.015em;font-weight:700;margin:0;color:var(--ink);max-width:16ch}',
+'@media(max-width:700px){h1.title{max-width:none}}',
+'.deck{font-family:var(--sans);font-size:17px;line-height:1.45;color:var(--body);margin:20px 0 0;max-width:var(--m)}',
+'.byline{font-family:var(--sans);font-size:15px;line-height:1.7;margin:24px 0 0;color:var(--ink-soft);max-width:var(--m)}',
+'.byline sup{font-size:10px;color:var(--accent);font-weight:700}',
+'.byline a{color:inherit;text-decoration:none}',
+'.byline a:hover{text-decoration:underline}',
+/* meta strip */
+'.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0;border-top:1px solid var(--hair);',
+'  border-bottom:1px solid var(--hair);margin:32px 0 0}',
+'.meta div{padding:14px 18px 14px 0;border-right:1px solid var(--hair)}',
+'.meta div:last-child{border-right:0}',
+'@media(max-width:700px){.meta div{border-right:0;border-bottom:1px solid var(--hair);padding-right:0}.meta div:last-child{border-bottom:0}}',
+'.meta dt{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--body);margin:0 0 5px}',
+'.meta dd{margin:0;font-family:var(--sans);font-size:13.5px;line-height:1.5;color:var(--ink-soft)}',
+'.meta dd a{color:var(--accent);text-decoration:none}',
+/* layout */
+'.cols{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:48px;align-items:start;padding:40px 0 0}',
+'@media(max-width:980px){.cols{grid-template-columns:1fr;gap:0}}',
+'.main{min-width:0;max-width:860px}',
+'.main > p,.main > h2.sec,.main > h3,.main > ul,.main > ol,.main > .abs,.main > .decl{max-width:var(--m)}',
+'aside.rail{position:sticky;top:76px;font-family:var(--sans);font-size:13px;border-left:1px solid var(--hair);padding-left:18px}',
+'@media(max-width:980px){aside.rail{position:static;border-left:0;padding:0;margin:0 0 28px;border-top:1px solid var(--hair);padding-top:18px}}',
+'aside.rail b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--body);margin-bottom:10px}',
+'aside.rail a{display:block;color:var(--ink-soft);text-decoration:none;padding:4px 0;border-bottom:1px solid transparent;line-height:1.35}',
+'aside.rail a:hover{color:var(--accent)}',
+/* abstract */
+'.abs{background:var(--canvas-soft);border-left:3px solid var(--accent);padding:22px 24px;margin:0 0 36px}',
+'.abs h2{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}',
+'.abs p{margin:0 0 10px;font-size:17px;line-height:1.55}',
+'.abs p:last-child{margin-bottom:0}',
+'.abs b{color:var(--ink)}',
+'.kw{font-family:var(--sans);font-size:13.5px;color:var(--body);margin-top:14px;padding-top:12px;border-top:1px solid var(--hair)}',
+'.kw span{color:var(--ink-soft)}',
+/* body */
+'.main h2.sec{font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;',
+'  color:var(--red);margin:48px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--hair);scroll-margin-top:80px}',
+'.main h3{font-family:var(--serif);font-size:22px;line-height:1.25;margin:30px 0 8px;color:var(--ink)}',
+'.main p{margin:0 0 20px}',
+'.main ul,.main ol{margin:0 0 20px;padding-left:24px}',
+'.main li{margin:0 0 6px}',
+'.main a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}',
+'.main a:hover{border-bottom-color:var(--accent)}',
+'figure{margin:32px 0;padding:0}',
+'figure{max-width:var(--m)}',
+'figure.wide{max-width:100%}',
+'figure img{display:block;max-width:100%;width:auto;height:auto;margin:0 auto;background:var(--canvas-soft)}',
+'figure figcaption{font-family:var(--sans);font-size:13px;line-height:1.5;color:var(--body);margin-top:10px;padding-top:10px;border-top:1px solid var(--hair)}',
+'figure figcaption b{color:var(--ink-soft);font-weight:700}',
+'figure pre{margin:0;padding:16px;background:var(--canvas-soft);font-family:var(--mono);font-size:13px;overflow:auto;white-space:pre-wrap}',
+'.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}',
+'table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:13.5px}',
+'th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--hair);vertical-align:top}',
+'thead th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--body);border-bottom:1.5px solid var(--ink-soft)}',
+'tbody tr:last-child td{border-bottom:1px solid var(--ink-soft)}',
+/* declarations + refs */
+'.decl dl{display:grid;grid-template-columns:150px minmax(0,1fr);gap:0 18px;font-family:var(--sans);font-size:14px;margin:0}',
+'@media(max-width:620px){.decl dl{grid-template-columns:1fr;gap:0}}',
+'.decl dt{font-weight:700;color:var(--accent);padding:10px 0;border-top:1px solid var(--hair)}',
+'.decl dd{margin:0;padding:10px 0;color:var(--ink-soft);border-top:1px solid var(--hair);line-height:1.55}',
+'@media(max-width:620px){.decl dd{border-top:0;padding-top:0}}',
+'ol.refs{list-style:none;counter-reset:r;padding:0;margin:0;font-family:var(--sans);font-size:14px;line-height:1.55}',
+'ol.refs li{counter-increment:r;position:relative;padding:12px 0 12px 42px;border-top:1px solid var(--hair);color:var(--ink-soft)}',
+'ol.refs li:before{content:counter(r);position:absolute;left:0;top:12px;font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700}',
+'ol.refs li:last-child{border-bottom:1px solid var(--hair)}',
+'ol.refs i{font-style:italic}',
+/* colophon */
+'footer.colo{background:var(--ink);color:var(--canvas);margin-top:72px;padding:40px 0}',
+'footer.colo .in{width:var(--wide);margin:0 auto;padding:0 16px;font-family:var(--sans);font-size:12.5px;line-height:1.7;opacity:.82}',
+'footer.colo b{display:block;font-size:13.5px;opacity:1;margin-bottom:8px;letter-spacing:.02em}',
+'footer.colo a{color:inherit}',
+'@media print{.mast{position:static}aside.rail{display:none}.cols{display:block}.main{max-width:none}',
+'  figure.wide{width:auto;margin-left:0}body{font-size:11pt}footer.colo{background:none;color:#000}}'
+].join('\n'); }
+
+function webBlocks(name){
+  var d=document.createElement('div'); d.innerHTML=(M.sections[name]||'').trim();
+  d.querySelectorAll('.gbmn-media-actions').forEach(function(n){n.remove()});
+  d.querySelectorAll('[contenteditable]').forEach(function(n){n.removeAttribute('contenteditable')});
+  d.querySelectorAll('[draggable]').forEach(function(n){n.removeAttribute('draggable')});
+  var out='';
+  Array.prototype.forEach.call(d.children,function(el){
+    if(el.tagName==='FIGURE'&&el.classList.contains('gbmn-inline-media')){
+      var fc=el.querySelector('figcaption'), st=fc?fc.querySelector('strong'):null;
+      var title=st?st.textContent.trim():'', legend=fc?fc.textContent.replace(title,'').replace(/^\s*—\s*/,'').trim():'';
+      var wide=el.dataset.layout==='one-column'?' class="wide"':'';
+      var inner='';
+      if(el.classList.contains('gbmn-inline-media-figure')){
+        WEBN.fig++; var img=el.querySelector('img');
+        inner=img?'<img src="'+esc(img.getAttribute('src'))+'" alt="'+esc(title)+'">':'';
+        out+='<figure'+wide+'>'+inner+'<figcaption><b>Figure '+WEBN.fig+'.</b> '+esc(title)+(legend?' '+esc(legend):'')+'</figcaption></figure>';
+      } else if(el.classList.contains('gbmn-inline-media-table')){
+        WEBN.tab++; var tb=el.querySelector('table');
+        out+='<figure'+wide+'><figcaption style="margin:0 0 10px;padding:0 0 10px;border-top:0;border-bottom:1px solid var(--hair)"><b>Table '+WEBN.tab+'.</b> '+
+          esc(title)+(legend?' '+esc(legend):'')+'</figcaption><div class="tablewrap">'+(tb?tb.outerHTML.replace(/ class="[^"]*"/g,''):'')+'</div></figure>';
+      } else {
+        WEBN.fig++; var pre=el.querySelector('pre');
+        out+='<figure'+wide+'><pre>'+esc(pre?pre.textContent:el.textContent)+'</pre>'+
+          '<figcaption><b>Figure '+WEBN.fig+'.</b> '+esc(title)+(legend?' '+esc(legend):'')+'</figcaption></figure>';
+      }
+      return;
+    }
+    if(/^H[2-6]$/.test(el.tagName)){ out+='<h3>'+el.innerHTML+'</h3>'; return; }
+    if(el.tagName==='UL'||el.tagName==='OL'){ out+=el.outerHTML; return; }
+    out+='<p>'+el.innerHTML+'</p>';
+  });
+  return out;
+}
+var WEBN={fig:0,tab:0};
+function webArticleHtml(){
+  WEBN={fig:0,tab:0};
+  var pv=M.preview||{}, affs=affilList();
+  var corr=M.authors.filter(function(a){return a.isCorresponding})[0];
+  var doi=((M.publicationInfo||{}).doi||'').replace(/^https?:\/\/(dx\.)?doi\.org\//i,'');
+  var names=sectionNames().filter(function(s){return s!=='Acknowledgments'&&(M.sections[s]||'').trim()});
+  var kw=(M.sections['Keywords']||'').replace(/\.$/,'').trim();
+  var dateTxt = pv.date ? new Date(pv.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : (pv.year||'');
+
+  var toc=names.map(function(s,i){return '<a href="#s'+i+'">'+esc(s)+'</a>'}).join('')+
+    (M.references.length?'<a href="#refs">References</a>':'');
+
+  var h='<header class="mast"><div class="in"><img src="'+LOGO+'" alt="Georgian Biomedical and Medical Nexus">'+
+    '<span class="sp"></span>'+(issueText()?'<span class="iss">'+esc(issueText())+'</span>':'')+
+    (doi?'<a class="doi" href="https://doi.org/'+encodeURIComponent(doi)+'">doi '+esc(doi)+'</a>':'')+'</div></header>';
+
+  h+='<div class="wrap"><div class="hero">'+
+    '<div class="kick">'+esc(cfg()?cfg().name:'Article')+(M.specialty?' <span>·</span> '+esc(M.specialty):'')+'</div>'+
+    '<h1 class="title">'+esc(M.title||'Article title')+'</h1>'+
+    (M.runningTitle?'<p class="deck">'+esc(M.runningTitle)+'</p>':'')+
+    '<div class="byline">'+authorsHtml()+'</div>'+
+    '<div class="meta">'+
+      (affs.length?'<div><dt>Affiliations</dt><dd>'+affs.map(function(a,i){return '<sup style="color:var(--accent);font-weight:700">'+(i+1)+'</sup> '+esc(a)}).join('<br>')+'</dd></div>':'')+
+      (corr?'<div><dt>Correspondence</dt><dd>'+esc([corr.firstName,corr.lastName].filter(Boolean).join(' '))+
+        (corr.email?'<br><a href="mailto:'+esc(corr.email)+'">'+esc(corr.email)+'</a>':'')+'</dd></div>':'')+
+      (dateTxt?'<div><dt>Published</dt><dd>'+esc(dateTxt)+(pv.fpage?'<br>pp. '+esc(pv.fpage)+(pv.lpage?'–'+esc(pv.lpage):''):'')+'</dd></div>':'')+
+      '<div><dt>License</dt><dd><a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a><br>Open access</dd></div>'+
+    '</div></div>';
+
+  h+='<div class="cols"><div class="main">';
+  if(!(cfg()&&cfg().abstractType==='none')&&(M.abstractContents.text||'').trim()){
+    h+='<div class="abs"><h2>Abstract</h2>'+(M.abstractContents.text||'')+
+      (kw?'<div class="kw">Keywords — <span>'+esc(kw)+'</span></div>':'')+'</div>';
+  } else if(kw){ h+='<div class="abs"><div class="kw" style="border:0;margin:0;padding:0">Keywords — <span>'+esc(kw)+'</span></div></div>'; }
+
+  names.forEach(function(s,i){ h+='<h2 class="sec" id="s'+i+'">'+esc(s)+'</h2>'+webBlocks(s); });
+  if((M.sections['Acknowledgments']||'').trim()) h+='<h2 class="sec" id="ack">Acknowledgments</h2>'+webBlocks('Acknowledgments');
+
+  var rows=declRows();
+  if(rows.length) h+='<h2 class="sec" id="decl">Declarations</h2><div class="decl"><dl>'+
+    rows.map(function(r){return '<dt>'+esc(r[0])+'</dt><dd>'+esc(r[1])+'</dd>'}).join('')+'</dl></div>';
+  if(M.references.length) h+='<h2 class="sec" id="refs">References</h2><ol class="refs">'+
+    M.references.map(function(r){return '<li>'+ital(formatAMAReference(r))+'</li>'}).join('')+'</ol>';
+  h+='</div><aside class="rail"><b>Contents</b>'+toc+
+    (rows.length?'<a href="#decl">Declarations</a>':'')+'</aside></div></div>';
+
+  h+='<footer class="colo"><div class="in"><b>Georgian Biomedical and Medical Nexus</b>'+
+    'Former Georgian Biomedical News · ISSN (Online) 2720-8796 · ISSN (Print) 2720-7994<br>'+
+    'Tbilisi State Medical University, Tbilisi, Georgia · gbmn.org<br>'+
+    'Open access under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. '+
+    'Copyright &copy; '+esc(pv.year||String(new Date().getFullYear()))+' the authors.</div></footer>';
+  return h;
+}
+function webDocument(){
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8">'+
+    '<meta name="viewport" content="width=device-width, initial-scale=1">'+
+    '<title>'+esc(M.title||'GBMN article')+'</title>'+
+    '<meta name="description" content="'+esc(stripTags(M.abstractContents.text||'').slice(0,180))+'">'+
+    '<meta name="citation_journal_title" content="Georgian Biomedical and Medical Nexus">'+
+    '<meta name="citation_title" content="'+esc(M.title)+'">'+
+    M.authors.map(function(a){return '<meta name="citation_author" content="'+esc(a.lastName+', '+a.firstName)+'">'}).join('')+
+    (((M.publicationInfo||{}).doi)?'<meta name="citation_doi" content="'+esc(M.publicationInfo.doi)+'">':'')+
+    '<style>'+webCss()+'</style></head><body>'+webArticleHtml()+'</body></html>';
+}
+function exportHtml(){ dl(slug()+'.html', new Blob([webDocument()],{type:'text/html;charset=utf-8'})); }

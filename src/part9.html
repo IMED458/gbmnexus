@@ -101,21 +101,20 @@ function toPng(src){
 }
 function b64bytes(b64){ var bin=atob(b64), a=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i); return a; }
 
-/* ══ DOCX ══════════════════════════════════════════════════════ */
+/* ══ DOCX — written from the rendered proof, so Word matches it ══ */
 function xe(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function wRuns(runs,base){
-  base=base||{};
+var TEAL='00786D', RED='B9353A', GREY='686868', INK='1F2A2A';
+function wRuns(runs){
   return runs.map(function(r){
     if(r.br) return '<w:r><w:br/></w:r>';
     var p=[];
-    if(base.sz) p.push('<w:sz w:val="'+base.sz+'"/><w:szCs w:val="'+base.sz+'"/>');
-    if(base.color) p.push('<w:color w:val="'+base.color+'"/>');
-    if(r.b||base.b) p.push('<w:b/>');
-    if(r.i||base.i) p.push('<w:i/>');
-    if(r.u) p.push('<w:u w:val="single"/>');
+    p.push('<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>');
+    if(r.sz) p.push('<w:sz w:val="'+r.sz+'"/><w:szCs w:val="'+r.sz+'"/>');
+    if(r.color) p.push('<w:color w:val="'+r.color+'"/>');
+    if(r.b) p.push('<w:b/>'); if(r.i) p.push('<w:i/>'); if(r.u) p.push('<w:u w:val="single"/>');
     if(r.sup) p.push('<w:vertAlign w:val="superscript"/>');
     if(r.sub) p.push('<w:vertAlign w:val="subscript"/>');
-    return '<w:r>'+(p.length?'<w:rPr>'+p.join('')+'</w:rPr>':'')+'<w:t xml:space="preserve">'+xe(r.t)+'</w:t></w:r>';
+    return '<w:r><w:rPr>'+p.join('')+'</w:rPr><w:t xml:space="preserve">'+xe(r.t)+'</w:t></w:r>';
   }).join('');
 }
 function wP(runs,o){
@@ -123,177 +122,209 @@ function wP(runs,o){
   if(o.align) pr.push('<w:jc w:val="'+o.align+'"/>');
   if(o.indent) pr.push('<w:ind w:firstLine="'+o.indent+'"/>');
   if(o.hang) pr.push('<w:ind w:left="'+o.hang+'" w:hanging="'+o.hang+'"/>');
-  pr.push('<w:spacing w:before="'+(o.before||0)+'" w:after="'+(o.after==null?100:o.after)+'" w:line="'+(o.line||240)+'" w:lineRule="auto"/>');
+  if(o.bdr) pr.push('<w:pBdr><w:top w:val="single" w:sz="16" w:space="1" w:color="777777"/><w:bottom w:val="single" w:sz="8" w:space="1" w:color="777777"/></w:pBdr>');
+  pr.push('<w:spacing w:before="'+(o.before||0)+'" w:after="'+(o.after==null?90:o.after)+'" w:line="'+(o.line||240)+'" w:lineRule="auto"/>');
   if(o.keep) pr.push('<w:keepNext/>');
-  return '<w:p><w:pPr>'+pr.join('')+'</w:pPr>'+wRuns(runs,o)+'</w:p>';
+  return '<w:p><w:pPr>'+pr.join('')+'</w:pPr>'+wRuns(runs)+'</w:p>';
 }
-function wText(t,o){ return wP([{t:t}],o); }
-function wTable(rows){
-  var cols=rows.reduce(function(n,r){return Math.max(n,r.length)},1), w=Math.floor(9360/cols);
+function wTable(el,totalTw){
+  var rows=Array.prototype.slice.call(el.rows);
+  if(!rows.length) return '';
+  var cols=rows.reduce(function(n,r){return Math.max(n,r.cells.length)},1);
+  var w=Math.floor(totalTw/cols);
   var bd='<w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(function(s){
-    return '<w:'+s+' w:val="single" w:sz="4" w:space="0" w:color="9AA5A5"/>'}).join('')+'</w:tblBorders>';
-  return '<w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/>'+bd+'</w:tblPr>'+
-    '<w:tblGrid>'+rows[0].map(function(){return '<w:gridCol w:w="'+w+'"/>'}).join('')+'</w:tblGrid>'+
-    rows.map(function(r){
-      return '<w:tr>'+r.map(function(c){
-        return '<w:tc><w:tcPr><w:tcW w:w="'+w+'" w:type="dxa"/>'+(c.head?'<w:shd w:val="clear" w:fill="E6F0EE"/>':'')+'</w:tcPr>'+
-          wP([{t:c.text,b:c.head}],{sz:18,after:0})+'</w:tc>'; }).join('')+'</w:tr>'; }).join('')+'</w:tbl>';
+    return '<w:'+s+' w:val="single" w:sz="4" w:space="0" w:color="AEBABA"/>'}).join('')+'</w:tblBorders>';
+  return '<w:tbl><w:tblPr><w:tblW w:w="'+totalTw+'" w:type="dxa"/><w:tblLayout w:type="fixed"/>'+bd+'</w:tblPr>'+
+    '<w:tblGrid>'+Array.apply(null,Array(cols)).map(function(){return '<w:gridCol w:w="'+w+'"/>'}).join('')+'</w:tblGrid>'+
+    rows.map(function(r,ri){
+      var head=r.cells[0]&&r.cells[0].tagName==='TH';
+      return '<w:tr>'+(head?'<w:trPr><w:tblHeader/></w:trPr>':'')+
+        Array.prototype.slice.call(r.cells).map(function(c){
+          var runs=domRuns(c,{sz:18,b:head});
+          return '<w:tc><w:tcPr><w:tcW w:w="'+w+'" w:type="dxa"/>'+(head?'<w:shd w:val="clear" w:fill="DFEEDD"/>':'')+
+            '<w:vAlign w:val="center"/></w:tcPr>'+wP(runs.length?runs:[{t:'',sz:18}],{align:'center',after:0})+'</w:tc>';
+        }).join('')+'</w:tr>';
+    }).join('')+'</w:tbl>';
 }
-function wImage(rid,wEmu,hEmu,name){
-  return '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="120" w:after="60"/></w:pPr><w:r><w:drawing>'+
-    '<wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+wEmu+'" cy="'+hEmu+'"/>'+
-    '<wp:docPr id="'+(rid.replace(/\D/g,'')||'1')+'" name="'+xe(name)+'"/>'+
+var WIMG=[];
+function wImage(bytes,wPx,hPx,maxEmu,name){
+  var id=WIMG.length+1, rid='rIdPic'+id;
+  WIMG.push({rid:rid,name:'word/media/pic'+id+'.png',bytes:bytes});
+  var cx=Math.min(maxEmu,wPx*9525), cy=Math.round(cx*hPx/wPx);
+  var maxH=3429000; /* 9.0 cm */
+  if(cy>maxH){ cy=maxH; cx=Math.round(cy*wPx/hPx); }
+  return '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="60" w:after="60"/></w:pPr><w:r><w:drawing>'+
+    '<wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/>'+
+    '<wp:docPr id="'+(900+id)+'" name="'+xe(name||('Picture '+id))+'"/>'+
     '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
-    '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="'+xe(name)+'"/><pic:cNvPicPr/></pic:nvPicPr>'+
+    '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="'+xe(name||'pic')+'"/><pic:cNvPicPr/></pic:nvPicPr>'+
     '<pic:blipFill><a:blip r:embed="'+rid+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
-    '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+wEmu+'" cy="'+hEmu+'"/></a:xfrm>'+
+    '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm>'+
     '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
 }
-async function exportDocx(){
-  notify('Building the Word file...','info');
-  var A=articleModel(), affs=affilList(), media=[], rels=[], body=[];
-  var MAXW=5943600; /* 17 cm content width in EMU */
-
-  var logo=await toPng(LOGO);
-  if(logo){ media.push({name:'word/media/masthead.png',bytes:logo.bytes});
-    rels.push({id:'rIdImg1',target:'media/masthead.png'});
-    var lw=Math.min(MAXW,logo.w*9525), lh=Math.round(lw*logo.h/logo.w);
-    body.push('<w:p><w:pPr><w:jc w:val="left"/><w:spacing w:after="40"/><w:pBdr><w:bottom w:val="single" w:sz="18" w:space="2" w:color="0E7A72"/></w:pBdr></w:pPr>'+
-      '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+lw+'" cy="'+lh+'"/><wp:docPr id="900" name="GBMN masthead"/>'+
-      '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
-      '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="masthead"/><pic:cNvPicPr/></pic:nvPicPr>'+
-      '<pic:blipFill><a:blip r:embed="rIdImg1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
-      '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+lw+'" cy="'+lh+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'+
-      '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>');
-  }
-  if(volLine()) body.push(wText(volLine(),{sz:18,align:'right',after:160}));
-
-  body.push(wP([{t:M.title||'Untitled manuscript'}],{sz:39,b:true,color:'006F68',align:'center',after:160,keep:true}));
-
-  var auRuns=[];
-  M.authors.forEach(function(a,i){
-    if(i) auRuns.push({t:', '});
-    auRuns.push({t:[a.firstName,a.middleInitial,a.lastName].filter(Boolean).join(' ')});
-    var nums=(a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).map(function(x){var k=affs.indexOf(x);return k<0?'':String(k+1)}).filter(Boolean);
-    var sup=nums.slice(); if(a.orcidId) sup.push('ID'); if(a.isCorresponding) sup.push('*');
-    if(sup.length) auRuns.push({t:sup.join(','),sup:true,b:true});
+/* DOM → runs, carrying the proof's own emphasis and colour */
+function domRuns(node,base){
+  base=base||{}; var out=[];
+  Array.prototype.forEach.call(node.childNodes,function(n){
+    if(n.nodeType===3){ var t=n.textContent.replace(/\s+/g,' ');
+      if(t) out.push({t:t,b:base.b,i:base.i,u:base.u,sup:base.sup,sub:base.sub,sz:base.sz,color:base.color}); return; }
+    if(n.nodeType!==1) return;
+    if(n.tagName==='BR'){ out.push({br:true}); return; }
+    var f=Object.assign({},base);
+    if(/^(B|STRONG)$/.test(n.tagName)) f.b=true;
+    if(/^(I|EM)$/.test(n.tagName)) f.i=true;
+    if(n.tagName==='U') f.u=true;
+    if(n.tagName==='SUP') f.sup=true;
+    if(n.tagName==='SUB') f.sub=true;
+    if(n.classList&&(n.classList.contains('abs-label')||n.classList.contains('ref-target')||n.classList.contains('citation'))){ f.color=TEAL; f.b=true; }
+    if(n.tagName==='A'&&n.closest&&n.closest('.authors')) f.color=TEAL;
+    out.push.apply(out,domRuns(n,f));
   });
-  if(auRuns.length) body.push(wP(auRuns,{sz:24,color:'686868',align:'center',after:140}));
-  affs.forEach(function(a,i){ body.push(wP([{t:String(i+1),sup:true,b:true},{t:' '+a}],{sz:17,after:20})); });
-  var corr=M.authors.filter(function(a){return a.isCorresponding})[0];
-  if(corr) body.push(wP([{t:'* Corresponding author: ',b:true},
-    {t:[corr.firstName,corr.middleInitial,corr.lastName].filter(Boolean).join(' ')+(corr.email?' — '+corr.email:'')}],{sz:17,after:140}));
-  if((M.publicationInfo||{}).doi) body.push(wP([{t:'DOI. '+M.publicationInfo.doi,u:true}],{sz:22,b:true,color:'008080',after:200}));
-
-  if(cfg()&&cfg().abstractType!=='none'&&(M.abstractContents.text||'').trim()){
-    body.push(wText('ABSTRACT',{sz:22,b:true,color:'B9353A',after:60,keep:true}));
-    parseBlocks(M.abstractContents.text).forEach(function(b){ if(b.t==='p') body.push(wP(b.runs,{sz:20,align:'both',after:60})); });
-  }
-  if((M.sections['Keywords']||'').trim())
-    body.push(wP([{t:'KEYWORDS. ',b:true,color:'006F68'},{t:M.sections['Keywords']}],{sz:20,after:200}));
-
-  var imgIdx=0;
-  for(var si=0;si<A.secs.length;si++){
-    var s=A.secs[si];
-    if(s.name==='Acknowledgments') continue;
-    body.push(wText(s.name.toUpperCase(),{sz:22,b:true,color:'B9353A',before:200,after:60,keep:true}));
-    for(var bi=0;bi<s.blocks.length;bi++){
-      var blk=s.blocks[bi];
-      if(blk.t==='p'){ body.push(wP(blk.runs,{sz:22,align:'both',indent:bi>0?283:0,after:0})); }
-      else if(blk.t==='h'){ body.push(wP(blk.runs,{sz:22,b:true,before:140,after:40,keep:true})); }
-      else if(blk.t==='list'){ blk.items.forEach(function(it){ body.push(wP([{t:'• '}].concat(it),{sz:22,hang:283,after:0})); }); }
-      else if(blk.t==='fig'){
-        var png=blk.src?await toPng(blk.src):null;
-        if(png){ imgIdx++; var rid='rIdFig'+imgIdx;
-          media.push({name:'word/media/figure'+imgIdx+'.png',bytes:png.bytes});
-          rels.push({id:rid,target:'media/figure'+imgIdx+'.png'});
-          var iw=Math.min(MAXW,png.w*9525), ih=Math.round(iw*png.h/png.w);
-          body.push(wImage(rid,iw,ih,'Figure '+blk.n)); }
-        body.push(wP([{t:'Figure '+blk.n+'. ',b:true,color:'006F68'},{t:blk.title+(blk.legend?' '+blk.legend:'')}],{sz:17,after:160}));
-      }
-      else if(blk.t==='table'){
-        body.push(wP([{t:'Table '+blk.n+'. ',b:true,color:'006F68'},{t:blk.title+(blk.legend?' '+blk.legend:'')}],{sz:17,after:60,keep:true}));
-        if(blk.rows.length) body.push(wTable(blk.rows));
-        body.push(wText('',{sz:12,after:120}));
-      }
-      else if(blk.t==='pre'){
-        body.push(wP([{t:'Figure '+blk.n+'. ',b:true,color:'006F68'},{t:blk.title+(blk.legend?' '+blk.legend:'')}],{sz:17,after:60,keep:true}));
-        body.push(wText(blk.text,{sz:18,after:140}));
-      }
-    }
-  }
-  var ack=A.secs.filter(function(s){return s.name==='Acknowledgments'})[0];
-  if(ack){ body.push(wText('ACKNOWLEDGMENTS',{sz:22,b:true,color:'B9353A',before:200,after:60,keep:true}));
-    ack.blocks.forEach(function(b){ if(b.t==='p') body.push(wP(b.runs,{sz:22,align:'both',after:0})); }); }
-
-  var rows=declRows();
-  if(rows.length){ body.push(wText('DECLARATIONS',{sz:22,b:true,color:'B9353A',before:200,after:60,keep:true}));
-    rows.forEach(function(r){ body.push(wP([{t:r[0]+'. ',b:true,color:'006F68'},{t:r[1]}],{sz:22,align:'both',after:60})); }); }
-
-  if(M.references.length){
-    body.push(wText('REFERENCES',{sz:22,b:true,color:'B9353A',before:200,after:60,keep:true}));
-    M.references.forEach(function(r,i){
-      var txt=formatAMAReference(r), runs=[{t:(i+1)+'. '}];
-      txt.split(/(\*[^*]+\*)/).forEach(function(seg){ if(!seg)return;
-        if(seg[0]==='*'&&seg.slice(-1)==='*') runs.push({t:seg.slice(1,-1),i:true}); else runs.push({t:seg}); });
-      body.push(wP(runs,{sz:19,hang:283,after:40}));
+  return out;
+}
+async function pngOf(el){
+  var src=el.getAttribute('src'); if(!src) return null;
+  return await toPng(src);
+}
+/* one proof element → an array of docx XML blocks */
+async function domToDocx(el,colTw,colEmu){
+  var out=[], tag=el.tagName, cl=el.classList;
+  if(cl.contains('journal-header')||cl.contains('pfooter')||cl.contains('running-footer')) return out;
+  if(cl.contains('top-rule')){ out.push(wP([{t:'',sz:4}],{bdr:true,after:120})); return out; }
+  if(cl.contains('article-title')){ out.push(wP(domRuns(el,{sz:39,b:true,color:TEAL}),{align:'center',after:120})); return out; }
+  if(cl.contains('authors')){ out.push(wP(domRuns(el,{sz:24,color:GREY}),{align:'center',after:140})); return out; }
+  if(cl.contains('doi-line')){ out.push(wP(domRuns(el,{sz:22}),{after:200})); return out; }
+  if(tag==='H2'&&cl.contains('section-title')){
+    out.push(wP([{t:el.textContent.toUpperCase(),sz:22,b:true,color:RED}],{before:160,after:60,keep:true})); return out; }
+  if(tag==='H3'){ out.push(wP(domRuns(el,{sz:22,b:true,color:RED}),{before:120,after:40,keep:true})); return out; }
+  if(tag==='H4'){ out.push(wP(domRuns(el,{sz:22,i:true,color:TEAL}),{before:100,after:40,keep:true})); return out; }
+  if(tag==='IMG'){ var p=await pngOf(el); if(p) out.push(wImage(p.bytes,p.w,p.h,colEmu,el.alt||'Figure')); return out; }
+  if(tag==='TABLE'){ out.push(wTable(el,colTw)); out.push(wP([{t:'',sz:10}],{after:60})); return out; }
+  if(tag==='PRE'){ out.push(wP([{t:el.textContent,sz:18}],{after:120})); return out; }
+  if(cl.contains('figure-caption')||cl.contains('table-caption')){
+    out.push(wP(domRuns(el,{sz:20}),{align:'both',after:40,keep:true})); return out; }
+  if(tag==='OL'||tag==='UL'){
+    var small=!!(el.closest('.refs')||el.closest('.aff-list'));
+    Array.prototype.forEach.call(el.children,function(li,i){
+      var pre=tag==='OL'?(i+1)+'. ':'• ';
+      out.push(wP([{t:pre,sz:small?20:22}].concat(domRuns(li,{sz:small?20:22})),{align:'both',hang:283,after:40}));
     });
+    return out;
+  }
+  if(tag==='P'){
+    var inAbs=!!el.closest('.abstract'), inDecl=!!el.closest('.decl'), inBlock=!!el.closest('.block');
+    var sz=(inAbs||inDecl)?20:22;
+    var ind=0;
+    if(inBlock&&!inDecl){
+      var blk=el.closest('.block');
+      var first=blk.querySelector('p')===el;
+      ind=(first&&blk.classList.contains('after-heading'))?0:(first?0:255);
+    }
+    out.push(wP(domRuns(el,{sz:sz}),{align:'both',indent:ind,after:70}));
+    return out;
+  }
+  for(var i=0;i<el.children.length;i++) out.push.apply(out,await domToDocx(el.children[i],colTw,colEmu));
+  return out;
+}
+async function exportDocx(){
+  if(pvMode!=='print'){ setMode('print'); await new Promise(function(r){setTimeout(r,120)}); }
+  notify('Building the Word file...','info');
+  WIMG=[];
+  var prev=$('#articlePreview');
+  if(!prev){ notify('Open the proof first.','error'); return; }
+
+  /* page: A4, matching the template's Word export */
+  var PAGE='<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="2050" w:right="800" w:bottom="1300" w:left="800" w:header="400" w:footer="450" w:gutter="0"/>';
+  var FULL_TW=10306, COL_TW=4913, FULL_EMU=6543675, COL_EMU=3117850;
+
+  var intro=[], body=[], inBody=false;
+  for(var i=0;i<prev.children.length;i++){
+    var el=prev.children[i];
+    if(el.matches('header,footer,.running-footer')) continue;
+    if(el.tagName==='SECTION'&&!el.classList.contains('abstract')) inBody=true;
+    var blocks=await domToDocx(el, inBody?COL_TW:FULL_TW, inBody?COL_EMU:FULL_EMU);
+    (inBody?body:intro).push.apply(inBody?body:intro,blocks);
   }
 
-  var doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
-   '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '+
+  /* running header: logo + issue line, as a borderless two-cell table */
+  var logo=await toPng(LOGO);
+  var hdrLogo = logo ? wImage(logo.bytes,logo.w,logo.h,2900000,'GBMN masthead') : '';
+  var hdr='<w:tbl><w:tblPr><w:tblW w:w="'+FULL_TW+'" w:type="dxa"/><w:tblLayout w:type="fixed"/>'+
+    '<w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(function(s){return '<w:'+s+' w:val="none" w:sz="0" w:space="0" w:color="auto"/>'}).join('')+'</w:tblBorders></w:tblPr>'+
+    '<w:tblGrid><w:gridCol w:w="5200"/><w:gridCol w:w="5106"/></w:tblGrid><w:tr>'+
+    '<w:tc><w:tcPr><w:tcW w:w="5200" w:type="dxa"/></w:tcPr>'+(hdrLogo||wP([{t:'GBMN',sz:28,b:true,color:TEAL}],{after:0}))+'</w:tc>'+
+    '<w:tc><w:tcPr><w:tcW w:w="5106" w:type="dxa"/><w:vAlign w:val="bottom"/></w:tcPr>'+
+      wP([{t:issueText(),sz:18}],{align:'right',after:60})+'</w:tc></w:tr></w:tbl>'+
+    wP([{t:'',sz:4}],{bdr:true,after:60});
+
+  var ftLines=$('#articlePreview .pfooter').innerHTML.split(/<br\s*\/?>/i).map(function(l){
+    var d=document.createElement('div'); d.innerHTML=l; return d.textContent.trim(); }).filter(Boolean);
+  var ftr=ftLines.map(function(t){ return wP([{t:t,sz:16}],{align:'center',after:0}); }).join('');
+
+  var S1='<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr"/><w:footerReference w:type="default" r:id="rIdFtr"/>'+
+    PAGE+'<w:cols w:space="708"/><w:docGrid w:linePitch="360"/></w:sectPr>';
+  var S2='<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr"/><w:footerReference w:type="default" r:id="rIdFtr"/>'+
+    '<w:type w:val="continuous"/>'+PAGE+'<w:cols w:num="2" w:space="480" w:equalWidth="1"/><w:docGrid w:linePitch="360"/></w:sectPr>';
+
+  var NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '+
    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '+
-   'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>'+
-   body.join('')+
-   '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr>'+
-   '</w:body></w:document>';
+   'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
+  var doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document '+NS+'><w:body>'+
+    intro.join('')+
+    '<w:p><w:pPr>'+S1+'</w:pPr></w:p>'+
+    body.join('')+
+    S2+'</w:body></w:document>';
+  var header='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr '+NS+'>'+hdr+'</w:hdr>';
+  var footer='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr '+NS+'>'+ftr+'</w:ftr>';
 
   var styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr>'+
-   '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:color w:val="1F2A2A"/>'+
-   '</w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'+
+   '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:color w:val="'+INK+'"/>'+
+   '</w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="90" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'+
    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>';
-
   var ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
-   '<Default Extension="xml" ContentType="application/xml"/>'+
-   '<Default Extension="png" ContentType="image/png"/>'+
+   '<Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/>'+
    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'+
+   '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>'+
+   '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>'+
    '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'+
    '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>';
-
   var mainRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'+
    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>'+
    '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>';
-
   var docRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
    '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
-   rels.map(function(r){return '<Relationship Id="'+r.id+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="'+r.target+'"/>'}).join('')+
+   '<Relationship Id="rIdHdr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>'+
+   '<Relationship Id="rIdFtr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'+
+   WIMG.map(function(m){return '<Relationship Id="'+m.rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="'+m.name.replace('word/','')+'"/>'}).join('')+
    '</Relationships>';
-
+  var hdrRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+   '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+   WIMG.map(function(m){return '<Relationship Id="'+m.rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="'+m.name.replace('word/','')+'"/>'}).join('')+
+   '</Relationships>';
   var now=new Date().toISOString().replace(/\.\d+Z$/,'Z');
   var core='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
-   '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" '+
-   'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'+
+   '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" '+
+   'xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'+
    '<dc:title>'+xe(M.title)+'</dc:title><dc:creator>'+xe(M.authors.map(function(a){return a.firstName+' '+a.lastName}).join('; '))+'</dc:creator>'+
    '<cp:keywords>'+xe(M.sections['Keywords']||'')+'</cp:keywords>'+
-   '<dcterms:created xsi:type="dcterms:W3CDTF">'+now+'</dcterms:created>'+
-   '<dcterms:modified xsi:type="dcterms:W3CDTF">'+now+'</dcterms:modified></cp:coreProperties>';
+   '<dcterms:created xsi:type="dcterms:W3CDTF">'+now+'</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">'+now+'</dcterms:modified></cp:coreProperties>';
   var app='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">'+
-   '<Application>GBMN Manuscript Builder</Application><Company>Georgian Biomedical and Medical Nexus</Company>'+
-   '<Words>'+wordCount()+'</Words></Properties>';
+   '<Application>GBMN Manuscript Builder</Application><Company>Georgian Biomedical and Medical Nexus</Company><Words>'+wordCount()+'</Words></Properties>';
 
   var files=[{name:'[Content_Types].xml',data:ct},{name:'_rels/.rels',data:mainRels},
     {name:'word/document.xml',data:doc},{name:'word/styles.xml',data:styles},
-    {name:'word/_rels/document.xml.rels',data:docRels},
+    {name:'word/header1.xml',data:header},{name:'word/footer1.xml',data:footer},
+    {name:'word/_rels/document.xml.rels',data:docRels},{name:'word/_rels/header1.xml.rels',data:hdrRels},
     {name:'docProps/core.xml',data:core},{name:'docProps/app.xml',data:app}]
-    .concat(media.map(function(m){return {name:m.name,data:m.bytes}}));
+    .concat(WIMG.map(function(m){return {name:m.name,data:m.bytes}}));
   dl(slug()+'.docx', new Blob([zipStore(files)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}));
-  notify('Word file downloaded.','success');
+  notify('Word file downloaded — same layout as the proof.','success');
 }

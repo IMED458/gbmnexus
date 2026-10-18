@@ -90,7 +90,7 @@ var CONTRIB_OPTIONS=[
 function blankManuscript(){
   return {
     id:'GBMN-'+new Date().getFullYear()+'-'+Math.random().toString(36).slice(2,10).toUpperCase(),
-    status:'Draft', title:'', runningTitle:'', specialty:'', articleType:'original-research',
+    status:'Draft', role:'author', editLog:[], title:'', runningTitle:'', specialty:'', articleType:'original-research',
     publicationInfo:{doi:'',volumeIssue:''}, checklistAgreed:false, checklistAgreedAt:'',
     authors:[], abstractContents:{text:''}, sections:{}, figuresAndTables:[], references:[],
     supplementaryFiles:[], editorFiles:[],
@@ -176,6 +176,31 @@ var STEP_HELP={
 
 /* ── sidebar ── */
 function renderSidebar(){
+  var rs=$('#roleSel'); if(rs && rs.value!==M.role) rs.value=M.role;
+  var tools=$('#roleTools');
+  if(M.role==='author'){ tools.innerHTML=''; }
+  else {
+    var n=(M.editLog||[]).length;
+    tools.innerHTML='<button type="button" class="btn sm" id="edOpen">Open a submission file</button>'+
+      '<button type="button" class="btn sm" id="edSave">Save submission file</button>'+
+      '<input type="file" id="edFile" accept="application/json,.json" hidden>'+
+      '<div class="hint">Full editorial access: every step is open and the proof on the right can be corrected directly — click any paragraph, heading or caption and type.'+
+      (n?' '+n+' edit'+(n===1?'':'s')+' recorded.':'')+'</div>';
+    $('#edOpen').onclick=function(){ $('#edFile').click(); };
+    $('#edSave').onclick=function(){ exportJson(); };
+    $('#edFile').onchange=function(e){ var f=e.target.files[0]; if(!f)return;
+      var r=new FileReader();
+      r.onload=function(){ try{
+          var o=JSON.parse(String(r.result)); if(!o||typeof o!=='object') throw 0;
+          var base=blankManuscript(), role=M.role;
+          Object.keys(base).forEach(function(k){ if(o[k]===undefined) o[k]=base[k]; });
+          ['publicationInfo','ethics','conflictDisclosure','fundingDetails','preview','abstractContents']
+            .forEach(function(k){ o[k]=Object.assign({},base[k],o[k]||{}); });
+          M=o; M.role=role; activeSection=''; activeStep='title-meta';
+          notify('Submission opened for editing.','success'); save(); renderAll();
+        }catch(err){ notify('That file is not a GBMN submission export.','error'); } };
+      r.readAsText(f); };
+  }
   $('#sideTitle').textContent = M.title || 'Untitled Manuscript Draft';
   $('#sideStatus').textContent = 'Manuscript Status: '+M.status;
   var nav=$('#sideNav'), html='';
@@ -193,6 +218,10 @@ function renderSidebar(){
   var pct=Math.round(done/STEPS.length*100);
   $('#progPct').textContent=pct+'%'; $('#progBar').style.width=pct+'%';
 }
+$('#roleSel').addEventListener('change',function(e){
+  M.role=e.target.value; save();
+  notify(M.role==='author'?'Author view.':'Editorial access on — you can correct the proof directly.','success');
+  renderAll(); });
 $('#sideNav').addEventListener('click',function(e){
   var b=e.target.closest('button[data-step]'); if(!b)return;
   go(b.dataset.step);

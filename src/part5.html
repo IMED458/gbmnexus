@@ -66,6 +66,7 @@ function mountRTE(host,o){
   var area=$('.rtarea',host), bar=$('.rtbar',host), selbar=$('.rtsel',host), wc=$('.rtwc',host), blk=$('[data-blk]',host);
   var savedRange=null;
   area.innerHTML=o.value||'';
+  setTimeout(function(){ if(ensureBlocks()) emit(); },0);
   updWc();
 
   function emit(){ o.onChange(area.innerHTML); updWc(); }
@@ -112,8 +113,52 @@ function mountRTE(host,o){
     handleAct(b.dataset.act);
   });
   selbar.addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) handleAct(b.dataset.act); });
-  blk.addEventListener('change',function(){ area.focus();
-    document.execCommand('formatBlock',false, blk.value==='subheading'?'h3':'p'); emit(); });
+  blk.addEventListener('change',function(){ setBlock(blk.value); });
+
+  /* ── block formatting, done by hand: execCommand('formatBlock') is
+        unreliable in a contenteditable whose children are not all blocks ── */
+  function ensureBlocks(){
+    var run=null, changed=false;
+    Array.prototype.slice.call(area.childNodes).forEach(function(n){
+      if(n.nodeType===1 && /^(P|H[1-6]|UL|OL|FIGURE|BLOCKQUOTE|PRE|TABLE|DIV)$/.test(n.tagName)){ run=null; return; }
+      if(n.nodeType===3 && !n.textContent.replace(/\u200b/g,'').trim()){ return; }
+      if(!run){ run=document.createElement('p'); area.insertBefore(run,n); changed=true; }
+      run.appendChild(n);
+    });
+    return changed;
+  }
+  function blockOf(node){
+    while(node&&node!==area){ if(node.nodeType===1&&/^(P|H[1-6]|LI|BLOCKQUOTE|PRE|DIV)$/.test(node.tagName)) return node;
+      node=node.parentNode; }
+    return null;
+  }
+  function setBlock(kind){
+    ensureBlocks();                      /* settle the DOM before reading the selection */
+    area.focus();
+    var sel=window.getSelection();
+    if(savedRange&&area.contains(savedRange.commonAncestorContainer)){
+      try{ sel.removeAllRanges(); sel.addRange(savedRange); }catch(e){} }
+    var list=[];
+    if(sel.rangeCount){
+      var r=sel.getRangeAt(0);
+      list=Array.prototype.filter.call(area.children,function(el){
+        try{ return r.intersectsNode(el); }catch(e){ return false; } });
+      if(!list.length){ var b=blockOf(r.startContainer)||blockOf(sel.anchorNode); if(b) list=[b]; }
+    }
+    if(!list.length && area.children.length) list=[area.children[area.children.length-1]];
+    if(!list.length){ var p=document.createElement(kind==='subheading'?'h3':'p'); p.innerHTML='<br>'; area.appendChild(p); list=[p]; }
+    var want=kind==='subheading'?'H3':'P', last=null;
+    list.forEach(function(el){
+      if(!/^(P|H[1-6]|DIV)$/.test(el.tagName)) return;
+      if(el.tagName===want){ last=el; return; }
+      var n=document.createElement(want);
+      n.innerHTML=el.innerHTML||'<br>';
+      el.parentNode.replaceChild(n,el); last=n;
+    });
+    if(last){ var rr=document.createRange(); rr.selectNodeContents(last); rr.collapse(false);
+      sel.removeAllRanges(); sel.addRange(rr); savedRange=rr.cloneRange(); }
+    emit(); detect();
+  }
 
   function handleAct(a){
     if(a==='undo'){ var prev=history.pop(); if(prev===undefined){document.execCommand('undo'); } else { area.innerHTML=prev; setSel(null); } emit(); return; }
@@ -242,6 +287,7 @@ function mountRTE(host,o){
 
   /* editor events */
   area.addEventListener('input',function(){ emit(); });
+  area.addEventListener('blur',function(){ if(ensureBlocks()) emit(); });
   area.addEventListener('keyup',function(){ saveSel(); detect(); });
   area.addEventListener('mouseup',function(){ setTimeout(function(){saveSel();detect()},0); });
   area.addEventListener('focus',function(){ saveSel(); detect(); });

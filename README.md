@@ -38,29 +38,39 @@ Served from GitHub Pages: open `index.html`.
 Each step carries its own completion state (complete / warning / empty) and
 feeds an overall readiness meter.
 
-**Live document preview** — rendered next to the form, paginated into real
-A4 pages:
+**Live document preview** — the GBMN submission-template layout, rendered
+next to the form and printed from the very same DOM, so the PDF is what the
+proof shows:
 
-- two-column body, 11 pt Calibri/Carlito on a 14.3 pt baseline
-- GBMN masthead, double rule and volume line on every page
-- full-width title, author line with affiliation, ORCID and corresponding
-  superscripts, abstract, DOI
-- figures, tables and diagrams inserted inline in the text, in either
-  two-column or full-width layout
-- declarations block assembled from the ethics, conflict and funding steps
-- AMA reference list
-- journal footer with ISSN and copyright line on every page
+- A4 page, 12/13/18 mm margins, Calibri body
+- GBMN masthead with the issue line, double rule under it
+- centred teal title, author line with affiliation, ORCID and corresponding
+  superscripts, red section headings, abstract, DOI
+- two-column body (`columns: 2`), with figures, tables and diagrams placed
+  inline and set to either **two-column** or **full article width**
+- author affiliations, corresponding author, acknowledgments, declarations
+  and the AMA reference list
+- running journal footer with the ISSNs and copyright line on every page
 
-Three preview modes: **PDF** (paginated A4), **Title page** (the separate,
-anonymisable title page) and **Web** (how the article looks on the site).
+Three preview modes: **PDF** (the A4 proof), **Title page** (the separate,
+anonymisable title page) and **Web** (the exported HTML article, shown in a
+frame, so what you see is the file you get).
+
+**Editorial access** — the sidebar has a role switch. As **Editor** or
+**Journal manager** you can open any exported submission file, every step is
+open regardless of validation, and the proof itself becomes editable: click a
+paragraph, heading or caption in the A4 page and correct it. Changes are
+written back into the manuscript and recorded in an edit log. (Per-user
+accounts and permissions live in the journal's Firebase application; this file
+carries the editing capability, not the authentication.)
 
 **Exports**
 
 | Format | What it is |
 |---|---|
 | **PDF** | Print-to-PDF straight from the browser, in the paginated A4 journal layout |
-| **Word (.docx)** | Real OOXML — masthead, title, authors with affiliation and ORCID superscripts, abstract, sections, inline figures and tables, declarations, AMA references. Written by a built-in ZIP writer; no library, no server |
-| **HTML** | Standalone article page, styles inlined |
+| **Word (.docx)** | Real OOXML, written from the rendered proof so it carries the same layout: running header with the masthead and issue line, single-column front matter, then a continuous two-column section for the body, running footer, A4 page. Built by a built-in ZIP writer; no library, no server |
+| **HTML** | Standalone editorial article page — sticky masthead, metadata strip, contents rail, full-width figures, dark mode, Highwire citation meta tags |
 | **JATS XML package (.zip)** | NISO JATS (Z39.96) Journal Publishing DTD v1.3, plus every figure as a separate file and a deposit README |
 | **PubMed citation XML** | PubMed 3.0 DTD (`ArticleSet`) |
 | **JSON** | Full metadata package for the editorial office |
@@ -96,9 +106,10 @@ src/part4.html    icons, article types, manuscript model, steps, sidebar
 src/part5.html    rich-text editor (figures, tables, diagrams)
 src/part6.html    steps 1–9
 src/part7.html    steps 10–17
-src/part9.html    ZIP writer, HTML block parser, DOCX builder
+src/part9.html    ZIP writer, HTML block parser, DOM-to-DOCX builder
 src/part10.html   JATS 1.3 and PubMed 3.0 XML builders
-src/part8.html    document builders, validation, pagination, preview, exports
+src/part11.html   the public HTML article page
+src/part8.html    proof builders, editorial proof editing, validation, exports
 assets/           GBMN masthead artwork
 ```
 
