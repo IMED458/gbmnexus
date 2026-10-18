@@ -174,113 +174,101 @@ function domRuns(node,base){
     if(/^(B|STRONG)$/.test(n.tagName)) f.b=true;
     if(/^(I|EM)$/.test(n.tagName)) f.i=true;
     if(n.tagName==='U') f.u=true;
-    if(n.tagName==='SUP') f.sup=true;
+    if(n.tagName==='SUP'){ f.sup=true; f.sz=Math.max(14,Math.round((base.sz||22)*0.64)); }
     if(n.tagName==='SUB') f.sub=true;
-    if(n.classList&&(n.classList.contains('abs-label')||n.classList.contains('ref-target')||n.classList.contains('citation'))){ f.color=TEAL; f.b=true; }
-    if(n.tagName==='A'&&n.closest&&n.closest('.authors')) f.color=TEAL;
+    if(n.classList&&(n.classList.contains('lb'))){ f.color=TEAL; f.b=true; }
+    if(n.tagName==='SUP'||n.tagName==='A'){ f.color=f.color||TEAL; }
     out.push.apply(out,domRuns(n,f));
   });
   return out;
 }
-async function pngOf(el){
-  var src=el.getAttribute('src'); if(!src) return null;
-  return await toPng(src);
-}
 /* one proof element → an array of docx XML blocks */
 async function domToDocx(el,colTw,colEmu){
   var out=[], tag=el.tagName, cl=el.classList;
-  if(cl.contains('journal-header')||cl.contains('pfooter')||cl.contains('running-footer')) return out;
-  if(cl.contains('top-rule')){ out.push(wP([{t:'',sz:4}],{bdr:true,after:120})); return out; }
-  if(cl.contains('article-title')){ out.push(wP(domRuns(el,{sz:39,b:true,color:TEAL}),{align:'center',after:120})); return out; }
-  if(cl.contains('authors')){ out.push(wP(domRuns(el,{sz:24,color:GREY}),{align:'center',after:140})); return out; }
-  if(cl.contains('doi-line')){ out.push(wP(domRuns(el,{sz:22}),{after:200})); return out; }
-  if(tag==='H2'&&cl.contains('section-title')){
-    out.push(wP([{t:el.textContent.toUpperCase(),sz:22,b:true,color:RED}],{before:160,after:60,keep:true})); return out; }
-  if(tag==='H3'){ out.push(wP(domRuns(el,{sz:22,b:true,color:RED}),{before:120,after:40,keep:true})); return out; }
-  if(tag==='H4'){ out.push(wP(domRuns(el,{sz:22,i:true,color:TEAL}),{before:100,after:40,keep:true})); return out; }
-  if(tag==='IMG'){ var p=await pngOf(el); if(p) out.push(wImage(p.bytes,p.w,p.h,colEmu,el.alt||'Figure')); return out; }
-  if(tag==='TABLE'){ out.push(wTable(el,colTw)); out.push(wP([{t:'',sz:10}],{after:60})); return out; }
-  if(tag==='PRE'){ out.push(wP([{t:el.textContent,sz:18}],{after:120})); return out; }
-  if(cl.contains('figure-caption')||cl.contains('table-caption')){
-    out.push(wP(domRuns(el,{sz:20}),{align:'both',after:40,keep:true})); return out; }
+  if(cl.contains('ptitle')){ out.push(wP(domRuns(el,{sz:39,b:true,color:TEAL}),{align:'center',before:160,after:150})); return out; }
+  if(cl.contains('pauth')){ out.push(wP(domRuns(el,{sz:24,color:GREY}),{align:'center',after:170})); return out; }
+  if(cl.contains('pabs-h')){ out.push(wP([{t:el.textContent,sz:22,b:true,color:RED}],{after:40,keep:true})); return out; }
+  if(cl.contains('pabs')){
+    Array.prototype.forEach.call(el.children,function(p){ out.push(wP(domRuns(p,{sz:20}),{align:'both',after:0,line:230})); });
+    return out; }
+  if(cl.contains('pdoi')){ out.push(wP(domRuns(el,{sz:22,b:true,color:'008080',u:true}),{before:110,after:160})); return out; }
+  if(tag==='H2'){ out.push(wP([{t:el.textContent.toUpperCase(),sz:22,b:true,color:RED}],{before:150,after:30,keep:true})); return out; }
+  if(tag==='H3'){ out.push(wP(domRuns(el,{sz:22,b:true,i:true,color:TEAL}),{before:110,after:30,keep:true})); return out; }
+  if(tag==='FIGURE'){
+    var img=el.querySelector('img'), pre=el.querySelector('pre'), cap=el.querySelector('.cap');
+    if(img){ var p=await toPng(img.getAttribute('src')); if(p) out.push(wImage(p.bytes,p.w,p.h,colEmu,img.alt||'Figure')); }
+    else if(pre) out.push(wP([{t:pre.textContent,sz:17}],{after:40}));
+    if(cap) out.push(wP(domRuns(cap,{sz:17}),{align:'both',after:120}));
+    return out; }
+  if(cl.contains('tbl')){
+    var c=el.querySelector('.cap'), t=el.querySelector('table');
+    if(c) out.push(wP(domRuns(c,{sz:17}),{align:'both',after:40,keep:true}));
+    if(t) out.push(wTable(t,colTw));
+    out.push(wP([{t:'',sz:10}],{after:80}));
+    return out; }
+  if(cl.contains('decl')||cl.contains('afflist')){
+    var sz=cl.contains('afflist')?19:22;
+    Array.prototype.forEach.call(el.children,function(p){ out.push(wP(domRuns(p,{sz:sz}),{align:'both',after:60})); });
+    return out; }
+  if(tag==='OL'&&cl.contains('refs')){
+    var start=parseInt(el.getAttribute('start')||'1',10);
+    Array.prototype.forEach.call(el.children,function(li,k){
+      out.push(wP([{t:(start+k)+'. ',sz:19}].concat(domRuns(li,{sz:19})),{align:'both',hang:255,after:30})); });
+    return out; }
   if(tag==='OL'||tag==='UL'){
-    var small=!!(el.closest('.refs')||el.closest('.aff-list'));
-    Array.prototype.forEach.call(el.children,function(li,i){
-      var pre=tag==='OL'?(i+1)+'. ':'• ';
-      out.push(wP([{t:pre,sz:small?20:22}].concat(domRuns(li,{sz:small?20:22})),{align:'both',hang:283,after:40}));
-    });
-    return out;
-  }
+    Array.prototype.forEach.call(el.children,function(li,k){
+      out.push(wP([{t:(tag==='OL'?(k+1)+'. ':'• '),sz:22}].concat(domRuns(li,{sz:22})),{hang:255,after:30})); });
+    return out; }
   if(tag==='P'){
-    var inAbs=!!el.closest('.abstract'), inDecl=!!el.closest('.decl'), inBlock=!!el.closest('.block');
-    var sz=(inAbs||inDecl)?20:22;
-    var ind=0;
-    if(inBlock&&!inDecl){
-      var blk=el.closest('.block');
-      var first=blk.querySelector('p')===el;
-      ind=(first&&blk.classList.contains('after-heading'))?0:(first?0:255);
-    }
-    out.push(wP(domRuns(el,{sz:sz}),{align:'both',indent:ind,after:70}));
-    return out;
-  }
+    out.push(wP(domRuns(el,{sz:22}),{align:'both',indent:cl.contains('first')?0:283,after:0,line:273}));
+    return out; }
   for(var i=0;i<el.children.length;i++) out.push.apply(out,await domToDocx(el.children[i],colTw,colEmu));
   return out;
 }
 async function exportDocx(){
-  if(pvMode!=='print'){ setMode('print'); await new Promise(function(r){setTimeout(r,120)}); }
   notify('Building the Word file...','info');
   WIMG=[];
-  var prev=$('#articlePreview');
-  if(!prev){ notify('Open the proof first.','error'); return; }
+  var flow=flowDom();
+  var front=flow.querySelector('.pfront'), body=flow.querySelector('#flowBody');
 
-  /* page: A4, matching the template's Word export */
-  var PAGE='<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="2050" w:right="800" w:bottom="1300" w:left="800" w:header="400" w:footer="450" w:gutter="0"/>';
-  var FULL_TW=10306, COL_TW=4913, FULL_EMU=6543675, COL_EMU=3117850;
+  /* A4, text 40→556pt: margins 800 twips left/right, header band on top */
+  var PAGE='<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1985" w:right="794" w:bottom="1400" w:left="794" w:header="340" w:footer="420" w:gutter="0"/>';
+  var FULL_TW=10318, COL_TW=4806, FULL_EMU=6553200, COL_EMU=3052763;
 
-  var intro=[], body=[], inBody=false;
-  for(var i=0;i<prev.children.length;i++){
-    var el=prev.children[i];
-    if(el.matches('header,footer,.running-footer')) continue;
-    if(el.tagName==='SECTION'&&!el.classList.contains('abstract')) inBody=true;
-    var blocks=await domToDocx(el, inBody?COL_TW:FULL_TW, inBody?COL_EMU:FULL_EMU);
-    (inBody?body:intro).push.apply(inBody?body:intro,blocks);
-  }
+  var intro=[], bodyX=[];
+  for(var i=0;i<front.children.length;i++) intro.push.apply(intro, await domToDocx(front.children[i],FULL_TW,FULL_EMU));
+  for(var j=0;j<body.children.length;j++) bodyX.push.apply(bodyX, await domToDocx(body.children[j],COL_TW,COL_EMU));
 
-  /* running header: logo + issue line, as a borderless two-cell table */
+  /* running header: masthead + issue line, then the double rule */
   var logo=await toPng(LOGO);
-  var hdrLogo = logo ? wImage(logo.bytes,logo.w,logo.h,2900000,'GBMN masthead') : '';
+  var hdrLogo = logo ? wImage(logo.bytes,logo.w,logo.h,4064000,'GBMN masthead') : '';
   var hdr='<w:tbl><w:tblPr><w:tblW w:w="'+FULL_TW+'" w:type="dxa"/><w:tblLayout w:type="fixed"/>'+
     '<w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(function(s){return '<w:'+s+' w:val="none" w:sz="0" w:space="0" w:color="auto"/>'}).join('')+'</w:tblBorders></w:tblPr>'+
-    '<w:tblGrid><w:gridCol w:w="5200"/><w:gridCol w:w="5106"/></w:tblGrid><w:tr>'+
-    '<w:tc><w:tcPr><w:tcW w:w="5200" w:type="dxa"/></w:tcPr>'+(hdrLogo||wP([{t:'GBMN',sz:28,b:true,color:TEAL}],{after:0}))+'</w:tc>'+
-    '<w:tc><w:tcPr><w:tcW w:w="5106" w:type="dxa"/><w:vAlign w:val="bottom"/></w:tcPr>'+
-      wP([{t:issueText(),sz:18}],{align:'right',after:60})+'</w:tc></w:tr></w:tbl>'+
-    wP([{t:'',sz:4}],{bdr:true,after:60});
-
-  var ftLines=$('#articlePreview .pfooter').innerHTML.split(/<br\s*\/?>/i).map(function(l){
-    var d=document.createElement('div'); d.innerHTML=l; return d.textContent.trim(); }).filter(Boolean);
-  var ftr=ftLines.map(function(t){ return wP([{t:t,sz:16}],{align:'center',after:0}); }).join('');
+    '<w:tblGrid><w:gridCol w:w="6400"/><w:gridCol w:w="3918"/></w:tblGrid><w:tr>'+
+    '<w:tc><w:tcPr><w:tcW w:w="6400" w:type="dxa"/></w:tcPr>'+(hdrLogo||wP([{t:'GBMN',sz:30,b:true,color:TEAL}],{after:0}))+'</w:tc>'+
+    '<w:tc><w:tcPr><w:tcW w:w="3918" w:type="dxa"/><w:vAlign w:val="bottom"/></w:tcPr>'+
+      wP([{t:volLine(),sz:18}],{align:'right',after:40})+'</w:tc></w:tr></w:tbl>'+
+    '<w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="18" w:space="0" w:color="006666"/>'+
+      '<w:bottom w:val="single" w:sz="6" w:space="1" w:color="006666"/></w:pBdr>'+
+      '<w:spacing w:before="40" w:after="0" w:line="20" w:lineRule="exact"/></w:pPr></w:p>';
+  var ftr=footerLines().map(function(t){ return wP([{t:t,sz:16}],{align:'center',after:0,line:230}); }).join('');
 
   var S1='<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr"/><w:footerReference w:type="default" r:id="rIdFtr"/>'+
-    PAGE+'<w:cols w:space="708"/><w:docGrid w:linePitch="360"/></w:sectPr>';
+    PAGE+'<w:cols w:space="708"/></w:sectPr>';
   var S2='<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr"/><w:footerReference w:type="default" r:id="rIdFtr"/>'+
-    '<w:type w:val="continuous"/>'+PAGE+'<w:cols w:num="2" w:space="480" w:equalWidth="1"/><w:docGrid w:linePitch="360"/></w:sectPr>';
+    '<w:type w:val="continuous"/>'+PAGE+'<w:cols w:num="2" w:space="706" w:equalWidth="1"/></w:sectPr>';
 
   var NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '+
    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '+
    'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
   var doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document '+NS+'><w:body>'+
-    intro.join('')+
-    '<w:p><w:pPr>'+S1+'</w:pPr></w:p>'+
-    body.join('')+
-    S2+'</w:body></w:document>';
+    intro.join('')+'<w:p><w:pPr>'+S1+'</w:pPr></w:p>'+bodyX.join('')+S2+'</w:body></w:document>';
   var header='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr '+NS+'>'+hdr+'</w:hdr>';
   var footer='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr '+NS+'>'+ftr+'</w:ftr>';
-
   var styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr>'+
    '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:color w:val="'+INK+'"/>'+
-   '</w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="90" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'+
+   '</w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="273" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'+
    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>';
   var ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
@@ -297,17 +285,14 @@ async function exportDocx(){
    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'+
    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>'+
    '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>';
+  var imgRels=WIMG.map(function(m){return '<Relationship Id="'+m.rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="'+m.name.replace('word/','')+'"/>'}).join('');
   var docRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
    '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
    '<Relationship Id="rIdHdr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>'+
-   '<Relationship Id="rIdFtr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'+
-   WIMG.map(function(m){return '<Relationship Id="'+m.rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="'+m.name.replace('word/','')+'"/>'}).join('')+
-   '</Relationships>';
+   '<Relationship Id="rIdFtr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'+imgRels+'</Relationships>';
   var hdrRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
-   '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
-   WIMG.map(function(m){return '<Relationship Id="'+m.rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="'+m.name.replace('word/','')+'"/>'}).join('')+
-   '</Relationships>';
+   '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+imgRels+'</Relationships>';
   var now=new Date().toISOString().replace(/\.\d+Z$/,'Z');
   var core='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" '+

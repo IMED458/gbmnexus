@@ -1,70 +1,84 @@
 
-/* ══ the document — exactly the GBMN submission-template layout ══ */
-.paper{background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-.article-page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;padding:12mm 13mm 18mm;
-  font-family:var(--doc);color:#1f2a2a;line-height:1.28;font-size:14px}
-@media (max-width:1040px){.article-page{width:100%;min-height:0;padding:16px}}
+/* ══ the document — measured against the printed GBMN article ══
+   A4 595.3×841.9pt · text 40→556pt · columns 240.3pt, gap 35.3pt
+   body Calibri 11/14.3pt · masthead and footer on every page       */
+.paper{background:transparent}
+.page{width:210mm;height:297mm;background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.28);
+  font-family:var(--doc);color:#1F2A2A;padding:6mm 13.86mm 8.4mm 14.11mm;
+  display:flex;flex-direction:column;overflow:hidden;position:relative}
+.page + .page{margin-top:18px}
+.page .pbody{flex:1 1 auto;min-height:0;overflow:hidden}
+.page .pfront{flex:0 0 auto}
 
-.journal-header{display:grid;grid-template-columns:minmax(0,1fr) max-content;align-items:end;gap:12px;margin-bottom:20px}
-.journal-logo{width:100%;height:auto;display:block}
-.issue-line{text-align:right;font-size:12px;line-height:1;align-self:end;white-space:nowrap;padding-bottom:3px}
-.article-title{text-align:center;color:#00786d;font-size:26px;font-weight:700;margin:10px 0 6px;line-height:1.16}
-.authors{text-align:center;color:#686868;font-size:17px;margin-bottom:10px}
-.authors sup,.authors sup a{color:#00786d;font-weight:700}
-.authors a{color:#686868;text-decoration:none}
-.author-unit{white-space:nowrap}
-.top-rule{border-top:2px solid #777;border-bottom:1px solid #777;height:9px;margin:24px 0 8px}
-.section-title{color:#b9353a;font-size:15px;font-weight:700;text-transform:uppercase;margin:12px 0 5px}
-.abstract{font-size:12px}
-.abs-label{color:#00786d;font-weight:700;font-size:11px;text-transform:uppercase}
-.abstract p{margin:0 0 5px;text-align:justify;text-indent:0}
-.doi-line{font-size:13px;margin:8px 0 28px}
-.doi-line a{color:#00786d;font-weight:700;text-decoration:none}
+/* masthead — repeats on every page */
+.pmast{display:flex;align-items:flex-end;justify-content:space-between;gap:10mm;flex:0 0 auto}
+.pmast img{width:112.9mm;height:auto;aspect-ratio:1834/414;display:block;margin-left:-3.53mm}
+.pmast .vol{font-family:var(--cond);font-size:9pt;color:#000;white-space:nowrap;letter-spacing:.01em;padding-bottom:.4mm}
+.prule{border:0;border-top:2.25pt solid #006666;margin:1.6mm 0 0}
+.prule2{border:0;border-top:.75pt solid #006666;margin:.26mm 0 0}
 
-.two-col{columns:2 280px;column-gap:32px;text-align:justify}
-.layout-one{column-span:all;width:100%;display:block;break-inside:avoid}
-.layout-two{break-inside:auto}
-.block{margin-bottom:7px}
-.block h3{color:#b9353a;font-size:15px;text-transform:uppercase;margin:0 0 2px}
-.block h4{color:#00786d;font-style:italic;font-size:14px;margin:0 0 2px}
-.block p{margin:0 0 5px;text-align:justify;text-indent:18px}
-.block.after-heading p:first-child{text-indent:0}
-.block ul,.block ol{margin:0 0 5px;padding-left:20px;text-align:left}
-.block li{margin:0 0 2px}
-.block p.dropcap{text-indent:0}
-.block p.dropcap:first-letter{float:left;font-size:3.5em;line-height:.82;padding:2px 5px 0 0;color:#00786d;font-weight:700}
-.block table,.ref-table{width:100%;border-collapse:collapse;margin:3px 0 7px;font-size:12px}
-.block th,.block td{border:1px solid #aebaba;padding:5px;vertical-align:middle;text-align:center}
-.block th{background:#dfeedd;text-align:center}
-.table-block,.figure{break-inside:avoid;page-break-inside:avoid;display:inline-block;width:100%;vertical-align:top}
-/* full-width items must beat the inline-block above, or column-span never applies */
-.two-col > .layout-one,.two-col > .figure.layout-one,.two-col > .table-block.layout-one{
-  display:block;column-span:all;-webkit-column-span:all;width:100%;break-inside:avoid;margin:6px 0 10px}
-.figure{margin:4px 0 8px}
-.figure-caption,.table-caption{font-size:12px;margin:0 0 3px;text-align:justify;break-after:avoid;page-break-after:avoid}
-.figure-caption b,.table-caption b{color:#00786d}
-.figure img{display:block;max-width:100%;height:auto;border:1px solid #ddd;margin:0 auto}
-.figure pre{white-space:pre-wrap;font-family:var(--mono);font-size:11px;background:#f6f8f8;border:1px solid #ddd;padding:6px;margin:0}
-.ref-target{color:#00786d;font-weight:700;text-decoration:none}
-.citation{font-size:.72em;vertical-align:super;color:#00786d;font-weight:700;text-decoration:none}
-.refs{font-size:12px}
-.refs ol{padding-left:22px;margin:0}
-.refs li{margin:0 0 7px;text-align:justify}
-.aff-list ol{padding-left:22px;text-align:justify;margin:0;font-size:12px}
-.aff-list li{margin:0 0 4px}
-.decl p{margin:0 0 5px;text-align:justify;text-indent:0;font-size:12px}
-.decl b{color:#00786d}
-.pfooter{text-align:center;font-size:12px;color:#222;margin-top:40px;padding-top:10px}
-.running-footer{display:none}
+/* front matter */
+.ptitle{font-size:19.6pt;line-height:1.19;font-weight:700;color:#006F68;text-align:center;margin:9.5mm 0 0;text-wrap:balance}
+.pauth{font-size:12pt;color:#686868;text-align:center;line-height:1.35;margin:6.4mm 0 0}
+.pauth sup{font-size:8pt;font-weight:700;color:#006F68;vertical-align:super}
+.pauth a{color:#006F68;text-decoration:none}
+.pabs-h{font-size:11pt;font-weight:700;color:#B9353A;letter-spacing:.01em;margin:5.3mm 0 .9mm}
+.pabs{font-size:10pt;line-height:1.22;text-align:justify;hyphens:auto}
+.pabs p{margin:0}
+.pabs .lb,.pabs b,.pabs strong{font-weight:700;color:#006F68}
+.pdoi{font-size:11pt;font-weight:700;color:#008080;margin:4.2mm 0 0}
+.pdoi a,.pdoi span.u{color:#008080;text-decoration:underline}
+
+/* body — two columns, exactly the printed measure */
+.pbody{font-size:11pt;line-height:1.3;text-align:justify;hyphens:auto;
+  column-count:2;column-gap:12.45mm;column-fill:auto;margin-top:4.3mm}
+.pbody p{margin:0;text-indent:5mm}
+.pbody p.first,.pbody .after-heading{text-indent:0}
+.pbody h2{font-size:11pt;font-weight:700;color:#B9353A;letter-spacing:.01em;margin:3.2mm 0 .4mm;break-after:avoid;text-transform:uppercase}
+.pbody h3{font-size:11pt;font-weight:700;color:#006F68;font-style:italic;margin:2.4mm 0 .4mm;break-after:avoid}
+.pbody sup{font-size:7pt;color:#008080;font-weight:700}
+.pbody ul,.pbody ol{margin:0 0 1mm;padding-left:6mm;text-align:left}
+.pbody ol.refs{font-size:9.5pt;line-height:1.26;padding-left:5mm;margin:0}
+.pbody ol.refs li{margin:0 0 .6mm;text-align:justify}
+.pbody .decl p{margin:0 0 1.1mm;text-indent:0}
+.pbody .decl b{color:#006F68}
+.pbody .afflist{font-size:9.5pt;line-height:1.3}
+.pbody .afflist p{margin:0 0 .6mm;text-indent:0}
+.pbody .afflist sup{font-size:7pt;color:#006F68}
+
+/* figures and tables */
+.pbody figure.fg,.pbody .tbl{margin:2.2mm 0 2.8mm;break-inside:avoid;page-break-inside:avoid}
+.pbody figure.fg{padding:0}
+.pbody figure.fg img{max-width:100%;width:auto;height:auto;display:block;margin:0 auto;max-height:95mm}
+.pbody figure.fg pre{white-space:pre-wrap;font-family:var(--mono);font-size:8pt;background:#f6f8f8;padding:1.5mm;margin:0}
+.pbody .cap{font-size:8.5pt;line-height:1.3;margin:0 0 1mm;text-align:justify;text-indent:0;break-after:avoid}
+.pbody .cap b{color:#006F68}
+.pbody figure.fg .cap{margin:1.1mm 0 0}
+.pbody .tbl table{width:100%;border-collapse:collapse;font-size:8.5pt;table-layout:fixed}
+.pbody .tbl th,.pbody .tbl td{border-top:.6pt solid #9aa5a5;border-bottom:.6pt solid #9aa5a5;padding:.9mm 1.3mm;
+  text-align:center;vertical-align:middle;overflow-wrap:anywhere}
+.pbody .tbl thead th{background:#DFEEDD;font-weight:700;color:#14201e}
+/* full article width beats the column flow */
+.pbody > .one-col{column-span:all;-webkit-column-span:all;width:100%;display:block;break-inside:avoid;margin:2.5mm 0 3mm}
+
+/* footer — on every page */
+.pfoot{margin-top:auto;padding-top:2mm;font-family:var(--cond);font-size:8pt;color:#000;text-align:center;line-height:1.2;flex:0 0 auto}
+
+/* title page extras */
+.tp-meta{margin-top:7mm;border-top:.9px solid #cfd6d6}
+.tp-meta div{display:grid;grid-template-columns:46mm 1fr;font-size:9.5pt;border-bottom:.9px solid #e4e9e9}
+.tp-meta span.k{padding:1.5mm 2mm;font-weight:700;color:#006F68}
+.tp-meta span.v{padding:1.5mm 2mm}
+.tp-note{margin-top:5mm;font-size:8.5pt;color:#6a7278;line-height:1.45}
+
+.page [contenteditable="true"]:focus{outline:0;box-shadow:inset 0 0 0 1px #00786d;background:#fbfffb}
 .no-content{color:#8a9999;font-style:italic}
-.article-page [contenteditable="true"]:focus{outline:0;box-shadow:inset 0 0 0 1px #00786d;background:#fbfffb}
 
-/* title page */
-.tp-meta{margin-top:10mm;border-top:1px solid #cfd6d6}
-.tp-meta div{display:grid;grid-template-columns:46mm 1fr;font-size:12px;border-bottom:1px solid #e4e9e9}
-.tp-meta span.k{padding:5px 6px;font-weight:700;color:#00786d}
-.tp-meta span.v{padding:5px 6px}
-.tp-note{margin-top:8mm;font-size:11px;color:#6a7278;line-height:1.45}
+@media screen and (max-width:1040px){
+  .page{width:100%;height:auto;padding:14px;box-shadow:0 1px 8px rgba(0,0,0,.22);overflow:visible}
+  .page .pbody{overflow:visible;column-count:1}
+  .pmast img{width:64%;margin-left:0}
+}
 
 /* ── print: the proof prints exactly as it reads on screen ── */
 @page{size:A4;margin:0}
@@ -76,22 +90,9 @@
   .pane{overflow:visible}
   .prev{overflow:visible;background:#fff}
   .prevwrap{overflow:visible;height:auto !important}
-  .scroller{width:auto;transform:none;padding:0;gap:0;display:block;align-items:stretch}
-  .paper{box-shadow:none}
-  .article-page{width:210mm;min-height:297mm;margin:0;padding:12mm 13mm 18mm}
-  .two-col{columns:2 75mm !important;column-gap:10mm;text-align:justify}
-  .two-col > .layout-one,.two-col > .figure.layout-one,.two-col > .table-block.layout-one{
-    column-span:all !important;width:auto !important;display:block !important}
-  .table-block,.figure{break-inside:avoid;page-break-inside:avoid}
-  .figure{display:inline-block;width:100%;max-width:100%;margin-top:1.5mm;margin-bottom:3mm}
-  .figure img{display:block;max-width:100%;max-height:105mm;object-fit:contain;margin:0 auto}
-  .figure-caption,.table-caption{break-after:avoid;page-break-after:avoid}
-  .block table{table-layout:fixed;width:100%;font-size:10px;overflow-wrap:anywhere}
-  .block th,.block td{padding:3px}
-  .doi-line{margin:2mm 0 3mm}
-  .top-rule{margin:8mm 0 4mm}
-  .pfooter{display:none}
-  .running-footer{display:block;position:fixed;bottom:6mm;left:0;right:0;text-align:center;font-size:10px;color:#222}
+  .scroller{width:auto;transform:none !important;padding:0;gap:0;display:block;align-items:stretch}
+  .page{width:210mm;height:297mm;box-shadow:none;break-after:page;page-break-after:always;margin:0;overflow:hidden}
+  .page:last-child{break-after:auto;page-break-after:auto}
   a{color:inherit}
 }
 </style>

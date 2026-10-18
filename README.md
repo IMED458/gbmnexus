@@ -38,19 +38,29 @@ Served from GitHub Pages: open `index.html`.
 Each step carries its own completion state (complete / warning / empty) and
 feeds an overall readiness meter.
 
-**Live document preview** — the GBMN submission-template layout, rendered
-next to the form and printed from the very same DOM, so the PDF is what the
-proof shows:
+**Live document preview** — real A4 pages, laid out to the measurements of a
+published GBMN article and printed from the same DOM, so the PDF is exactly
+what the proof shows:
 
-- A4 page, 12/13/18 mm margins, Calibri body
-- GBMN masthead with the issue line, double rule under it
-- centred teal title, author line with affiliation, ORCID and corresponding
-  superscripts, red section headings, abstract, DOI
-- two-column body (`columns: 2`), with figures, tables and diagrams placed
-  inline and set to either **two-column** or **full article width**
-- author affiliations, corresponding author, acknowledgments, declarations
-  and the AMA reference list
-- running journal footer with the ISSNs and copyright line on every page
+| | |
+|---|---|
+| Page | A4, text block 40→556 pt (14.1 / 13.9 mm side margins) |
+| Columns | two, 240.3 pt wide, 35.3 pt (12.45 mm) gutter |
+| Body | Calibri 11 pt on a 14.3 pt baseline, justified, 5 mm first-line indent |
+| Title | Calibri Bold 19.6 pt, #006F68, centred |
+| Authors | Calibri 12 pt #686868, superscripts Bold 8 pt #006F68 |
+| Abstract | heading Bold 11 pt #B9353A, labels Bold 10 pt #006F68, body 10 pt |
+| DOI | Bold 11 pt #008080, underlined |
+| Section headings | Bold 11 pt #B9353A, uppercase |
+| Rules | 2.25 pt + 0.75 pt, #006666, full measure |
+| Footer | Bahnschrift SemiLight 8 pt, four lines |
+
+The masthead, issue line and footer repeat on every page; the body is
+paginated into page boxes so nothing ever runs over the footer. Figures,
+tables and diagrams sit inline and can be set to **two-column** or **full
+article width**; the article ends with the author affiliations, the
+corresponding author, acknowledgements, declarations and the AMA reference
+list, all in the same two-column flow.
 
 Three preview modes: **PDF** (the A4 proof), **Title page** (the separate,
 anonymisable title page) and **Web** (the exported HTML article, shown in a
@@ -69,7 +79,7 @@ carries the editing capability, not the authentication.)
 | Format | What it is |
 |---|---|
 | **PDF** | Print-to-PDF straight from the browser, in the paginated A4 journal layout |
-| **Word (.docx)** | Real OOXML, written from the rendered proof so it carries the same layout: running header with the masthead and issue line, single-column front matter, then a continuous two-column section for the body, running footer, A4 page. Built by a built-in ZIP writer; no library, no server |
+| **Word (.docx)** | Real OOXML carrying the same layout and the same measurements: running header with the masthead and issue line, single-column front matter, then a continuous two-column section (706 twips gutter) for the body, running footer, A4 with 794-twip side margins. Built by a built-in ZIP writer; no library, no server |
 | **HTML** | Standalone editorial article page — sticky masthead, metadata strip, contents rail, full-width figures, dark mode, Highwire citation meta tags |
 | **JATS XML package (.zip)** | NISO JATS (Z39.96) Journal Publishing DTD v1.3, plus every figure as a separate file and a deposit README |
 | **PubMed citation XML** | PubMed 3.0 DTD (`ArticleSet`) |
