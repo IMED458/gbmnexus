@@ -1,0 +1,59 @@
+<div class="app">
+
+  <aside class="pane side" id="sidePane">
+    <div class="brand">
+      <img id="brandLogo" alt="GBMN">
+      <div><b>Georgian Biomedical and Medical Nexus</b><span>Manuscript submission</span></div>
+    </div>
+    <div class="sidehead">
+      <h3>Submission Workflow</h3>
+      <div class="t" id="sideTitle">Untitled Manuscript Draft</div>
+      <span class="badge" id="sideStatus">Manuscript Status: Draft</span>
+    </div>
+    <nav id="sideNav"></nav>
+    <div class="prog">
+      <div class="pl"><span>Overall Submission Readiness</span><span id="progPct">0%</span></div>
+      <div class="tr"><i id="progBar" style="width:0%"></i></div>
+      <div class="fn">All sections must show green or amber status before final submittal.</div>
+    </div>
+  </aside>
+
+  <main class="pane mid" id="midPane">
+    <div class="panel">
+      <div class="phead">
+        <div>
+          <span class="k" id="stepKicker">Step Profile</span>
+          <h2 id="stepTitle"></h2>
+        </div>
+        <div id="stepAction"></div>
+      </div>
+      <div class="stepbody" id="stepBody"></div>
+      <div class="navbar">
+        <button class="btn" id="btnPrev" type="button">&larr; Save and Back</button>
+        <button class="btn tl" id="btnSave" type="button">Save</button>
+        <button class="btn t" id="btnNext" type="button">Save and Continue &rarr;</button>
+      </div>
+    </div>
+  </main>
+
+  <section class="pane prev" id="prevPane">
+    <div class="prevbar">
+      <div class="tgl" id="pvTgl">
+        <button type="button" data-pv="print" aria-selected="true">PDF</button>
+        <button type="button" data-pv="title" aria-selected="false">Title page</button>
+        <button type="button" data-pv="web" aria-selected="false">Web</button>
+      </div>
+      <input id="pvVol" placeholder="Vol" title="Volume" style="width:48px">
+      <input id="pvIss" placeholder="Iss" title="Issue" style="width:48px">
+      <input id="pvPeriod" placeholder="JUL–SEP 2026" title="Issue period" style="width:120px">
+      <input id="pvDoi" placeholder="DOI" title="DOI" style="width:150px">
+      <button class="pbtn" id="btnPdf" type="button">Download PDF</button>
+      <button class="pbtn" id="btnHtml" type="button">HTML</button>
+      <span class="note" id="pvNote"></span>
+    </div>
+    <div class="prevwrap" id="prevWrap"><div class="scroller" id="scroller"></div></div>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+<div id="modalRoot"></div>

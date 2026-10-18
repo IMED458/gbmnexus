@@ -1,0 +1,1723 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GBMN Manuscript Submission</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap">
+<style>
+:root{
+  --teal:#0f766e; --teal-d:#115e59; --teal-900:#134e4a; --teal-50:#f0fdfa; --teal-100:#ccfbf1; --teal-200:#99f6e4; --teal-300:#5eead4;
+  --s50:#f8fafc; --s100:#f1f5f9; --s200:#e2e8f0; --s300:#cbd5e1; --s400:#94a3b8; --s500:#64748b; --s600:#475569; --s700:#334155; --s800:#1e293b;
+  --amber50:#fffbeb; --amber200:#fde68a; --amber700:#b45309; --amber900:#78350f;
+  --rose50:#fff1f2; --rose200:#fecdd3; --rose700:#be123c;
+  --em50:#ecfdf5; --em200:#a7f3d0; --em700:#047857; --em900:#064e3b;
+  --ui:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',sans-serif;
+  --doc:'Carlito',Calibri,'Segoe UI',system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --cond:'Bahnschrift','DIN Alternate','Archivo Narrow','Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{font-family:var(--ui);color:var(--s800);background:#eef1f4;font-size:13px;line-height:1.5;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4,h5{margin:0;font-weight:700}
+p{margin:0}
+
+/* ── three independent scroll panes ── */
+.app{height:100%;display:grid;grid-template-columns:286px minmax(0,1fr) minmax(0,1fr);}
+.pane{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.side{background:#fff;border-right:1px solid var(--s200);padding:16px 14px 40px}
+.mid{background:#eef1f4;padding:16px 18px 60px}
+.prev{background:#9ea7ad;padding:0}
+@media (max-width:1280px){.app{grid-template-columns:250px minmax(0,1fr) minmax(0,1fr)}}
+@media (max-width:1040px){
+  body{overflow:auto}
+  .app{display:block;height:auto}
+  .pane{overflow:visible;height:auto}
+  .side{border-right:0;border-bottom:1px solid var(--s200)}
+}
+
+/* ── brand ── */
+.brand{display:flex;gap:10px;align-items:center;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--s100)}
+.brand img{height:30px;width:auto}
+.brand b{display:block;font-size:12px;line-height:1.25}
+.brand span{font-size:10px;color:var(--s400)}
+
+/* ── sidebar ── */
+.sidehead{border-bottom:1px solid var(--s100);padding-bottom:12px;margin-bottom:12px}
+.sidehead h3{font-size:10px;text-transform:uppercase;color:var(--s400);letter-spacing:.08em}
+.sidehead .t{font-size:12.5px;font-weight:600;color:var(--teal-d);margin-top:4px;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sidehead .badge{display:inline-flex;margin-top:5px;padding:1px 6px;border-radius:2px;font-size:9.5px;font-weight:700;
+  background:var(--amber50);color:var(--amber900);border:1px solid var(--amber200)}
+.stp{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 11px;border:0;border-radius:8px;
+  background:transparent;text-align:left;font-size:11.5px;font-weight:500;color:var(--s600);cursor:pointer;transition:background .12s}
+.stp:hover{background:var(--s50);color:var(--s800)}
+.stp.on{background:var(--teal);color:#fff;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.stp .lt{display:flex;align-items:center;gap:9px;min-width:0}
+.stp .ic{width:15px;height:15px;flex:0 0 15px;opacity:.85}
+.stp .lb{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stp .st{width:15px;height:15px;flex:0 0 15px}
+.sthelp{padding:2px 11px 7px;font-size:10px;line-height:1.35;color:var(--amber700)}
+.prog{margin-top:18px;padding-top:14px;border-top:1px solid var(--s100)}
+.prog .pl{display:flex;justify-content:space-between;font-size:10.5px;font-weight:600;color:var(--s500);margin-bottom:5px}
+.prog .tr{height:8px;border-radius:99px;background:var(--s100);overflow:hidden}
+.prog .tr i{display:block;height:100%;background:var(--teal);transition:width .4s}
+.prog .fn{font-size:10px;color:var(--s400);font-style:italic;margin-top:7px}
+
+/* ── form panel ── */
+.panel{background:#fff;border:1px solid var(--s200);border-radius:16px;padding:20px 22px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.phead{border-bottom:1px solid var(--s100);padding-bottom:14px;margin-bottom:18px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center}
+.phead .k{font-size:10px;text-transform:uppercase;font-weight:700;color:var(--teal);letter-spacing:.07em}
+.phead h2{font-size:18px;color:var(--s800);margin-top:2px}
+.stepbody>*+*{margin-top:16px}
+.lbl{display:block;font-weight:700;color:var(--s700);font-size:11.5px;margin-bottom:4px}
+.lbl .req{color:#dc2626}
+.inp,.sel,.ta{width:100%;background:var(--s50);border:1px solid var(--s300);border-radius:8px;padding:8px 10px;font-size:12.5px}
+.inp.sm,.sel.sm{padding:6px 8px;border-radius:6px}
+.ta{resize:vertical;min-height:72px;line-height:1.5}
+.inp:focus,.sel:focus,.ta:focus{outline:0;border-color:var(--teal);box-shadow:0 0 0 1px var(--teal)}
+.inp.mono{font-family:var(--mono);color:var(--teal-d);background:var(--s100)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.span2{grid-column:span 2}
+@media (max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}.span2{grid-column:auto}}
+.box{background:var(--s50);border:1px solid var(--s200);border-radius:12px;padding:14px}
+.boxw{background:#fff;border:1px solid var(--s200);border-radius:12px;padding:16px}
+.box>*+*,.boxw>*+*{margin-top:10px}
+.note{font-size:11px;color:var(--s500)}
+.ital{font-style:italic;color:var(--s400);font-size:11px}
+.btn{border:1px solid var(--s300);background:#fff;border-radius:8px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;color:var(--s700)}
+.btn:hover{background:var(--s50)}
+.btn.t{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.t:hover{background:var(--teal-d)}
+.btn.tl{background:var(--teal-50);border-color:var(--teal-200);color:var(--teal-d)}
+.btn.sm{padding:4px 9px;font-size:10.5px;border-radius:6px}
+.btn.rd{color:var(--rose700);border-color:var(--rose200);background:var(--rose50)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.chk{display:flex;gap:9px;align-items:flex-start;font-size:11.5px;line-height:1.45;cursor:pointer}
+.chk input{margin-top:2px;accent-color:var(--teal);width:15px;height:15px;flex:0 0 15px}
+.radio{display:inline-flex;gap:6px;align-items:center;font-weight:700;cursor:pointer;font-size:12px}
+.radio input{accent-color:var(--teal)}
+.tile{display:block;width:100%;text-align:left;border:2px solid var(--s200);background:var(--s50);border-radius:12px;padding:14px;cursor:pointer}
+.tile:hover{border-color:var(--s300);background:#fff}
+.tile.on{border-color:var(--teal);background:var(--teal-50);box-shadow:0 2px 6px rgba(0,0,0,.07)}
+.tile b{font-size:12.5px;color:var(--s800)}
+.tile p{font-size:10.5px;color:var(--s500);margin-top:5px;line-height:1.35}
+.tile .m{border-top:1px solid var(--s200);margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;font-size:9.5px;font-family:var(--mono);color:var(--teal-d)}
+.infobox{border-left:4px solid var(--teal);background:var(--teal-50);border-radius:0 8px 8px 0;padding:12px 14px}
+.infobox h4{font-size:12.5px;color:var(--teal-900)}
+.infobox p{font-size:11px;color:var(--teal-d);margin-top:4px;line-height:1.5}
+.drop{border:2px dashed var(--s300);background:#fff;border-radius:8px;padding:18px;text-align:center}
+.drop b{display:block;color:var(--s700);font-size:12px;margin-bottom:5px}
+.pill{display:inline-block;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;background:var(--teal-50);color:var(--teal)}
+.rowcard{background:#fff;border:1px solid var(--s200);border-radius:8px;padding:10px 12px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.rowcard+.rowcard{margin-top:8px}
+.rowcard .nm{font-weight:700;color:var(--s800);font-size:12px}
+.rowcard .af{color:var(--s500);font-size:10px;margin-top:2px}
+.rowcard .or{color:#4d7c0f;font-family:var(--mono);font-size:9.5px;margin-top:1px}
+.iconbtn{border:1px solid var(--s200);background:var(--s50);border-radius:6px;padding:4px 6px;cursor:pointer;line-height:0}
+.iconbtn:disabled{opacity:.4;cursor:not-allowed}
+.iconbtn svg{width:13px;height:13px}
+.tagbtn{padding:3px 8px;border-radius:6px;background:#fff;border:1px solid var(--s200);font-size:10px;cursor:pointer}
+.reflist{list-style:decimal;padding-left:20px;max-height:200px;overflow-y:auto;margin:0}
+.reflist li{font-size:11px;color:var(--s700);margin-bottom:7px;line-height:1.45}
+.reflist .lk{color:var(--teal);font-weight:700;margin-left:7px;cursor:pointer;background:0;border:0;padding:0;font-size:10.5px}
+.reflist .lk:disabled{color:var(--s300);cursor:not-allowed}
+.reflist .lk.rd{color:var(--rose700)}
+.navbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:16px;margin-top:18px;border-top:1px solid var(--s100)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:90;padding:9px 16px;border-radius:9px;font-size:12px;font-weight:600;
+  box-shadow:0 6px 24px rgba(0,0,0,.2);color:#fff;background:var(--teal);opacity:0;pointer-events:none;transition:opacity .2s,bottom .2s}
+.toast.on{opacity:1;bottom:30px}
+.toast.err{background:#be123c}.toast.info{background:var(--s700)}
+.secbtn{text-align:left;border:1px solid var(--s200);background:rgba(255,255,255,.7);border-radius:8px;padding:8px 11px;cursor:pointer;width:100%}
+.secbtn.on{border-color:var(--teal);background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.secbtn .n{display:block;font-size:9.5px;text-transform:uppercase;font-weight:700;color:var(--s400)}
+.secbtn .t{display:block;font-weight:700;font-size:11.5px;color:var(--s700);margin-top:1px}
+.secbtn .s{display:block;font-size:9.5px;margin-top:3px}
+.secbtn .s.ok{color:var(--em700)}.secbtn .s.no{color:var(--amber700)}
+.chklist{display:grid;gap:7px}
+.chkopt{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--s200);border-radius:8px;background:#fff;cursor:pointer;font-size:11px}
+.chkopt.on{background:var(--teal-50);border-color:var(--teal-300);color:var(--teal-900)}
+.chkopt input{accent-color:var(--teal)}
+
+/* ── rich text editor ── */
+.rte{display:flex;flex-direction:column;gap:6px}
+.rte>.cap{font-weight:700;color:var(--s800);font-size:11.5px}
+.rte>.hint{font-size:10px;color:var(--s500);font-style:italic}
+.rtbar{display:flex;flex-wrap:wrap;gap:4px;background:var(--s100);border:1px solid var(--s300);border-bottom:0;border-radius:8px 8px 0 0;padding:6px}
+.rtbar select{height:28px;border:1px solid var(--s300);background:#fff;padding:0 6px;font-size:11px;font-weight:600}
+.rtbar button{height:28px;min-width:28px;border:1px solid var(--s300);background:#fff;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0 5px}
+.rtbar button:hover{background:var(--s50);border-color:var(--teal)}
+.rtbar svg{width:14px;height:14px}
+.rtbar .div{width:1px;background:var(--s300);margin:0 2px}
+.rtsel{display:flex;flex-wrap:wrap;gap:7px;align-items:center;border:1px solid var(--teal-200);border-bottom:0;background:var(--teal-50);padding:7px 11px;font-size:10.5px}
+.rtsel b{color:var(--teal-900)}
+.rtarea{width:100%;background:#fff;border:1px solid var(--s300);border-radius:0 0 8px 8px;padding:12px;font-family:var(--doc);font-size:14px;line-height:1.65;color:var(--s800);min-height:320px;max-height:58vh;overflow-y:auto}
+.rtarea:focus{outline:0;box-shadow:0 0 0 1px var(--teal)}
+.rtarea:empty:before{content:attr(data-ph);color:#9ca3af}
+.rtarea ul{list-style:disc;padding-left:1.5em}
+.rtarea ol{list-style:decimal;padding-left:1.5em}
+.rtarea h3{font-size:15px;font-weight:700;margin:10px 0 4px}
+.rtwc{font-size:10px;color:var(--s400);font-family:var(--mono);font-style:italic}
+.gbmn-inline-media{break-inside:avoid;margin:12px 0;border:1px solid var(--s300);padding:8px;background:#fff;cursor:move;position:relative}
+.gbmn-inline-media.sel{outline:2px solid var(--teal);outline-offset:2px}
+.gbmn-inline-media img{display:block;max-width:100%;height:auto;margin:0 auto}
+.gbmn-inline-media figcaption{margin-top:6px;font-family:Arial,sans-serif;font-size:11px;color:var(--s600)}
+.gbmn-inline-table{width:100%;table-layout:fixed;border-collapse:collapse;font-family:Arial,sans-serif;font-size:11px}
+.gbmn-inline-table th,.gbmn-inline-table td{border:1px solid var(--s300);padding:4px 6px;overflow-wrap:anywhere;vertical-align:top}
+.gbmn-inline-table th{background:var(--s100);font-weight:700}
+.gbmn-inline-media-diagram pre{white-space:pre-wrap;font-family:var(--mono);font-size:11px;background:var(--s50);padding:8px}
+.gbmn-media-actions{position:absolute;top:4px;right:4px;display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.gbmn-inline-media:hover .gbmn-media-actions,.gbmn-inline-media.sel .gbmn-media-actions{opacity:1}
+.gbmn-media-actions button{border:1px solid var(--s300);background:#fff;border-radius:4px;font-size:10px;font-weight:700;padding:2px 6px;cursor:pointer;color:var(--s700)}
+.gbmn-media-actions button[data-media-action=delete]{color:#b91c1c}
+
+/* ── modal ── */
+.modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,.3);padding:16px}
+.modal .sheet{background:#fff;width:100%;max-width:760px;max-height:calc(100vh - 48px);overflow-y:auto;border:1px solid var(--s300);box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.modal .mh{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 20px;border-bottom:1px solid var(--s200)}
+.modal .mh h3{font-size:19px;font-weight:400;color:#0f172a}
+.modal .mh p{font-size:12.5px;color:var(--s600);margin-top:4px}
+.modal .mb{padding:18px 20px}
+.modal .mb>*+*{margin-top:14px}
+.modal .mf{display:flex;justify-content:flex-end;gap:10px;padding:14px 18px;border-top:1px solid var(--s200);background:var(--s50)}
+.modal .x{border:0;background:0;cursor:pointer;font-size:22px;line-height:1;color:var(--s500);padding:0 2px}
+.modal input[type=text],.modal textarea,.modal select{width:100%;border:1px solid var(--s300);padding:8px 11px;font-size:12.5px;background:#fff;border-radius:0}
+.modal textarea{resize:vertical}
+.modal .btn-ins{padding:8px 18px;font-size:12.5px;font-weight:600;border:0;border-radius:6px;background:#7dd3fc;color:#fff;cursor:pointer}
+.modal .btn-ins:disabled{opacity:.5;cursor:not-allowed}
+.modal .btn-c{padding:8px 18px;font-size:12.5px;font-weight:600;border:1px solid var(--s300);border-radius:6px;background:#fff;color:var(--s600);cursor:pointer}
+
+/* ── preview chrome ── */
+.prevbar{position:sticky;top:0;z-index:3;background:#787f85;color:#fff;display:flex;gap:9px;align-items:center;padding:8px 13px;font-size:11.5px;flex-wrap:wrap}
+.prevbar .tgl{display:flex;gap:2px;background:rgba(0,0,0,.18);border-radius:999px;padding:2px}
+.prevbar .tgl button{border:0;background:transparent;color:#e9edef;border-radius:999px;padding:4px 12px;font-size:11.5px;cursor:pointer}
+.prevbar .tgl button[aria-selected=true]{background:#fff;color:#20262b;font-weight:600}
+.prevbar input{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:5px;padding:3px 7px;font-size:11px;width:74px}
+.prevbar input::placeholder{color:rgba(255,255,255,.6)}
+.prevbar .note{opacity:.85;margin-left:auto}
+.prevbar .pbtn{border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer}
+.prevbar .pbtn:hover{background:rgba(255,255,255,.22)}
+.prevwrap{overflow:hidden}
+.scroller{width:calc(210mm + 28px);padding:18px 14px 70px;display:flex;flex-direction:column;align-items:center;gap:18px;
+  transform-origin:top left;transform:scale(var(--pvs,1))}
+@media (max-width:1040px){.scroller{width:100%;transform:none}}
+
+/* ── the document — matched to the printed GBMN layout ───────── */
+/* A4 · margins 14mm · body Calibri 11/14.3pt · 2 columns · gap 6mm */
+.page{width:210mm;height:297mm;background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.28);font-family:var(--doc);color:#1F2A2A;
+  padding:12mm 14mm 9mm;display:flex;flex-direction:column;overflow:hidden}
+.page .pbody{flex:1 1 auto;min-height:0;overflow:hidden}
+.page .pfront{flex:0 0 auto}
+@media (max-width:980px){.page{width:100%;height:auto;padding:16px;box-shadow:0 1px 8px rgba(0,0,0,.22);overflow:visible}
+  .page .pbody{overflow:visible}}
+
+/* masthead */
+.pmast{display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
+.pmast .mk{display:flex;flex-direction:column}
+.pmast img{width:113mm;height:auto;display:block;margin-left:-3.4mm}
+.pmast .vol{font-family:var(--cond);font-size:9pt;color:#000;white-space:nowrap;padding-bottom:1.2mm;letter-spacing:.01em}
+@media (max-width:980px){.pmast img{width:62%;margin-left:0}.pmast .vol{font-size:9px}}
+.prule{border:0;border-top:2.25pt solid #0E7A72;margin:2.2mm 0 0}
+.prule2{border:0;border-top:.75pt solid #0E7A72;margin:.75mm 0 5mm}
+
+/* title block */
+.ptitle{font-size:19.6pt;line-height:1.2;font-weight:700;color:#006F68;text-align:center;margin:3mm 0 3mm;text-wrap:balance}
+.pauth{font-size:12pt;color:#686868;text-align:center;line-height:1.5;margin:0 0 4mm}
+.pauth sup{font-size:8pt;font-weight:700;color:#006F68;vertical-align:super}
+.paffil{font-size:8.5pt;color:#444c4c;line-height:1.45;margin:0 0 3mm}
+.paffil div{text-indent:-3mm;padding-left:3mm}
+.paffil sup{font-size:7pt;color:#006F68;font-weight:700}
+.pcorr{font-size:8.5pt;color:#444c4c;margin:0 0 3mm}
+.pdates{font-size:9pt;color:#444c4c;font-style:italic;margin:0 0 2mm}
+
+/* abstract — full width */
+.pabs-h{font-size:11pt;font-weight:700;color:#B9353A;letter-spacing:.02em;margin:0 0 1mm}
+.pabs{font-size:10pt;line-height:1.30;text-align:justify;hyphens:auto}
+.pabs p{margin:0 0 1.2mm}
+.pabs .lb{font-weight:700;color:#006F68}
+.pdoi{font-size:11pt;font-weight:700;color:#008080;text-decoration:underline;margin:4mm 0 5mm}
+
+/* body — two columns */
+.pbody{font-size:11pt;line-height:1.30;text-align:justify;hyphens:auto;
+  column-count:2;column-gap:6mm;column-fill:auto}
+.pbody p{margin:0}
+.pbody p + p{text-indent:5mm}
+.pbody h2{font-size:11pt;font-weight:700;color:#B9353A;letter-spacing:.02em;margin:3.4mm 0 .8mm;break-after:avoid}
+.pbody h3{font-size:11pt;font-weight:700;color:#1F2A2A;margin:2.6mm 0 .6mm;break-after:avoid}
+.pbody .decl p{margin:0 0 1.2mm;text-indent:0}
+.pbody .decl b{color:#006F68}
+.pbody ol.refs{font-size:9.5pt;line-height:1.28;padding-left:5mm;margin:0}
+.pbody ol.refs li{margin:0 0 .8mm;text-align:left}
+.pbody figure.fg{margin:2.5mm 0;break-inside:avoid}
+.pbody figure.fg img{width:100%;height:auto;display:block}
+.pbody figure.fg figcaption{font-size:8.5pt;line-height:1.35;margin-top:1.2mm;text-align:left}
+.pbody figure.fg figcaption b{color:#006F68}
+.pbody .tbl{margin:2.5mm 0;break-inside:avoid}
+.pbody .tbl .cap{font-size:8.5pt;margin-bottom:1mm;text-align:left}
+.pbody .tbl .cap b{color:#006F68}
+.pbody .tbl table{width:100%;border-collapse:collapse;font-size:8.5pt}
+.pbody .tbl th,.pbody .tbl td{border-top:.7px solid #9aa5a5;border-bottom:.7px solid #9aa5a5;padding:1mm 1.4mm;text-align:left;vertical-align:top}
+.pbody .tbl thead th{background:#E6F0EE;font-weight:700;color:#14201e}
+
+
+/* inline media coming from the rich-text editor */
+.pbody figure.gbmn-inline-media{margin:2.5mm 0;border:0;padding:0;background:0;cursor:auto;break-inside:avoid;position:static}
+.pbody figure.gbmn-inline-media .gbmn-media-actions{display:none}
+.pbody figure.gbmn-inline-media img{width:100%;height:auto;display:block}
+.pbody figure.gbmn-inline-media figcaption{font-family:var(--doc);font-size:8.5pt;line-height:1.35;margin:0 0 1.2mm;color:#1F2A2A;text-align:left}
+.pbody figure.gbmn-inline-media figcaption strong{color:#006F68}
+.pbody figure.gbmn-inline-media table,.pbody table.gbmn-inline-table{width:100%;border-collapse:collapse;font-family:var(--doc);font-size:8.5pt;table-layout:fixed}
+.pbody figure.gbmn-inline-media th,.pbody figure.gbmn-inline-media td{border-top:.7px solid #9aa5a5;border-bottom:.7px solid #9aa5a5;border-left:0;border-right:0;padding:1mm 1.4mm;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.pbody figure.gbmn-inline-media th{background:#E6F0EE;font-weight:700;color:#14201e}
+.pbody figure.gbmn-inline-media pre{white-space:pre-wrap;font-family:var(--mono);font-size:8.5pt;background:#f4f7f7;padding:1.5mm}
+.pbody figure.gbmn-media-one-column{column-span:all;-webkit-column-span:all}
+.web .pbody figure.gbmn-inline-media figcaption{font-size:13px;color:#475569}
+.web .pbody figure.gbmn-inline-media table{font-size:13px}
+.web .pbody figure.gbmn-inline-media th,.web .pbody figure.gbmn-inline-media td{padding:6px 8px}
+
+/* footer */
+.pfoot{margin-top:auto;padding-top:3mm;font-family:var(--cond);font-size:8pt;color:#000;text-align:center;line-height:1.35}
+
+/* title page extras */
+.tp-meta{margin-top:6mm;border-top:.9px solid #cfd6d6}
+.tp-meta div{display:grid;grid-template-columns:46mm 1fr;font-size:9.5pt;border-bottom:.9px solid #e4e9e9}
+.tp-meta span.k{padding:1.6mm 2mm;font-weight:700;color:#006F68}
+.tp-meta span.v{padding:1.6mm 2mm}
+@media (max-width:620px){.tp-meta div{grid-template-columns:1fr}}
+.tp-note{margin-top:5mm;font-size:8.5pt;color:#6a7278;line-height:1.45}
+
+/* ── web version ── */
+.web{width:min(820px,100%);background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.28);font-family:var(--doc);color:#1F2A2A}
+.web .wtop{background:#0f2f2b;color:#eaf2f0;padding:22px 30px}
+.web .wtop img{height:42px;filter:brightness(0) invert(1);opacity:.96}
+.web .wtop .wv{font-family:var(--cond);font-size:12px;letter-spacing:.1em;opacity:.8;margin-top:10px}
+.web .wbody{padding:26px 30px 34px}
+@media (max-width:620px){.web .wtop,.web .wbody{padding:18px 16px}}
+.web .ptitle{text-align:left;font-size:27px;line-height:1.2}
+.web .pauth,.web .paffil,.web .pcorr,.web .pdates{text-align:left}
+.web .pabs{font-size:15px;line-height:1.6}
+.web .pabs-h,.web .pbody h2{font-size:13px;letter-spacing:.1em}
+.web .pdoi{font-size:14px}
+.web .pbody{column-count:1;font-size:16px;line-height:1.68}
+.web .pbody p + p{text-indent:0;margin-top:12px}
+.web .pbody h2{margin:26px 0 8px}
+.web .pbody h3{font-size:17px}
+.web .pbody ol.refs{font-size:14px;line-height:1.5}
+.web .toc{background:#EAF3F1;border-left:3px solid #0E7A72;padding:12px 14px;margin:18px 0;font-size:14px}
+.web .toc b{display:block;font-family:var(--cond);font-size:11px;letter-spacing:.12em;color:#006F68;margin-bottom:6px}
+.web .toc a{color:#1F2A2A;text-decoration:none;display:block;padding:2px 0}
+.web .toc a:hover{color:#006F68;text-decoration:underline}
+
+/* ── print ── */
+@page{size:A4;margin:0}
+@media print{
+  html,body{background:#fff;margin:0;padding:0}
+  .side,.mid,.prevbar,.web,.toast,.modal{display:none !important}
+  .app{display:block;height:auto}
+  .pane{overflow:visible}
+  html,body{height:auto;overflow:visible}
+  .prev{overflow:visible;background:#fff}
+  .prevwrap{overflow:visible;height:auto !important}
+  .scroller{width:auto;transform:none;padding:0;gap:0;display:block;align-items:stretch}
+  .page{width:210mm;height:297mm;box-shadow:none;break-after:page;page-break-after:always;overflow:hidden}
+  .page:last-child{break-after:auto;page-break-after:auto}
+  a{color:inherit}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="pane side" id="sidePane">
+    <div class="brand">
+      <img id="brandLogo" alt="GBMN">
+      <div><b>Georgian Biomedical and Medical Nexus</b><span>Manuscript submission</span></div>
+    </div>
+    <div class="sidehead">
+      <h3>Submission Workflow</h3>
+      <div class="t" id="sideTitle">Untitled Manuscript Draft</div>
+      <span class="badge" id="sideStatus">Manuscript Status: Draft</span>
+    </div>
+    <nav id="sideNav"></nav>
+    <div class="prog">
+      <div class="pl"><span>Overall Submission Readiness</span><span id="progPct">0%</span></div>
+      <div class="tr"><i id="progBar" style="width:0%"></i></div>
+      <div class="fn">All sections must show green or amber status before final submittal.</div>
+    </div>
+  </aside>
+
+  <main class="pane mid" id="midPane">
+    <div class="panel">
+      <div class="phead">
+        <div>
+          <span class="k" id="stepKicker">Step Profile</span>
+          <h2 id="stepTitle"></h2>
+        </div>
+        <div id="stepAction"></div>
+      </div>
+      <div class="stepbody" id="stepBody"></div>
+      <div class="navbar">
+        <button class="btn" id="btnPrev" type="button">&larr; Save and Back</button>
+        <button class="btn tl" id="btnSave" type="button">Save</button>
+        <button class="btn t" id="btnNext" type="button">Save and Continue &rarr;</button>
+      </div>
+    </div>
+  </main>
+
+  <section class="pane prev" id="prevPane">
+    <div class="prevbar">
+      <div class="tgl" id="pvTgl">
+        <button type="button" data-pv="print" aria-selected="true">PDF</button>
+        <button type="button" data-pv="title" aria-selected="false">Title page</button>
+        <button type="button" data-pv="web" aria-selected="false">Web</button>
+      </div>
+      <input id="pvVol" placeholder="Vol" title="Volume" style="width:48px">
+      <input id="pvIss" placeholder="Iss" title="Issue" style="width:48px">
+      <input id="pvPeriod" placeholder="JUL–SEP 2026" title="Issue period" style="width:120px">
+      <input id="pvDoi" placeholder="DOI" title="DOI" style="width:150px">
+      <button class="pbtn" id="btnPdf" type="button">Download PDF</button>
+      <button class="pbtn" id="btnHtml" type="button">HTML</button>
+      <span class="note" id="pvNote"></span>
+    </div>
+    <div class="prevwrap" id="prevWrap"><div class="scroller" id="scroller"></div></div>
+  </section>
+
+</div>
+<div class="toast" id="toast"></div>
+<div id="modalRoot"></div>
+<script>
+(function(){
+"use strict";
+var LOGO = "data:image/webp;base64,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";
+document.getElementById('brandLogo').src = LOGO;
+
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')};
+var uid=0, nid=function(p){return (p||'x')+'-'+(++uid)+Date.now().toString(36)};
+var stripTags=function(h){return String(h==null?'':h).replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim()};
+
+/* ── icons (24x24 stroke) ── */
+var P={
+ book:'M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z',
+ shield:'M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3zM9 12l2 2 4-4',
+ filecheck:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 15l2 2 4-4',
+ file:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h8',
+ users:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+ layers:'m12.8 2.7 8.5 4.3a1 1 0 0 1 0 1.8l-8.5 4.3a2 2 0 0 1-1.6 0L2.7 8.8a1 1 0 0 1 0-1.8l8.5-4.3a2 2 0 0 1 1.6 0M2.4 12.6 11.2 17a2 2 0 0 0 1.6 0l8.8-4.4M2.4 17.6 11.2 22a2 2 0 0 0 1.6 0l8.8-4.4',
+ spark:'m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM5 19l.7 1.8L7.5 21.5 5.7 22.2 5 24l-.7-1.8L2.5 21.5l1.8-.7z',
+ key:'m15.5 7.5 3 3L22 7l-3-3M2 22l1-1M9.5 14.5 3 21M16.5 13a5.5 5.5 0 1 1-5.5-5.5',
+ bookmark:'m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',
+ clip:'m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l8.6-8.6a4 4 0 1 1 5.6 5.6l-8.5 8.5a2 2 0 1 1-2.8-2.8l7.8-7.8',
+ heart:'M11.6 5.4 8.4 8.6a2 2 0 0 0 0 2.8l1.2 1.2a2 2 0 0 0 2.8 0l3.2-3.2 4.2 4.2a2 2 0 0 1 0 2.8l-2.6 2.6a2 2 0 0 1-2.8 0L5 11a2 2 0 0 1 0-2.8l3-3a4 4 0 0 1 5.6 0',
+ dollar:'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+ eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6',
+ check:'M22 11.1V12a10 10 0 1 1-5.9-9.1M9 11l3 3L22 4',
+ alert:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 8v4M12 16h.01',
+ circle:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18',
+ bold:'M6 4h7a4 4 0 0 1 0 8H6zM6 12h8a4 4 0 0 1 0 8H6z',
+ italic:'M19 4h-9M14 20H5M15 4 9 20',
+ under:'M6 4v6a6 6 0 0 0 12 0V4M4 21h16',
+ sup:'m4 19 8-11M12 19 4 8M20 9h-4c0-1.5.44-2 1.5-2.5S20 5.4 20 4.5A1.5 1.5 0 0 0 17 4',
+ sub:'m4 5 8 11M12 5 4 16M20 20h-4c0-1.5.44-2 1.5-2.5s2.5-1.1 2.5-2a1.5 1.5 0 0 0-3-.5',
+ ul:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+ ol:'M10 6h11M10 12h11M10 18h11M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3a1 1 0 0 0-2 0',
+ clear:'M21 6H3M15 12H3M17 18H3',
+ undo:'M9 14 4 9l5-5M4 9h11a5 5 0 1 1 0 10h-5',
+ image:'M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M21 15l-5-5L5 21',
+ table:'M12 3v18M3 9h18M3 15h18M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2',
+ chart:'M3 21V3M7 21v-6M12 21V9M17 21v-9M21 21H3',
+ trash:'M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6',
+ up:'M12 19V5M5 12l7-7 7 7', down:'M12 5v14M19 12l-7 7-7-7',
+ code:'m10 20-6-8 6-8M14 4l6 8-6 8', info:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 16v-4M12 8h.01',
+ sq:'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'
+};
+function ico(n,cls,st){ var d=P[n]||P.circle;
+  return '<svg class="'+(cls||'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'+(st?' style="'+st+'"':'')+'><path d="'+d+'"/></svg>'; }
+
+/* ── article types (ported verbatim) ── */
+var ARTICLE_TYPES={
+ 'clinical-cases':{key:'clinical-cases',name:'CLINICAL CASES',
+   description:'Brief Report or Clinical Problem Solving. Describes 1–3 patients, one family, or step-by-step clinical reasoning. Maximum words: 2000–2500. Up to 3 tables/figures and 15–25 references.',
+   maxWordCount:2500,maxReferences:25,maxFiguresTables:3,
+   requiredSections:['Introduction','Case Presentation','Clinical Reasoning','Discussion','Conclusions','Notes on Patient Consent','Acknowledgments','Keywords'],
+   abstractType:'unstructured'},
+ 'original-research':{key:'original-research',name:'ORIGINAL RESEARCH',
+   description:'Original Article or Special Article. Reports scientific results of original clinical research, policy, ethics, law, or health care delivery. Maximum words: 2700. Maximum of 5 tables/figures. Up to 40 references.',
+   maxWordCount:2700,maxReferences:40,maxFiguresTables:5,
+   requiredSections:['Introduction','Materials and Methods','Results','Discussion','Conclusions','Acknowledgments','Keywords'],
+   abstractType:'unstructured'},
+ 'review-articles':{key:'review-articles',name:'REVIEW ARTICLES',
+   description:'Clinical Practice Review or Other Review. Evidence-based review for clinical or mechanistic topics. Maximum words: 2500–3000. Up to 5 tables/figures and 50–55 references.',
+   maxWordCount:3000,maxReferences:55,maxFiguresTables:5,
+   requiredSections:['Introduction','Methods','Evidence Review','Clinical Implications','Discussion','Conclusions','Acknowledgments','Keywords'],
+   abstractType:'unstructured'},
+ 'commentary':{key:'commentary',name:'COMMENTARY',
+   description:'Editorial, Perspective, Clinical Implications of Basic Research, or Letter to the Editor. Maximum words: 400–1200 depending on format. Usually no abstract.',
+   maxWordCount:1200,maxReferences:10,maxFiguresTables:1,
+   requiredSections:['Commentary','Conclusions','Keywords'],
+   abstractType:'none'},
+ 'other':{key:'other',name:'OTHER',
+   description:'Special Report, Health Law/Ethics/Human Rights or Health Policy Report, Medicine and Society, or Sounding Board. Maximum words: 2000–2700.',
+   maxWordCount:2700,maxReferences:40,maxFiguresTables:5,
+   requiredSections:['Introduction','Background','Report','Analysis','Discussion','Conclusions','Acknowledgments','Keywords'],
+   abstractType:'unstructured'}
+};
+var CONTRIB_OPTIONS=[
+ 'Substantial contributions to concept or design',
+ 'Acquisition, analysis, or interpretation of data',
+ 'Drafting of the manuscript',
+ 'Critical review of the manuscript for important intellectual content',
+ 'Agreed to be accountable for all aspects of the work',
+ 'Will review the final version to be published',
+ 'Supervised the work'];
+
+/* ── manuscript model ── */
+function blankManuscript(){
+  return {
+    id:'GBMN-'+new Date().getFullYear()+'-'+Math.random().toString(36).slice(2,10).toUpperCase(),
+    status:'Draft', title:'', runningTitle:'', specialty:'', articleType:'original-research',
+    publicationInfo:{doi:'',volumeIssue:''}, checklistAgreed:false, checklistAgreedAt:'',
+    authors:[], abstractContents:{text:''}, sections:{}, figuresAndTables:[], references:[],
+    supplementaryFiles:[], editorFiles:[],
+    ethics:{humanSubjectsApproved:'yes',irbApprovalNumber:'',irbInstitution:'',informedConsentObtained:'yes',ethicsStatementFileName:'',ethicsStatementUploadedUrl:''},
+    conflictDisclosure:{hasConflict:false,conflictDetails:'',signedCoiFormName:'',signedCoiFormUrl:''},
+    fundingDetails:{fundingAgency:'',grantNumber:'',explanation:''},
+    preview:{vol:'',iss:'',period:'',year:String(new Date().getFullYear())},
+    createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+  };
+}
+var M = blankManuscript();
+var activeStep='getting-started';
+
+/* ── persistence ── */
+var KEY='gbmnManuscript';
+function save(){ try{ M.updatedAt=new Date().toISOString(); localStorage.setItem(KEY,JSON.stringify(M)); }catch(e){} }
+function load(){ try{ var raw=localStorage.getItem(KEY); if(!raw)return;
+  var o=JSON.parse(raw); if(!o||typeof o!=='object')return;
+  var base=blankManuscript();
+  Object.keys(base).forEach(function(k){ if(o[k]===undefined) o[k]=base[k]; });
+  ['publicationInfo','ethics','conflictDisclosure','fundingDetails','preview','abstractContents'].forEach(function(k){
+    o[k]=Object.assign({}, base[k], o[k]||{}); });
+  M=o;
+}catch(e){} }
+load();
+
+/* ── toast ── */
+var toastT;
+function notify(msg,type){ var t=$('#toast'); t.className='toast on'+(type==='error'?' err':(type==='info'?' info':''));
+  t.textContent=msg; clearTimeout(toastT); toastT=setTimeout(function(){t.className='toast'+(type==='error'?' err':'')},2600); }
+
+/* ── steps (ported verbatim) ── */
+var STEPS=[
+ {id:'getting-started',label:'Getting Started',icon:'book',title:'1. Complete Manuscript Generation Core',v:function(){return 'complete'}},
+ {id:'policies',label:'Journal Policies',icon:'shield',title:'2. GBMN Ethics & Open Access Declarations',v:function(){return 'complete'}},
+ {id:'checklist',label:'Manuscript Checklist',icon:'filecheck',title:'3. Mandatory Peer Submitting Checklist',v:function(m){return m.checklistAgreed?'complete':'warning'}},
+ {id:'title-meta',label:'Title & Metadata',icon:'file',title:'4. Title and Clinical Specialty Scope',
+   v:function(m){return (m.title.trim()&&m.runningTitle.trim()&&m.specialty.trim())?'complete':(m.title.trim()?'warning':'empty')}},
+ {id:'authors',label:'Authors',icon:'users',title:'5. GBMN Author Roster Management',
+   v:function(m){ if(!m.authors.length) return 'empty';
+     var hasCorr=m.authors.some(function(a){return a.isCorresponding});
+     var allOrcid=m.authors.every(function(a){return a.orcidId&&a.orcidId.length>5});
+     return (hasCorr&&allOrcid)?'complete':'warning'; }},
+ {id:'article-type',label:'Article Type',icon:'layers',title:'6. Article Type Quota Configuration',
+   v:function(m){return m.articleType?'complete':'empty'}},
+ {id:'abstract',label:'Abstract',icon:'spark',title:'7. Structured abstract compilation',
+   v:function(m){ var c=ARTICLE_TYPES[m.articleType]; if(!c||c.abstractType==='none')return 'complete';
+     var t=stripTags(m.abstractContents.text||''); return t.length>50?'complete':(t.length>0?'warning':'empty'); }},
+ {id:'keywords',label:'Keywords',icon:'key',title:'8. Indexed indexing Keywords',
+   v:function(m){ var n=(m.sections['Keywords']||'').split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean).length;
+     return (n>=3&&n<=6)?'complete':(n>0?'warning':'empty'); }},
+ {id:'sections',label:'Manuscript Sections',icon:'file',title:'9. Structured Manuscript Body Segments',
+   v:function(m){ var c=ARTICLE_TYPES[m.articleType]; if(!c)return 'empty';
+     var reqs=c.requiredSections.filter(function(s){return s!=='Acknowledgments'&&s!=='Keywords'});
+     var filled=reqs.filter(function(s){return m.sections[s]&&m.sections[s].length>100});
+     return filled.length===reqs.length?'complete':(filled.length?'warning':'empty'); }},
+ {id:'references',label:'References (AMA)',icon:'bookmark',title:'10. AMA Bibliography Reference Library',
+   v:function(m){ if(!m.references.length)return 'empty';
+     return m.references.some(function(r){return !r.authors||!r.title||!r.year||!r.journalOrBook})?'warning':'complete'; }},
+ {id:'supplementary',label:'Supplementary Files',icon:'clip',title:'11. Optional Appendix Datasets & Protocols',v:function(){return 'complete'}},
+ {id:'ethics',label:'Ethics Statement',icon:'heart',title:'12. Institutional Review Board (IRB) Clearance',
+   v:function(m){ var c=m.ethics.humanSubjectsApproved&&m.ethics.informedConsentObtained;
+     if(c&&(m.ethics.informedConsentObtained==='no'||m.ethics.humanSubjectsApproved==='not-applicable'||m.ethics.ethicsStatementFileName))return 'complete';
+     return c?'warning':'empty'; }},
+ {id:'conflicts',label:'Conflict Disclosures',icon:'shield',title:'13. Disclosure of Financial Conflicts (COI)',
+   v:function(m){ return (!m.conflictDisclosure.hasConflict||m.conflictDisclosure.signedCoiFormName)?'complete':'warning'; }},
+ {id:'funding',label:'Funding Info',icon:'dollar',title:'14. Rustaveli & Global Research Grants',v:function(){return 'complete'}},
+ {id:'editor-files',label:'Files for Editorial Office',icon:'filecheck',title:'15. Cover Letter & Referee Guidelines',v:function(){return 'complete'}},
+ {id:'preview',label:'Manuscript Preview',icon:'eye',title:'16. Pre-Publication Live Watermarked proof',v:function(){return 'complete'}},
+ {id:'summary-submit',label:'Summary & Submit',icon:'check',title:'17. Final Integrity Evaluation & Submitting',v:function(){return 'complete'}}
+];
+var STEP_HELP={
+ checklist:'Checklist must be accepted before submission.',
+ 'title-meta':'Full title, running title, and specialty are required.',
+ authors:'Add at least one author, ORCID, and a corresponding author.',
+ abstract:'Abstract is required for this article type.',
+ keywords:'Enter 3-6 MeSH-style keywords separated by semicolons.',
+ sections:'Required manuscript body sections need content.',
+ references:'Add complete AMA references.',
+ ethics:'Ethics fields and IRB upload should be completed.',
+ conflicts:'COI file is required only when conflicts are declared.'
+};
+
+/* ── sidebar ── */
+function renderSidebar(){
+  $('#sideTitle').textContent = M.title || 'Untitled Manuscript Draft';
+  $('#sideStatus').textContent = 'Manuscript Status: '+M.status;
+  var nav=$('#sideNav'), html='';
+  STEPS.forEach(function(s){
+    var st=s.v(M), on=activeStep===s.id;
+    var stIcon = st==='complete' ? ico('check','st',on?'color:#99f6e4':'color:#16a34a')
+               : st==='warning'  ? ico('alert','st',on?'color:#fde68a':'color:#f59e0b')
+               :                   ico('circle','st',on?'color:#5eead4;opacity:.6':'color:#cbd5e1');
+    html+='<button type="button" class="stp'+(on?' on':'')+'" data-step="'+s.id+'">'+
+          '<span class="lt">'+ico(s.icon,'ic',on?'color:#fff':'color:#94a3b8')+'<span class="lb">'+esc(s.label)+'</span></span>'+stIcon+'</button>';
+    if(on && st!=='complete' && STEP_HELP[s.id]) html+='<div class="sthelp">'+esc(STEP_HELP[s.id])+'</div>';
+  });
+  nav.innerHTML=html;
+  var done=STEPS.filter(function(s){return s.v(M)==='complete'}).length;
+  var pct=Math.round(done/STEPS.length*100);
+  $('#progPct').textContent=pct+'%'; $('#progBar').style.width=pct+'%';
+}
+$('#sideNav').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-step]'); if(!b)return;
+  go(b.dataset.step);
+});
+function go(id){ activeStep=id; renderAll(); $('#midPane').scrollTop=0; }
+
+/* ══ rich text editor ═════════════════════════════════════════ */
+function escHtml(t){return esc(t)}
+function tableFromDelimitedText(text){
+  var rows=text.trim().split(/\r?\n/).filter(Boolean).map(function(r){return r.split(/\t|,/).map(function(c){return c.trim()})});
+  if(!rows.length) return '';
+  return '<table class="gbmn-inline-table"><tbody>'+rows.map(function(row,ri){
+    return '<tr>'+row.map(function(c){return ri===0?'<th>'+escHtml(c)+'</th>':'<td>'+escHtml(c)+'</td>'}).join('')+'</tr>';
+  }).join('')+'</tbody></table>';
+}
+function mediaActionsHtml(){
+  return '<div class="gbmn-media-actions" contenteditable="false">'+
+    '<button type="button" data-media-action="edit">Edit</button>'+
+    '<button type="button" data-media-action="delete">Delete</button></div>';
+}
+function sanitizeRichPaste(html){
+  var d=document.createElement('div'); d.innerHTML=html;
+  d.querySelectorAll('script,style,meta,link').forEach(function(n){n.remove()});
+  d.querySelectorAll('*').forEach(function(n){
+    Array.prototype.slice.call(n.attributes).forEach(function(a){
+      if(/^on/i.test(a.name)) n.removeAttribute(a.name);
+      if(a.name==='class'&&!/gbmn-/.test(a.value)) n.removeAttribute('class');
+      if(a.name==='style') n.removeAttribute('style');
+    });
+    if(n.tagName==='TABLE') n.className='gbmn-inline-table';
+  });
+  return d.innerHTML;
+}
+
+function mountRTE(host,o){
+  var selId=null, markerId=null, history=[], editing=null;
+  host.className='rte';
+  host.innerHTML =
+    (o.label?'<div class="cap">'+esc(o.label)+'</div>':'')+
+    (o.hint?'<div class="hint">'+esc(o.hint)+'</div>':'')+
+    '<div class="rtbar">'+
+      '<select data-blk title="Block style"><option value="normal">Normal</option><option value="subheading">Subheading</option></select>'+
+      '<button type="button" data-cmd="bold" title="Bold">'+ico('bold')+'</button>'+
+      '<button type="button" data-cmd="italic" title="Italic">'+ico('italic')+'</button>'+
+      '<button type="button" data-cmd="underline" title="Underline">'+ico('under')+'</button>'+
+      '<button type="button" data-cmd="superscript" title="Superscript">'+ico('sup')+'</button>'+
+      '<button type="button" data-cmd="subscript" title="Subscript">'+ico('sub')+'</button>'+
+      '<span class="div"></span>'+
+      '<button type="button" data-cmd="insertUnorderedList" title="Bullet list">'+ico('ul')+'</button>'+
+      '<button type="button" data-cmd="insertOrderedList" title="Numbered list">'+ico('ol')+'</button>'+
+      '<span class="div"></span>'+
+      '<button type="button" data-cmd="removeFormat" title="Remove formatting">'+ico('clear')+'</button>'+
+      '<span class="div"></span>'+
+      '<button type="button" data-act="undo" title="Undo">'+ico('undo')+'</button>'+
+      '<button type="button" data-act="image" title="Insert image at cursor">'+ico('image')+'</button>'+
+      '<button type="button" data-act="table" title="Paste table at cursor">'+ico('table')+'</button>'+
+      '<button type="button" data-act="diagram" title="Paste diagram at cursor">'+ico('chart')+'</button>'+
+      '<button type="button" data-act="del" title="Delete selected table, figure, or diagram">'+ico('trash')+'</button>'+
+      '<button type="button" data-act="up" title="Move selected table, figure, or diagram up">'+ico('up')+'</button>'+
+      '<button type="button" data-act="down" title="Move selected table, figure, or diagram down">'+ico('down')+'</button>'+
+    '</div>'+
+    '<div class="rtsel" style="display:none"><b>Selected table / figure</b>'+
+      '<button type="button" class="btn sm" data-act="edit">Edit</button>'+
+      '<button type="button" class="btn sm rd" data-act="del">Delete</button>'+
+      '<button type="button" class="btn sm" data-act="up">Move up</button>'+
+      '<button type="button" class="btn sm" data-act="down">Move down</button></div>'+
+    '<div class="rtarea" contenteditable="true" data-ph="'+esc(o.placeholder||'Enter text here...')+'"'+
+      (o.minHeight?' style="min-height:'+o.minHeight+'"':'')+'></div>'+
+    (o.showWordCount?'<div class="rtwc"></div>':'');
+
+  var area=$('.rtarea',host), bar=$('.rtbar',host), selbar=$('.rtsel',host), wc=$('.rtwc',host), blk=$('[data-blk]',host);
+  var savedRange=null;
+  area.innerHTML=o.value||'';
+  updWc();
+
+  function emit(){ o.onChange(area.innerHTML); updWc(); }
+  function updWc(){ if(!wc)return; var n=stripTags(area.innerHTML); wc.textContent='Word count: '+(n?n.split(/\s+/).length:0); }
+  function push(){ history=history.slice(-24).concat([area.innerHTML]); }
+  function saveSel(){ var s=window.getSelection(); if(!s||!s.rangeCount)return;
+    var r=s.getRangeAt(0); if(area.contains(r.commonAncestorContainer)) savedRange=r.cloneRange(); }
+  function caretAfter(n){ var s=window.getSelection(); if(!s)return; var r=document.createRange();
+    r.setStartAfter(n); r.collapse(true); s.removeAllRanges(); s.addRange(r); savedRange=r.cloneRange(); }
+  function clearMarker(){ if(!markerId)return; var m=area.querySelector('[data-mk="'+markerId+'"]'); if(m)m.remove(); markerId=null; }
+  function makeMarker(){ clearMarker(); area.focus();
+    var s=window.getSelection(), live=(s&&s.rangeCount)?s.getRangeAt(0):null;
+    var r = (savedRange&&area.contains(savedRange.commonAncestorContainer)) ? savedRange.cloneRange()
+          : (live&&area.contains(live.commonAncestorContainer)) ? live.cloneRange() : document.createRange();
+    if(!(savedRange&&area.contains(savedRange.commonAncestorContainer))&&!(live&&area.contains(live.commonAncestorContainer))){
+      r.selectNodeContents(area); r.collapse(false); }
+    r.deleteContents();
+    var id=nid('mk'), sp=document.createElement('span');
+    sp.setAttribute('data-mk',id); sp.style.cssText='display:inline-block;width:0;height:0;overflow:hidden';
+    sp.textContent='﻿'; r.insertNode(sp); markerId=id; caretAfter(sp); }
+  function insertHtml(html){
+    push(); area.focus();
+    var mk = markerId ? area.querySelector('[data-mk="'+markerId+'"]') : null;
+    var tpl=document.createElement('template'); tpl.innerHTML=html;
+    var frag=tpl.content, last=frag.lastChild;
+    if(mk && mk.parentNode){ mk.parentNode.replaceChild(frag,mk); }
+    else if(savedRange&&area.contains(savedRange.commonAncestorContainer)){ savedRange.deleteContents(); savedRange.insertNode(frag); }
+    else area.appendChild(frag);
+    markerId=null;
+    if(last) caretAfter(last);
+    emit();
+  }
+  function pickMedia(){ return selId? area.querySelector('.gbmn-inline-media[data-media-id="'+selId+'"]') : null; }
+  function setSel(id){ selId=id;
+    area.querySelectorAll('.gbmn-inline-media').forEach(function(f){ f.classList.toggle('sel', f.dataset.mediaId===id); });
+    selbar.style.display = id? 'flex':'none'; }
+
+  bar.addEventListener('mousedown',function(e){ if(e.target.closest('button')) e.preventDefault(); });
+  selbar.addEventListener('mousedown',function(e){ if(e.target.closest('button')) e.preventDefault(); });
+  bar.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b)return;
+    if(b.dataset.cmd){ area.focus(); if(savedRange){var s=window.getSelection();s.removeAllRanges();s.addRange(savedRange);} 
+      document.execCommand(b.dataset.cmd,false,null); emit(); return; }
+    handleAct(b.dataset.act);
+  });
+  selbar.addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) handleAct(b.dataset.act); });
+  blk.addEventListener('change',function(){ area.focus();
+    document.execCommand('formatBlock',false, blk.value==='subheading'?'h3':'p'); emit(); });
+
+  function handleAct(a){
+    if(a==='undo'){ var prev=history.pop(); if(prev===undefined){document.execCommand('undo'); } else { area.innerHTML=prev; setSel(null); } emit(); return; }
+    if(a==='del'){ var m=pickMedia(); if(!m)return; push(); m.remove(); setSel(null); emit(); return; }
+    if(a==='up'||a==='down'){ var md=pickMedia(); if(!md)return; push();
+      var sib = a==='up'? md.previousElementSibling : md.nextElementSibling;
+      if(!sib)return;
+      if(a==='up') md.parentNode.insertBefore(md,sib); else md.parentNode.insertBefore(sib,md);
+      emit(); return; }
+    if(a==='edit'){ var me=pickMedia(); if(!me)return; openEditFor(me); return; }
+    saveSel(); makeMarker(); editing=null;
+    if(a==='image') openImageDialog({});
+    if(a==='table') openPasteDialog('table',{});
+    if(a==='diagram') openPasteDialog('diagram',{});
+  }
+  function openEditFor(m){
+    editing=m.dataset.mediaId;
+    var fc=m.querySelector('figcaption'), st=fc?fc.querySelector('strong'):null;
+    var title = st? st.textContent : '';
+    var legend = fc? fc.textContent.replace(title,'').replace(/^\s*—\s*/,'').trim() : '';
+    var layout = m.dataset.layout==='one-column'?'one-column':'two-column';
+    if(m.classList.contains('gbmn-inline-media-figure')){
+      var img=m.querySelector('img');
+      openImageDialog({title:title,legend:legend,layout:layout,src:img?img.src:''});
+    } else {
+      var kind=m.classList.contains('gbmn-inline-media-table')?'table':'diagram';
+      var inner=Array.prototype.slice.call(m.childNodes).filter(function(n){
+        return !(n.nodeType===1&&(n.matches('figcaption')||n.matches('.gbmn-media-actions')));
+      }).map(function(n){return n.nodeType===1?n.outerHTML:(n.textContent||'')}).join('');
+      openPasteDialog(kind,{title:title,legend:legend,layout:layout,buffer:inner});
+    }
+  }
+  function replaceOrInsert(html){
+    if(editing){ var old=area.querySelector('.gbmn-inline-media[data-media-id="'+editing+'"]');
+      if(old){ push(); var t=document.createElement('template'); t.innerHTML=html;
+        var fresh=t.content.firstElementChild; old.parentNode.replaceChild(fresh,old); editing=null; setSel(null); emit(); return; } }
+    insertHtml(html+'<p><br></p>');
+  }
+
+  /* ── modals ── */
+  function openImageDialog(init){
+    var state={src:init.src||'',name:'',title:init.title||'',legend:init.legend||'',layout:init.layout||'two-column'};
+    var root=$('#modalRoot');
+    root.innerHTML='<div class="modal"><div class="sheet">'+
+      '<div class="mh"><div><h3>Insert Figure</h3><p>Upload an image, add title and legend, then insert it exactly where the cursor was.</p></div><button class="x" data-c>&times;</button></div>'+
+      '<div class="mb">'+
+        '<div class="drop" id="imgDrop" tabindex="0">'+
+          '<div id="imgPrev">'+(state.src?'<img src="'+state.src+'" style="max-height:220px;margin:0 auto;display:block;background:#fff;border:1px solid #e2e8f0">':'<p class="note">Upload, drag &amp; drop, or paste copied image here.</p>')+'</div>'+
+          '<button type="button" class="btn sm" id="imgPick" style="margin-top:12px">Upload Image</button>'+
+          '<input type="file" accept="image/*" id="imgFile" hidden></div>'+
+        '<div><label class="lbl">Title <span class="req">*</span></label>'+
+          '<input type="text" id="imgTitle" placeholder="Figure 1. Descriptive title" value="'+esc(state.title)+'"></div>'+
+        '<textarea id="imgLegend" rows="4" placeholder="Legend (optional)">'+esc(state.legend)+'</textarea>'+
+        '<select id="imgLayout"><option value="two-column">Two-column width</option><option value="one-column">One-column full article width</option></select>'+
+      '</div>'+
+      '<div class="mf"><button class="btn-c" data-c>Cancel</button><button class="btn-ins" id="imgGo" disabled>'+(editing?'Update':'Insert')+'</button></div>'+
+      '</div></div>';
+    $('#imgLayout').value=state.layout;
+    var go=$('#imgGo'), ti=$('#imgTitle');
+    function sync(){ go.disabled = !(state.src && ti.value.trim()); }
+    sync();
+    ti.addEventListener('input',sync);
+    function takeFile(f){ if(!f)return; var r=new FileReader();
+      r.onload=function(){ state.src=String(r.result||''); $('#imgPrev').innerHTML='<img src="'+state.src+'" style="max-height:220px;margin:0 auto;display:block;background:#fff;border:1px solid #e2e8f0">';
+        $('#imgPick').textContent=f.name; if(!ti.value) ti.value=f.name; sync(); };
+      r.readAsDataURL(f); }
+    $('#imgPick').onclick=function(){ $('#imgFile').click(); };
+    $('#imgFile').onchange=function(e){ takeFile(e.target.files[0]); };
+    var dz=$('#imgDrop');
+    dz.addEventListener('dragover',function(e){e.preventDefault()});
+    dz.addEventListener('drop',function(e){ e.preventDefault();
+      takeFile(Array.prototype.slice.call(e.dataTransfer.files).filter(function(f){return /^image\//.test(f.type)})[0]); });
+    dz.addEventListener('paste',function(e){
+      var f=Array.prototype.slice.call(e.clipboardData.files).filter(function(x){return /^image\//.test(x.type)})[0];
+      if(!f){ var it=Array.prototype.slice.call(e.clipboardData.items).filter(function(i){return i.kind==='file'&&/^image\//.test(i.type)})[0]; if(it) f=it.getAsFile(); }
+      if(f){ e.preventDefault(); takeFile(f); } });
+    go.onclick=function(){
+      var cap=ti.value.trim(), lg=$('#imgLegend').value.trim(), lay=$('#imgLayout').value;
+      closeModal();
+      replaceOrInsert('<figure class="gbmn-inline-media gbmn-inline-media-figure gbmn-media-'+lay+'" data-layout="'+lay+'" contenteditable="false" draggable="true" data-media-id="'+nid('md')+'">'+
+        mediaActionsHtml()+'<figcaption><strong>'+escHtml(cap)+'</strong>'+(lg?' — '+escHtml(lg):'')+'</figcaption>'+
+        '<img src="'+state.src+'" alt="'+escHtml(cap)+'"></figure>');
+    };
+    wireClose();
+  }
+  function openPasteDialog(kind,init){
+    var isT=kind==='table';
+    var root=$('#modalRoot');
+    root.innerHTML='<div class="modal"><div class="sheet" style="max-width:860px">'+
+      '<div class="mh"><div><h3>'+(isT?'Insert Table':'Insert Diagram')+'</h3><p>'+
+        (isT?'Create your table in Excel, Word, PowerPoint, Google Docs or Sheets, then paste it here.'
+            :'Paste SVG/HTML, chart markup, or diagram text. It will be inserted exactly where the cursor was.')+
+        '</p></div><button class="x" data-c>&times;</button></div>'+
+      '<div class="mb">'+
+        '<div style="border:1px solid var(--s300)"><div style="display:flex;gap:8px;padding:6px 8px;border-bottom:1px solid var(--s200);background:var(--s50);color:var(--s600)">'+
+          ico('bold')+ico('italic')+ico('sup')+ico('sub')+'</div>'+
+          '<textarea id="pbBuf" rows="8" style="border:0;padding:14px;font-size:12.5px" placeholder="'+(isT?'Paste table here. Required before Insert.':'Paste diagram here. Required before Insert.')+'">'+esc(init.buffer||'')+'</textarea></div>'+
+        '<select id="pbLayout"><option value="two-column">Two-column width</option><option value="one-column">One-column full article width</option></select>'+
+        '<div><label class="lbl">Title <span class="req">*</span></label><input type="text" id="pbTitle" value="'+esc(init.title||'')+'" placeholder="'+
+          (isT?'Table 1: Enter your descriptive title here (required). Do not include reference citations.':'Figure 1: Enter your diagram title here (required).')+'"></div>'+
+        '<div style="border:1px solid var(--s300)"><div style="display:flex;gap:8px;padding:6px 8px;border-bottom:1px solid var(--s200);background:var(--s50);color:var(--s600)">'+
+          ico('italic')+ico('sup')+ico('sub')+'</div>'+
+          '<textarea id="pbLegend" rows="4" style="border:0;padding:14px;font-size:12.5px" placeholder="Enter your legend here (optional). Please include abbreviation definitions and reference citations here.">'+esc(init.legend||'')+'</textarea></div>'+
+      '</div>'+
+      '<div class="mf"><button class="btn-c" data-c>Cancel</button><button class="btn-ins" id="pbGo">'+(editing?'Update':'Insert')+'</button></div>'+
+      '</div></div>';
+    $('#pbLayout').value=init.layout||'two-column';
+    var buf=$('#pbBuf'), tt=$('#pbTitle'), go=$('#pbGo');
+    function sync(){ go.disabled = !(buf.value.trim() && tt.value.trim()); } sync();
+    buf.addEventListener('input',sync); tt.addEventListener('input',sync);
+    buf.addEventListener('paste',function(e){
+      var html=e.clipboardData.getData('text/html');
+      if(html){ e.preventDefault(); buf.value=sanitizeRichPaste(html); sync(); } });
+    go.onclick=function(){
+      var raw=buf.value.trim(), cap=tt.value.trim(), lg=$('#pbLegend').value.trim(), lay=$('#pbLayout').value;
+      var content = /<table|<svg|<img/i.test(raw) ? sanitizeRichPaste(raw)
+                  : isT ? tableFromDelimitedText(raw) : '<pre>'+escHtml(raw)+'</pre>';
+      closeModal();
+      replaceOrInsert('<figure class="gbmn-inline-media gbmn-inline-media-'+kind+' gbmn-media-'+lay+'" data-layout="'+lay+'" contenteditable="false" draggable="true" data-media-id="'+nid('md')+'">'+
+        mediaActionsHtml()+'<figcaption><strong>'+escHtml(cap)+'</strong>'+(lg?' — '+escHtml(lg):'')+'</figcaption>'+content+'</figure>');
+    };
+    wireClose();
+  }
+  function closeModal(){ $('#modalRoot').innerHTML=''; }
+  function wireClose(){ $$('#modalRoot [data-c]').forEach(function(b){ b.onclick=function(){ closeModal(); clearMarker(); editing=null; }; }); }
+
+  /* editor events */
+  area.addEventListener('input',function(){ emit(); });
+  area.addEventListener('keyup',function(){ saveSel(); detect(); });
+  area.addEventListener('mouseup',function(){ setTimeout(function(){saveSel();detect()},0); });
+  area.addEventListener('focus',function(){ saveSel(); detect(); });
+  area.addEventListener('keydown',function(e){
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); handleAct('undo'); return; }
+    if(e.key!=='Backspace'&&e.key!=='Delete')return;
+    var m=pickMedia(); if(!m)return; e.preventDefault(); push(); m.remove(); setSel(null); emit(); });
+  area.addEventListener('click',function(e){
+    var act=e.target.closest('[data-media-action]');
+    var fig=e.target.closest('.gbmn-inline-media');
+    if(act&&fig){ setSel(fig.dataset.mediaId);
+      if(act.dataset.mediaAction==='delete'){ push(); fig.remove(); setSel(null); emit(); }
+      else openEditFor(fig);
+      return; }
+    setSel(fig?fig.dataset.mediaId:null); });
+  area.addEventListener('paste',function(e){
+    var html=e.clipboardData.getData('text/html');
+    if(html&&/<table/i.test(html)){ e.preventDefault(); saveSel(); makeMarker();
+      insertHtml('<figure class="gbmn-inline-media gbmn-inline-media-table gbmn-media-two-column" data-layout="two-column" contenteditable="false" draggable="true" data-media-id="'+nid('md')+'">'+
+        mediaActionsHtml()+'<figcaption><strong>Table.</strong> Add title and legend...</figcaption>'+sanitizeRichPaste(html)+'</figure><p><br></p>'); } });
+  function detect(){ var s=window.getSelection(); if(!s||!s.rangeCount){blk.value='normal';return}
+    var n=s.getRangeAt(0).commonAncestorContainer;
+    while(n&&n!==area){ if(n.nodeType===1){ var t=n.tagName;
+      if(/^H[2-5]$/.test(t)){blk.value='subheading';return} if(/^(P|DIV|LI|BLOCKQUOTE)$/.test(t)){blk.value='normal';return} }
+      n=n.parentNode; }
+    blk.value='normal'; }
+  return { setValue:function(v){ area.innerHTML=v||''; updWc(); } };
+}
+
+/* ══ shared helpers ════════════════════════════════════════════ */
+function touch(){ save(); renderSidebar(); renderPreview(); }
+function restep(){ save(); renderAll(); }
+function cfg(){ return ARTICLE_TYPES[M.articleType]; }
+function sectionNames(){ return (cfg()?cfg().requiredSections:[]).filter(function(s){return s!=='Keywords'}); }
+function normalizeKeywords(v){ var k=v.split(/[;,]/).map(function(x){return x.trim()}).filter(Boolean); return k.length? k.join('; ')+'.' : ''; }
+function fileSizeLabel(f){ return f.size<1048576 ? Math.max(1,Math.round(f.size/1024))+' KB' : (f.size/1048576).toFixed(1)+' MB'; }
+function readDataUrl(f){ return new Promise(function(res){ var r=new FileReader(); r.onload=function(){res(String(r.result||''))}; r.readAsDataURL(f); }); }
+function formatAMAReference(ref){
+  if(!ref.authors||!ref.title||!ref.journalOrBook||!ref.year) return 'Incomplete citation data provided';
+  var a=ref.authors.trim(); if(a.slice(-1)!=='.') a+='.';
+  var t=ref.title.trim(), vol=ref.volume?String(ref.volume).trim():'', iss=ref.issue?'('+ref.issue+')':'',
+      pg=ref.pages?':'+ref.pages:'', sfx=ref.doi?' doi:'+ref.doi:(ref.url?' Available at: '+ref.url:'');
+  if(ref.type==='journal') return a+' '+t+'. *'+ref.journalOrBook+'*. '+ref.year+';'+vol+iss+pg+'.'+sfx;
+  if(ref.type==='book') return a+' *'+ref.journalOrBook+'*. '+ref.year+(vol?', Vol '+vol:'')+(ref.pages?', p. '+ref.pages:'')+'.'+sfx;
+  return a+' '+t+'. *'+ref.journalOrBook+'*. Published '+ref.year+'.'+sfx;
+}
+
+/* author editor state */
+var AF={first:'',middle:'',last:'',email:'',phone:'',orcid:'',spec:'Biochemistry',country:'Georgia',city:'Tbilisi',
+        inst:'',dept:'',affil:'',title:'MD, PhD',contrib:'Draft Writing & Methodology',affiliations:[],tags:[],corr:false,editingId:null,busy:false};
+function resetAF(){ AF.first='';AF.middle='';AF.last='';AF.email='';AF.phone='';AF.orcid='';AF.inst='';AF.dept='';AF.affil='';
+  AF.affiliations=[];AF.tags=[];AF.corr=false;AF.editingId=null; }
+/* citation editor state */
+var CF={type:'journal',authors:'',title:'',src:'',year:'',volume:'',issue:'',pages:'',doi:'',url:''};
+var SUPP={name:'',desc:'',url:'',size:''};
+var activeSection='';
+
+/* ══ step rendering ════════════════════════════════════════════ */
+function renderStep(){
+  var step=STEPS.filter(function(s){return s.id===activeStep})[0]||STEPS[0];
+  $('#stepKicker').textContent='Step Profile - '+activeStep.replace('-',' ');
+  $('#stepTitle').textContent=step.title;
+  $('#stepAction').innerHTML='';
+  var b=$('#stepBody'); b.innerHTML='';
+  var fn=VIEWS[activeStep]; if(fn) fn(b);
+  $('#btnPrev').disabled = activeStep==='getting-started';
+  $('#btnNext').disabled = activeStep==='summary-submit';
+  var names=sectionNames();
+  $('#btnNext').textContent = (activeStep==='sections' && names.indexOf(activeSection)<names.length-1)
+    ? 'Save and Continue Section →' : 'Save and Continue →';
+}
+
+var VIEWS={};
+
+/* 1 ── getting started */
+VIEWS['getting-started']=function(b){
+  b.innerHTML=
+   '<div class="infobox"><h4>'+ico('info','',' width:15px;height:15px;vertical-align:-2px')+' Online Academic Journal submission &amp; peer system</h4>'+
+   '<p>You are submitting to the official publication of <b>Georgian Biomedical and Medical Nexus (GBMN)</b>, representing elite biomedical research indices.</p></div>'+
+   '<p style="font-size:12.5px;line-height:1.6;color:var(--s600)">We leverage an advanced <b>Structured Entry Engine</b> inspired by top biomedical journals. Instead of submitting clumsy formatted Word documents containing styles errors, you enter your findings into structured databases.</p>'+
+   '<p style="font-size:12.5px;line-height:1.6;color:var(--s600)">The system then processes, validates, indexes, and compiles your paper into a beautiful pre-publication layout automatically, reducing editorial errors by up to <b>85%</b>.</p>'+
+   '<div class="box"><h5 style="font-size:11.5px;color:var(--s800)">Aesthetic Journal Guidelines Overview</h5>'+
+   '<ul style="margin:0;padding-left:18px;font-size:11px;line-height:1.7;color:var(--s600)">'+
+   '<li>References must use standard <b style="font-family:var(--mono);font-size:10px">AMA (American Medical Association)</b> style.</li>'+
+   '<li>MANDATED: Every author entered must have a linked, verified <b style="color:#4d7c0f;font-family:var(--mono)">ORCID iD</b>.</li>'+
+   '<li>All submissions are backed by the <b>Creative Commons Attribution (CC BY 4.0)</b> license.</li></ul></div>';
+};
+
+/* 2 ── policies */
+VIEWS['policies']=function(b){
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800)">CC-BY Open Access License</h4>'+
+   '<p style="font-size:11.5px;line-height:1.6;color:var(--s600)">Georgian Biomedical and Medical Nexus complies with global open-access initiatives. Authors retain copyright and grant the journal first publication privileges. The CC BY 4.0 license permits free dissemination, reading, indexing, and downloading provided authentic citations are preserved.</p></div>'+
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800)">Authorship Qualifications (ICMJE Rules)</h4>'+
+   '<p style="font-size:11.5px;line-height:1.6;color:var(--s600)">All listed authors must meet the four requirements set by the International Committee of Medical Journal Editors: (1) Substantial contributions to conception, design, or acquisition of studies; (2) Drafting or revising the intellectual content; (3) Final approval of the published copy; (4) Agree to be accountable for all aspects of work.</p></div>'+
+   '<label class="chk" style="padding-top:4px"><input type="checkbox" id="polAck" checked>'+
+   '<span style="color:var(--s600);font-weight:500">I hereby certify that all co-authors agree to the open-access CC-BY policies and ICMJE authorship rules.</span></label>';
+};
+
+/* 3 ── checklist */
+VIEWS['checklist']=function(b){
+  b.innerHTML='<p class="note">Please confirm each of primary submission criteria checkboxes before completing the structured fields:</p>'+
+   '<div class="box"><label class="chk"><input type="checkbox" id="ckAgree"'+(M.checklistAgreed?' checked':'')+'>'+
+   '<span style="color:var(--s700);font-weight:500"><b>Manuscript Integrity Assurance Checklist:</b> I declare that this scientific paper represents original, authentic scientific laboratory/clinical findings that are not currently under appraisal or draft review by other medical or publisher editorial boards. All corresponding authors endorse the data. We declare full IRB consent.</span></label></div>';
+  $('#ckAgree').addEventListener('change',function(e){
+    M.checklistAgreed=e.target.checked;
+    M.checklistAgreedAt=e.target.checked?new Date().toISOString():'';
+    touch(); });
+};
+
+/* 4 ── title & metadata */
+VIEWS['title-meta']=function(b){
+  b.innerHTML=
+   '<div><label class="lbl" for="mTitle">Full Scientific Title <span class="req">*</span></label>'+
+   '<input class="inp" id="mTitle" type="text" placeholder="e.g., Clinical trial of..." style="font-weight:600" value="'+esc(M.title)+'"></div>'+
+   '<div class="g2">'+
+     '<div><div style="display:flex;justify-content:space-between"><label class="lbl" for="mRun">Running Title (Abbreviated, Max 50 chars) <span class="req">*</span></label>'+
+       '<span style="font-size:10px;color:var(--s400);font-family:var(--mono)" id="runCount">'+M.runningTitle.length+' / 50</span></div>'+
+       '<input class="inp" id="mRun" type="text" maxlength="50" placeholder="e.g., Mitochondrial Deficits in Georgian Diabetes" value="'+esc(M.runningTitle)+'"></div>'+
+     '<div><label class="lbl" for="mSpec">Primary Medical Specialty <span class="req">*</span></label>'+
+       '<input class="inp" id="mSpec" type="text" placeholder="e.g., Medical Biochemistry &amp; Cardiology" value="'+esc(M.specialty)+'"></div>'+
+   '</div>';
+  $('#mTitle').addEventListener('input',function(e){ M.title=e.target.value; touch(); });
+  $('#mRun').addEventListener('input',function(e){ M.runningTitle=e.target.value; $('#runCount').textContent=e.target.value.length+' / 50'; touch(); });
+  $('#mSpec').addEventListener('input',function(e){ M.specialty=e.target.value; touch(); });
+};
+
+/* 5 ── authors */
+function savedAffiliations(){
+  var out=[]; M.authors.forEach(function(a){ (a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).forEach(function(x){ if(x&&out.indexOf(x)<0) out.push(x); }); });
+  return out;
+}
+VIEWS['authors']=function(b){
+  var roster = M.authors.length===0
+    ? '<p class="ital" style="text-align:center;padding:10px 0">No author affiliations linked. Use creation card below to append.</p>'
+    : M.authors.map(function(a,i){
+        return '<div class="rowcard"><div><div class="nm">'+(i+1)+'. '+esc(a.firstName)+' '+esc(a.lastName)+
+          (a.isCorresponding?' <span class="pill">Corresponding</span>':'')+'</div>'+
+          '<div class="af">'+esc(a.affiliation||'')+'</div><div class="or">Linked ORCID: '+esc(a.orcidId||'')+'</div></div>'+
+          '<div style="display:flex;gap:6px;align-items:center">'+
+          '<button class="iconbtn" data-mv="up" data-i="'+i+'"'+(i===0?' disabled':'')+' title="Move priority Up">'+ico('up')+'</button>'+
+          '<button class="iconbtn" data-mv="down" data-i="'+i+'"'+(i===M.authors.length-1?' disabled':'')+' title="Move priority Down">'+ico('down')+'</button>'+
+          '<button class="btn sm tl" data-edit="'+esc(a.id)+'">Edit</button>'+
+          '<button class="iconbtn" data-del="'+esc(a.id)+'" style="border-color:var(--rose200);background:var(--rose50);color:var(--rose700)" title="Exclude Affiliation">'+ico('trash')+'</button>'+
+          '</div></div>';
+      }).join('');
+
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800);display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--s200);padding-bottom:8px">'+
+     ico('users','',' width:15px;height:15px;color:var(--teal)')+' Indexed Manuscript Authors roster ('+M.authors.length+')</h4>'+roster+'</div>'+
+   '<form class="boxw" id="authForm">'+
+     '<h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--s800)">'+(AF.editingId?'Edit Author credentials':'Add Co-Author credentials')+'</h4>'+
+     '<div class="g4">'+
+       '<div><label class="lbl">First Name <span class="req">*</span></label><input class="inp sm" data-af="first" type="text" required placeholder="e.g., Ioseb" value="'+esc(AF.first)+'"></div>'+
+       '<div><label class="lbl">Middle Init.</label><input class="inp sm" data-af="middle" type="text" placeholder="T." value="'+esc(AF.middle)+'"></div>'+
+       '<div><label class="lbl">Last Name <span class="req">*</span></label><input class="inp sm" data-af="last" type="text" required placeholder="Kavtaradze" value="'+esc(AF.last)+'"></div>'+
+       '<div><label class="lbl">Mandatory ORCID iD <span class="req">*</span></label><input class="inp sm mono" data-af="orcid" type="text" required placeholder="0000-0002-1823-4412" value="'+esc(AF.orcid)+'">'+
+         '<button type="button" id="orcidFill" style="margin-top:4px;background:0;border:0;padding:0;font-size:10px;font-weight:700;color:var(--teal);cursor:pointer">'+(AF.busy?'Importing ORCID...':'Auto-fill author')+'</button></div>'+
+     '</div>'+
+     '<div class="g3">'+
+       '<div><label class="lbl">Academic Title (e.g., PhD) <span class="req">*</span></label><input class="inp sm" data-af="title" type="text" value="'+esc(AF.title)+'"></div>'+
+       '<div><label class="lbl">Email <span class="req">*</span></label><input class="inp sm" data-af="email" type="email" placeholder="author@tsmu.edu" value="'+esc(AF.email)+'"></div>'+
+       '<div><label class="lbl">Phone number</label><input class="inp sm" data-af="phone" type="text" placeholder="+995 599..." value="'+esc(AF.phone)+'"></div>'+
+     '</div>'+
+     '<div class="g3">'+
+       '<div><label class="lbl">Institutional Location <span class="req">*</span></label><input class="inp sm" data-af="inst" type="text" required placeholder="Tbilisi State Medical University" value="'+esc(AF.inst)+'"></div>'+
+       '<div><label class="lbl">Department</label><input class="inp sm" data-af="dept" type="text" placeholder="Department of Medical Biochemistry" value="'+esc(AF.dept)+'"></div>'+
+       '<div><label class="lbl">Specific scientific contributions <span class="req">*</span></label><input class="inp sm" data-af="contrib" type="text" placeholder="e.g., Conception, Biochemical Assays" value="'+esc(AF.contrib)+'"></div>'+
+     '</div>'+
+     '<div class="box" style="padding:12px">'+
+       '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">'+
+         '<div style="flex:1;min-width:240px"><label class="lbl">Affiliations for this author</label>'+
+           '<select class="sel sm" id="affPick" style="background:#fff"><option value="">Choose saved affiliation...</option>'+
+           savedAffiliations().map(function(a){return '<option value="'+esc(a)+'">'+esc(a)+'</option>'}).join('')+'</select></div>'+
+         '<div style="flex:1;min-width:240px"><label class="lbl">Add new affiliation</label>'+
+           '<input class="inp sm" id="affNew" style="background:#fff" placeholder="Department, Institution, City, Country"></div>'+
+         '<button type="button" class="btn t" id="affAdd">Add</button>'+
+       '</div>'+
+       (AF.affiliations.length? '<div style="display:flex;flex-wrap:wrap;gap:6px">'+AF.affiliations.map(function(a){
+          return '<button type="button" class="tagbtn" data-affx="'+esc(a)+'" title="Click to remove">'+esc(a)+' ×</button>'}).join('')+'</div>' : '')+
+     '</div>'+
+     '<div class="boxw" style="padding:12px">'+
+       '<h5 style="font-size:12px;color:var(--s800)">Contributions. How did each listed author contribute?</h5>'+
+       '<p style="font-size:10px;color:var(--s500)">Contributions (please check all that apply). All authors must contribute to at least one concept/data item, one writing/review item, and both required items.</p>'+
+       '<div class="g2" style="gap:7px">'+CONTRIB_OPTIONS.map(function(o){
+          return '<label class="chk" style="font-size:10.5px"><input type="checkbox" data-tag="'+esc(o)+'"'+(AF.tags.indexOf(o)>=0?' checked':'')+'><span>'+esc(o)+'</span></label>'}).join('')+'</div>'+
+     '</div>'+
+     '<label class="radio" style="gap:7px"><input type="checkbox" id="afCorr"'+(AF.corr?' checked':'')+'><span style="color:var(--s700)">Designate as corresponding author</span></label>'+
+     '<div><button type="submit" class="btn t">'+(AF.editingId?'Save Author Changes':'+ Link Author Affiliate to Manuscript')+'</button></div>'+
+   '</form>';
+
+  $$('[data-af]',b).forEach(function(el){ el.addEventListener('input',function(){ AF[el.dataset.af]=el.value; }); });
+  $$('[data-tag]',b).forEach(function(el){ el.addEventListener('change',function(){
+    var t=el.dataset.tag, i=AF.tags.indexOf(t); if(el.checked){ if(i<0)AF.tags.push(t) } else if(i>=0) AF.tags.splice(i,1); }); });
+  $('#afCorr').addEventListener('change',function(e){ AF.corr=e.target.checked; });
+  $('#affPick').addEventListener('change',function(e){ addAffil(e.target.value); e.target.value=''; });
+  $('#affAdd').addEventListener('click',function(){ addAffil($('#affNew').value); });
+  $('#affNew').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); addAffil(e.target.value); } });
+  $$('[data-affx]',b).forEach(function(el){ el.addEventListener('click',function(){
+    AF.affiliations=AF.affiliations.filter(function(x){return x!==el.dataset.affx}); renderStep(); }); });
+  $('#orcidFill').addEventListener('click',orcidLookup);
+  $$('[data-mv]',b).forEach(function(el){ el.addEventListener('click',function(){
+    var i=+el.dataset.i, d=el.dataset.mv, l=M.authors.slice();
+    if(d==='up'&&i>0){ var t=l[i];l[i]=l[i-1];l[i-1]=t; } else if(d==='down'&&i<l.length-1){ var u=l[i];l[i]=l[i+1];l[i+1]=u; }
+    M.authors=l; restep(); }); });
+  $$('[data-del]',b).forEach(function(el){ el.addEventListener('click',function(){
+    M.authors=M.authors.filter(function(a){return a.id!==el.dataset.del}); notify('Author removed from draft lists.','info'); restep(); }); });
+  $$('[data-edit]',b).forEach(function(el){ el.addEventListener('click',function(){
+    var a=M.authors.filter(function(x){return x.id===el.dataset.edit})[0]; if(!a)return;
+    AF.editingId=a.id; AF.first=a.firstName; AF.middle=a.middleInitial||''; AF.last=a.lastName; AF.email=a.email||'';
+    AF.phone=a.phone||''; AF.orcid=a.orcidId||''; AF.spec=a.specialty||AF.spec; AF.country=a.country||AF.country;
+    AF.city=a.city||AF.city; AF.inst=a.institution||''; AF.dept=a.department||''; AF.affil=a.affiliation||'';
+    AF.affiliations=(a.affiliations&&a.affiliations.length)?a.affiliations.slice():(a.affiliation?[a.affiliation]:[]);
+    AF.title=a.academicTitle||''; AF.contrib=a.contributionRole||''; AF.tags=(a.contributionTags||[]).slice(); AF.corr=!!a.isCorresponding;
+    renderStep(); $('#midPane').scrollTop=$('#midPane').scrollHeight; }); });
+  $('#authForm').addEventListener('submit',addAuthor);
+
+  function addAffil(v){ var c=(v||'').trim(); if(!c||AF.affiliations.indexOf(c)>=0)return;
+    AF.affiliations.push(c); if(!AF.affil) AF.affil=c; $('#affNew').value=''; renderStep(); }
+}
+function orcidLookup(){
+  var clean=(AF.orcid||'').replace(/^https?:\/\/orcid\.org\//i,'').trim();
+  if(!clean) return;
+  AF.busy=true; renderStep();
+  fetch('https://pub.orcid.org/v3.0/'+clean+'/record',{headers:{Accept:'application/json'}})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(rec){
+      var nm=rec&&rec.person&&rec.person.name||{};
+      var given=(nm['given-names']||{}).value||'', family=(nm['family-name']||{}).value||'';
+      var emails=((rec.person||{}).emails||{}).email||[];
+      var grp=((rec['activities-summary']||{}).employments||{})['affiliation-group']||[];
+      var org=grp[0]&&grp[0].summaries&&grp[0].summaries[0]&&grp[0].summaries[0]['employment-summary']&&grp[0].summaries[0]['employment-summary'].organization;
+      if(given&&!AF.first)AF.first=given; if(family&&!AF.last)AF.last=family;
+      if(emails[0]&&emails[0].email&&!AF.email)AF.email=emails[0].email;
+      if(org&&org.name){ if(!AF.inst)AF.inst=org.name;
+        if(org.address){ if(!AF.city&&org.address.city)AF.city=org.address.city; if(!AF.country&&org.address.country)AF.country=org.address.country; }
+        var full=[AF.dept,org.name,org.address&&org.address.city,org.address&&org.address.country].filter(Boolean).join(', ');
+        if(full&&AF.affiliations.indexOf(full)<0) AF.affiliations.push(full); }
+      AF.orcid=clean; AF.busy=false; renderStep();
+      notify('ORCID author metadata imported where available.','success'); })
+    .catch(function(){ AF.busy=false; renderStep();
+      notify('ORCID metadata could not be imported. You can complete author fields manually.','error'); });
+}
+function addAuthor(e){
+  e.preventDefault();
+  var affs = AF.affiliations.length ? AF.affiliations.slice()
+           : [AF.affil || [AF.dept,AF.inst,AF.city,AF.country].filter(Boolean).join(', ')].filter(Boolean);
+  if(!AF.first||!AF.last||!AF.orcid||(!AF.inst&&!affs.length)){
+    notify('First name, Last Name, Affiliation, and Mandated ORCID iD are required.','error'); return; }
+  var core=AF.tags.some(function(t){return ['Substantial contributions to concept or design','Acquisition, analysis, or interpretation of data'].indexOf(t)>=0});
+  var writ=AF.tags.some(function(t){return ['Drafting of the manuscript','Critical review of the manuscript for important intellectual content'].indexOf(t)>=0});
+  var req=['Agreed to be accountable for all aspects of the work','Will review the final version to be published'].every(function(t){return AF.tags.indexOf(t)>=0});
+  if(!core||!writ||!req){ notify('Each author must have concept/data, writing/review, accountability, and final review contributions checked.','error'); return; }
+  var a={ id:AF.editingId||nid('auth'), firstName:AF.first, middleInitial:AF.middle||undefined, lastName:AF.last,
+    email:AF.email, phone:AF.phone, orcidId:AF.orcid, specialty:AF.spec, country:AF.country, city:AF.city,
+    institution:AF.inst, department:AF.dept, affiliation:affs[0], affiliations:affs, academicTitle:AF.title,
+    contributionRole:AF.contrib||AF.tags.join('; '), contributionTags:AF.tags.slice(), isCorresponding:AF.corr };
+  var list = AF.editingId ? M.authors.filter(function(x){return x.id!==AF.editingId}) : M.authors.slice();
+  if(AF.corr) list=list.map(function(x){ x.isCorresponding=false; return x; });
+  if(AF.editingId){ var idx=M.authors.map(function(x){return x.id}).indexOf(AF.editingId);
+    list.splice(idx>=0?Math.min(idx,list.length):list.length,0,a); } else list.push(a);
+  M.authors=list;
+  notify('Author '+AF.first+' '+AF.last+' successfully '+(AF.editingId?'updated':'added')+'!','success');
+  resetAF(); restep();
+}
+
+/* 6 ── article type */
+VIEWS['article-type']=function(b){
+  b.innerHTML='<p class="note">Select the article profile category that corresponds with the scope of your investigation:</p>'+
+   '<div class="g2">'+Object.keys(ARTICLE_TYPES).map(function(k){ var t=ARTICLE_TYPES[k];
+     return '<button type="button" class="tile'+(M.articleType===k?' on':'')+'" data-at="'+k+'">'+
+       '<b>'+esc(t.name)+'</b><p>'+esc(t.description)+'</p>'+
+       '<div class="m"><span>Max Words: <b>'+t.maxWordCount+'</b></span><span>Max Refs: <b>'+t.maxReferences+'</b></span></div></button>'; }).join('')+'</div>';
+  $$('[data-at]',b).forEach(function(el){ el.addEventListener('click',function(){
+    M.articleType=el.dataset.at; activeSection=''; restep(); }); });
+};
+
+/* 7 ── abstract */
+VIEWS['abstract']=function(b){
+  if(cfg()&&cfg().abstractType==='none'){
+    b.innerHTML='<div class="box" style="text-align:center;padding:26px;color:var(--s500);font-size:13px">Abstract is not required for this article type. Proceed to next step.</div>';
+    return; }
+  var host=document.createElement('div'); b.appendChild(host);
+  mountRTE(host,{label:'Abstract *',hint:'Maximum 250 words. Use the toolbar for bold, italic, and lists.',
+    value:M.abstractContents.text||'', placeholder:'Enter your abstract here...',
+    onChange:function(v){ M.abstractContents={text:v}; touch(); }});
+};
+
+/* 8 ── keywords */
+VIEWS['keywords']=function(b){
+  var v=M.sections['Keywords']||'';
+  b.innerHTML='<div class="box"><label class="lbl" for="kwIn">Academic Indexing Keywords (3 to 6 MeSH terms, semicolon separated) <span class="req">*</span></label>'+
+    '<input class="inp" id="kwIn" type="text" style="background:#fff" placeholder="e.g., Diabetes Mellitus; Cardiomyopathies; Cytokines" value="'+esc(v)+'"></div>'+
+    '<p class="ital">Use semicolons between terms. Commas are converted automatically, and the final period is added on save. Number of tags entered: <b id="kwN">'+
+      v.split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean).length+'</b></p>';
+  $('#kwIn').addEventListener('input',function(e){
+    M.sections['Keywords']=e.target.value.replace(/,/g,';');
+    $('#kwN').textContent=M.sections['Keywords'].split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean).length;
+    touch(); });
+  $('#kwIn').addEventListener('blur',function(e){
+    M.sections['Keywords']=normalizeKeywords(e.target.value); e.target.value=M.sections['Keywords']; touch(); });
+};
+
+/* 9 ── manuscript sections */
+VIEWS['sections']=function(b){
+  var names=sectionNames();
+  if(!names.length){ b.innerHTML='<div class="box">Select an article type first.</div>'; return; }
+  if(!activeSection||names.indexOf(activeSection)<0) activeSection=names[0];
+  var idx=names.indexOf(activeSection);
+  b.innerHTML=
+   '<div class="box">'+
+     '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center">'+
+       '<div><h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--s800)">Manuscript subsections</h4>'+
+       '<p class="ital" style="margin-top:3px">Fill one subsection at a time for '+esc(cfg().name)+'. Preview generation keeps the journal order unchanged.</p></div>'+
+       '<span style="font-size:10.5px;font-weight:700;color:var(--teal-d);background:var(--teal-50);border:1px solid var(--teal-100);border-radius:99px;padding:3px 11px">'+(idx+1)+' / '+names.length+'</span>'+
+     '</div>'+
+     '<div class="g3" style="gap:8px">'+names.map(function(s,i){ var saved=stripTags(M.sections[s]||'');
+       return '<button type="button" class="secbtn'+(s===activeSection?' on':'')+'" data-sec="'+esc(s)+'">'+
+         '<span class="n">Section '+(i+1)+'</span><span class="t">'+esc(s)+'</span>'+
+         '<span class="s '+(saved?'ok':'no')+'">'+(saved?'Saved content':'Empty')+'</span></button>'; }).join('')+'</div>'+
+   '</div>';
+  var host=document.createElement('div'); b.appendChild(host);
+  mountRTE(host,{label:activeSection+' *', value:M.sections[activeSection]||'', showWordCount:true,
+    placeholder:'Write the full structured '+activeSection.toLowerCase()+' of the study...',
+    onChange:function(v){ M.sections[activeSection]=v; touch(); }});
+  $$('[data-sec]',b).forEach(function(el){ el.addEventListener('click',function(){ activeSection=el.dataset.sec; renderStep(); }); });
+};
+
+/* 10 ── references (AMA) */
+VIEWS['references']=function(b){
+  var lib = M.references.length===0
+    ? '<p class="ital">No citations cataloged yet.</p>'
+    : '<ol class="reflist">'+M.references.map(function(r,i){
+        return '<li><span>'+esc(formatAMAReference(r))+'</span>'+
+          '<button class="lk" data-rup="'+i+'"'+(i===0?' disabled':'')+'>[Up]</button>'+
+          '<button class="lk" data-rdn="'+i+'"'+(i===M.references.length-1?' disabled':'')+'>[Down]</button>'+
+          '<button class="lk rd" data-rdel="'+esc(r.id)+'">[Delete]</button></li>'; }).join('')+'</ol>';
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:11px;text-transform:uppercase;color:var(--s800)">Manuscript Reference Library ('+M.references.length+')</h4>'+lib+'</div>'+
+   '<form class="boxw" id="citeForm">'+
+     '<h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--s800)">Add Reference</h4>'+
+     '<div style="background:var(--teal-50);border:1px solid var(--teal-200);border-radius:8px;padding:12px">'+
+       '<label class="lbl" style="color:var(--teal-900)">Quick fill via DOI</label>'+
+       '<div style="display:flex;gap:8px"><input class="inp sm mono" id="cDoi" style="background:#fff" placeholder="e.g., 10.1056/NEJMoa2026816" value="'+esc(CF.doi)+'">'+
+       '<button type="button" class="btn t" id="doiGo">Auto-fill</button></div>'+
+       '<p style="font-size:10px;color:var(--teal-d);margin-top:6px">Enter DOI and click Auto-fill, or fill fields manually below.</p></div>'+
+     '<div style="display:flex;gap:16px;flex-wrap:wrap">'+
+       ['journal:Medical Journal','book:Book Publication','web:Website'].map(function(p){ var k=p.split(':')[0];
+         return '<label class="radio" style="font-weight:400"><input type="radio" name="ctype" value="'+k+'"'+(CF.type===k?' checked':'')+'><span>'+p.split(':')[1]+'</span></label>'; }).join('')+
+     '</div>'+
+     '<div class="g3"><div><label class="lbl">Authors (Surname Initials) <span class="req">*</span></label><input class="inp sm" data-cf="authors" required placeholder="Smith AJ, Jones BJ" value="'+esc(CF.authors)+'"></div>'+
+       '<div class="span2"><label class="lbl">Article / Chapter Title <span class="req">*</span></label><input class="inp sm" data-cf="title" required placeholder="Title of the article..." value="'+esc(CF.title)+'"></div></div>'+
+     '<div class="g4"><div class="span2"><label class="lbl">Journal / Book Publisher <span class="req">*</span></label><input class="inp sm" data-cf="src" required placeholder="Journal or Publisher name" value="'+esc(CF.src)+'"></div>'+
+       '<div><label class="lbl">Year <span class="req">*</span></label><input class="inp sm" data-cf="year" required placeholder="2024" value="'+esc(CF.year)+'"></div>'+
+       '<div><label class="lbl">Volume</label><input class="inp sm" data-cf="volume" placeholder="34" value="'+esc(CF.volume)+'"></div></div>'+
+     '<div class="g4"><div><label class="lbl">Issue</label><input class="inp sm" data-cf="issue" placeholder="1" value="'+esc(CF.issue)+'"></div>'+
+       '<div><label class="lbl">Pages</label><input class="inp sm" data-cf="pages" placeholder="22-29" value="'+esc(CF.pages)+'"></div>'+
+       '<div class="span2"><label class="lbl">URL (for websites)</label><input class="inp sm mono" data-cf="url" placeholder="https://..." value="'+esc(CF.url)+'"></div></div>'+
+     '<div><button type="submit" class="btn t">+ Add Reference</button></div>'+
+   '</form>';
+  $$('[data-cf]',b).forEach(function(el){ el.addEventListener('input',function(){ CF[el.dataset.cf]=el.value; }); });
+  $('#cDoi').addEventListener('input',function(e){ CF.doi=e.target.value; });
+  $$('input[name=ctype]',b).forEach(function(el){ el.addEventListener('change',function(){ CF.type=el.value; }); });
+  $$('[data-rup]',b).forEach(function(el){ el.addEventListener('click',function(){ var i=+el.dataset.rup, l=M.references.slice();
+    var t=l[i-1]; l[i-1]=l[i]; l[i]=t; M.references=l; restep(); }); });
+  $$('[data-rdn]',b).forEach(function(el){ el.addEventListener('click',function(){ var i=+el.dataset.rdn, l=M.references.slice();
+    var t=l[i+1]; l[i+1]=l[i]; l[i]=t; M.references=l; restep(); }); });
+  $$('[data-rdel]',b).forEach(function(el){ el.addEventListener('click',function(){
+    M.references=M.references.filter(function(r){return r.id!==el.dataset.rdel}); restep(); }); });
+  $('#doiGo').addEventListener('click',function(){
+    var d=(CF.doi||'').trim(); if(!d) return;
+    notify('Looking up DOI metadata...','info');
+    fetch('https://api.crossref.org/works/'+encodeURIComponent(d)).then(function(r){return r.json()}).then(function(data){
+      var w=data.message||{};
+      var auth=(w.author||[]).map(function(a){ return (a.family||'')+' '+String(a.given||'').split(' ').map(function(n){return n[0]||''}).join(''); }).join(', ');
+      CF.type='journal'; CF.authors=auth; CF.title=(w.title||[])[0]||'';
+      CF.src=(w['container-title']||[])[0]||w.publisher||'';
+      CF.year=String((((w.published||{})['date-parts']||[])[0]||[])[0]||'');
+      CF.volume=w.volume||''; CF.issue=w.issue||''; CF.pages=w.page||''; CF.doi=d;
+      if(CF.authors&&CF.title&&CF.src&&CF.year){
+        M.references.push({id:nid('ref'),type:'journal',authors:CF.authors,title:CF.title,journalOrBook:CF.src,year:CF.year,
+          volume:CF.volume||undefined,issue:CF.issue||undefined,pages:CF.pages||undefined,doi:d});
+        CF={type:'journal',authors:'',title:'',src:'',year:'',volume:'',issue:'',pages:'',doi:'',url:''};
+        notify('DOI metadata loaded and reference added.','success');
+      } else notify('DOI metadata loaded. Review fields and click Add Reference.','info');
+      restep();
+    }).catch(function(){ notify('Could not fetch DOI. Fill fields manually.','error'); });
+  });
+  $('#citeForm').addEventListener('submit',function(e){ e.preventDefault();
+    if(!CF.authors||!CF.title||!CF.src||!CF.year){ notify('Please specify standard Authors, Title, Source, and Year.','error'); return; }
+    M.references.push({id:nid('ref'),type:CF.type,authors:CF.authors,title:CF.title,journalOrBook:CF.src,year:CF.year,
+      volume:CF.volume||undefined,issue:CF.issue||undefined,pages:CF.pages||undefined,doi:CF.doi||undefined,url:CF.url||undefined});
+    notify('AMA Reference indexed successfully!','success');
+    CF={type:'journal',authors:'',title:'',src:'',year:'',volume:'',issue:'',pages:'',doi:'',url:''};
+    restep(); });
+};
+
+/* 11 ── supplementary */
+VIEWS['supplementary']=function(b){
+  b.innerHTML='<p class="note">Register supplementary files such as massive biochemical spreadsheets, sequence datasets, of MRI imagery:</p>'+
+   '<div class="box"><h5 style="font-size:12px;color:var(--s800)">Appendix attachments ('+M.supplementaryFiles.length+')</h5>'+
+   (M.supplementaryFiles.length===0? '<p class="ital">None attached.</p>' :
+     M.supplementaryFiles.map(function(f){ return '<div class="rowcard"><div><span style="font-weight:700;font-family:var(--mono);font-size:10px;display:block">'+esc(f.fileName)+'</span>'+
+       '<span style="font-size:10px;color:var(--s400)">'+esc(f.description||'')+'</span></div>'+
+       '<span style="font-family:var(--mono);font-weight:700;font-size:10px;color:var(--s500)">'+esc(f.fileSize||'')+'</span></div>'; }).join(''))+'</div>'+
+   '<form class="boxw" id="suppForm">'+
+     '<div><label class="lbl">Upload File <span class="req">*</span></label><input class="inp sm" type="file" id="suppFile">'+
+       (SUPP.name?'<p style="font-size:10px;color:var(--teal-d);margin-top:4px;font-family:var(--mono)">'+esc(SUPP.name)+'</p>':'')+'</div>'+
+     '<div><label class="lbl">Description</label><input class="inp sm" id="suppDesc" placeholder="Describe the supplementary material..." value="'+esc(SUPP.desc)+'"></div>'+
+     '<div><button type="submit" class="btn t sm" style="padding:6px 12px;font-size:11.5px">+ Add Supplementary File</button></div>'+
+   '</form>';
+  $('#suppFile').addEventListener('change',function(e){ var f=e.target.files[0]; if(!f)return;
+    SUPP.name=f.name; SUPP.size=fileSizeLabel(f); readDataUrl(f).then(function(u){ SUPP.url=u; renderStep(); }); });
+  $('#suppDesc').addEventListener('input',function(e){ SUPP.desc=e.target.value; });
+  $('#suppForm').addEventListener('submit',function(e){ e.preventDefault(); if(!SUPP.name)return;
+    M.supplementaryFiles.push({id:nid('supp'),fileName:SUPP.name,description:SUPP.desc,fileSize:SUPP.size||'Attached',fileUrl:SUPP.url,uploadedAt:new Date().toISOString()});
+    notify('Dataset supplementary file registered.','success'); SUPP={name:'',desc:'',url:'',size:''}; restep(); });
+};
+
+/* 12 ── ethics */
+VIEWS['ethics']=function(b){
+  var E=M.ethics;
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800)">Human subjects approval and IRB clearance <span class="req">*</span></h4>'+
+     '<div class="g3">'+
+       '<div><label class="lbl">Involved testing approved?</label><select class="sel sm" id="eApp" style="background:#fff">'+
+         [['yes','Yes - Formal approval obtained'],['no','No - Not approved'],['exempt','Exempt by ethics board'],['not-applicable','Not Applicable']]
+         .map(function(o){return '<option value="'+o[0]+'"'+(E.humanSubjectsApproved===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
+       '<div><label class="lbl">IRB Approval reference ID</label><input class="inp sm" id="eIrb" style="background:#fff" placeholder="e.g., IRB-TSMU-22-88" value="'+esc(E.irbApprovalNumber||'')+'"></div>'+
+       '<div><label class="lbl">Instituting Board / University</label><input class="inp sm" id="eInst" style="background:#fff" placeholder="Tbilisi State Medical University Committee" value="'+esc(E.irbInstitution||'')+'"></div>'+
+     '</div></div>'+
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800)">Informed Patient Consent statement <span class="req">*</span></h4>'+
+     '<select class="sel" id="eCons" style="background:#fff">'+
+     [['yes','Yes - Written informed consent obtained from all subjects'],['no','No - Consent omitted'],['not-applicable','Not applicable']]
+     .map(function(o){return '<option value="'+o[0]+'"'+(E.informedConsentObtained===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
+   '<div class="drop"><b>1. Upload Signed IRB/Ethics Statement Approval PDF</b>'+
+     '<p style="font-size:10.5px;color:var(--s400)">Drag &amp; drop or select signed laboratory authorization form</p>'+
+     '<input type="file" id="eFile" hidden>'+
+     '<button type="button" class="btn" id="ePick" style="margin-top:8px">'+(E.ethicsStatementFileName?'Change file ('+esc(E.ethicsStatementFileName)+')':'Attach IRB document')+'</button></div>';
+  $('#eApp').addEventListener('change',function(e){ M.ethics.humanSubjectsApproved=e.target.value; touch(); });
+  $('#eIrb').addEventListener('input',function(e){ M.ethics.irbApprovalNumber=e.target.value; touch(); });
+  $('#eInst').addEventListener('input',function(e){ M.ethics.irbInstitution=e.target.value; touch(); });
+  $('#eCons').addEventListener('change',function(e){ M.ethics.informedConsentObtained=e.target.value; touch(); });
+  $('#ePick').addEventListener('click',function(){ $('#eFile').click(); });
+  $('#eFile').addEventListener('change',function(e){ var f=e.target.files[0]; if(!f)return;
+    readDataUrl(f).then(function(u){ M.ethics.ethicsStatementFileName=f.name; M.ethics.ethicsStatementUploadedUrl=u;
+      notify('Signed Ethics IRB approval registered!','success'); restep(); }); });
+};
+
+/* 13 ── conflicts */
+VIEWS['conflicts']=function(b){
+  var C=M.conflictDisclosure;
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800)">GBMN Conflict of Interest disclosures</h4>'+
+     '<p style="font-size:11.5px;color:var(--s600)">You must disclose all conflicts. Select the corresponding option:</p>'+
+     '<div style="display:flex;gap:16px;flex-wrap:wrap">'+
+       '<label class="radio"><input type="radio" name="coi"'+(!C.hasConflict?' checked':'')+' data-coi="0"><span>No Conflicts to declare</span></label>'+
+       '<label class="radio"><input type="radio" name="coi"'+(C.hasConflict?' checked':'')+' data-coi="1"><span>Yes - I have conflicts to declare</span></label>'+
+     '</div>'+
+     (C.hasConflict? '<div><label class="lbl">Enter details of interests / industry sponsorship ties:</label>'+
+       '<textarea class="ta" id="coiTxt" rows="3" style="background:#fff" placeholder="Enter details...">'+esc(C.conflictDetails||'')+'</textarea></div>' : '')+
+   '</div>'+
+   (C.hasConflict?
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800);display:flex;gap:6px;align-items:center">'+ico('code','',' width:14px;height:14px;color:var(--teal)')+' Mandatory Conflict of Interest Form Verification</h4>'+
+     '<div class="rowcard"><div><span style="font-weight:700;color:var(--s800);display:block;font-size:11.5px">GBMN COI form document package</span>'+
+       '<p style="font-size:10px;color:var(--s400)">Download, complete, sign, and upload proof</p></div>'+
+       '<button type="button" class="btn tl sm" id="coiTpl">Download template form</button></div>'+
+     '<div class="drop"><b>Upload completed and signed Conflict statement</b><input type="file" id="coiFile" hidden>'+
+       '<button type="button" class="btn" id="coiPick">'+(C.signedCoiFormName?'Change COI file ('+esc(C.signedCoiFormName)+')':'Attach signed PDF form')+'</button></div></div>'
+   : '<div style="background:var(--em50);border:1px solid var(--em200);border-radius:12px;padding:14px;color:var(--em900);font-size:12px">'+
+     '<b>No Conflicts to declare</b> selected. A signed COI upload is not required for this manuscript.</div>');
+  $$('[data-coi]',b).forEach(function(el){ el.addEventListener('change',function(){
+    M.conflictDisclosure.hasConflict = el.dataset.coi==='1'; restep(); }); });
+  if($('#coiTxt')) $('#coiTxt').addEventListener('input',function(e){ M.conflictDisclosure.conflictDetails=e.target.value; touch(); });
+  if($('#coiTpl')) $('#coiTpl').addEventListener('click',function(){ notify('The COI template is provided by the editorial office.','info'); });
+  if($('#coiPick')){ $('#coiPick').addEventListener('click',function(){ $('#coiFile').click(); });
+    $('#coiFile').addEventListener('change',function(e){ var f=e.target.files[0]; if(!f)return;
+      readDataUrl(f).then(function(u){ M.conflictDisclosure.signedCoiFormName=f.name; M.conflictDisclosure.signedCoiFormUrl=u;
+        notify('Signed COI form registered.','success'); restep(); }); }); }
+};
+
+/* 14 ── funding */
+VIEWS['funding']=function(b){
+  var F=M.fundingDetails;
+  b.innerHTML=
+   '<div style="background:var(--s50);border-left:4px solid var(--s300);border-radius:0 8px 8px 0;padding:11px 13px;color:var(--s600);font-size:11.5px">'+
+     'Funding information is <b>optional</b>. Fill in only if your research received external funding.</div>'+
+   '<div class="g2">'+
+     '<div><label class="lbl">Sponsoring Research Foundation / Agency</label><input class="inp" id="fAg" placeholder="e.g., Shota Rustaveli National Science Foundation" value="'+esc(F.fundingAgency||'')+'"></div>'+
+     '<div><label class="lbl">Funding reference Grant Identification ID</label><input class="inp" id="fNo" placeholder="e.g., FR-24-9128" value="'+esc(F.grantNumber||'')+'"></div>'+
+   '</div>'+
+   '<div><label class="lbl">Describe specific allocation of funding resources:</label><textarea class="ta" id="fEx" rows="3">'+esc(F.explanation||'')+'</textarea></div>';
+  $('#fAg').addEventListener('input',function(e){ M.fundingDetails.fundingAgency=e.target.value; touch(); });
+  $('#fNo').addEventListener('input',function(e){ M.fundingDetails.grantNumber=e.target.value; touch(); });
+  $('#fEx').addEventListener('input',function(e){ M.fundingDetails.explanation=e.target.value; touch(); });
+};
+
+/* 15 ── files for editorial office */
+function editorFileBlock(opts){
+  var f=M.editorFiles.filter(function(x){return x.type===opts.type})[0];
+  return '<div><h4 style="font-size:12.5px;color:var(--s800)">'+opts.heading+'</h4>'+
+    '<p class="note">'+opts.sub+'</p>'+
+    '<div class="rowcard" style="background:var(--s50);margin-top:8px"><div style="flex:1"><span style="font-weight:700;color:var(--s800);display:block;font-size:11.5px">'+opts.tplName+'</span>'+
+      '<p style="font-size:10px;color:var(--s400)">'+opts.tplSub+'</p></div>'+
+      '<button type="button" class="btn tl sm" data-tpl="'+opts.type+'">'+opts.tplBtn+'</button></div>'+
+    '<div class="drop" style="margin-top:8px"><b>'+opts.upLabel+'</b>'+
+      '<input type="file" hidden data-up="'+opts.type+'">'+
+      '<button type="button" class="btn" data-pick="'+opts.type+'">'+(f?esc(f.fileName):'Upload File')+'</button>'+
+      (f? '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;border:1px solid var(--teal-100);background:var(--teal-50);border-radius:8px;padding:7px">'+
+          '<span style="font-weight:700;color:var(--teal-900);font-size:11px">'+esc(f.fileName)+(f.fileSize?' · '+esc(f.fileSize):'')+'</span>'+
+          '<a class="btn sm" href="'+f.fileUrl+'" target="_blank" rel="noopener">Preview</a>'+
+          '<a class="btn sm" href="'+f.fileUrl+'" download="'+esc(f.fileName)+'">Open</a>'+
+          '<button type="button" class="btn sm" data-pick="'+opts.type+'">Replace</button>'+
+          '<button type="button" class="btn sm rd" data-rm="'+opts.type+'">Delete</button></div>' : '')+
+    '</div></div>';
+}
+VIEWS['editor-files']=function(b){
+  b.innerHTML=
+    editorFileBlock({type:'cover-letter',heading:'Cover Letter',
+      sub:'Download the cover letter template, fill it in, sign it, and upload the completed version.',
+      tplName:'GBMN Cover Letter Template',tplSub:'Download, complete, sign, and upload',tplBtn:'Download Template',
+      upLabel:'Upload Completed Cover Letter'})+
+    editorFileBlock({type:'copyright-transfer',heading:'Copyright Transfer Form',
+      sub:'Download the copyright form, fill it in, sign it, and upload the completed version.',
+      tplName:'GBMN Copyright Transfer Agreement',tplSub:'Required for all submissions — download, sign, upload',tplBtn:'Download Form',
+      upLabel:'Upload Signed Copyright Form'});
+  $$('[data-pick]',b).forEach(function(el){ el.addEventListener('click',function(){ $('[data-up="'+el.dataset.pick+'"]',b).click(); }); });
+  $$('[data-up]',b).forEach(function(el){ el.addEventListener('change',function(e){ var f=e.target.files[0]; if(!f)return;
+    var type=el.dataset.up;
+    readDataUrl(f).then(function(u){
+      M.editorFiles=M.editorFiles.filter(function(x){return x.type!==type});
+      M.editorFiles.push({id:type+'-'+Date.now(),fileName:f.name,type:type,fileUrl:u,uploadedAt:new Date().toISOString(),fileSize:fileSizeLabel(f)});
+      notify(type.replace('-',' ')+' uploaded: '+f.name,'success'); restep(); }); }); });
+  $$('[data-rm]',b).forEach(function(el){ el.addEventListener('click',function(){
+    M.editorFiles=M.editorFiles.filter(function(x){return x.type!==el.dataset.rm});
+    notify(el.dataset.rm.replace('-',' ')+' removed.','success'); restep(); }); });
+  $$('[data-tpl]',b).forEach(function(el){ el.addEventListener('click',function(){
+    notify('The template is provided by the editorial office.','info'); }); });
+};
+
+/* 16 ── preview */
+VIEWS['preview']=function(b){
+  b.innerHTML='<div class="box" style="text-align:center;padding:22px">'+
+    '<p style="font-size:12.5px;color:var(--s600)">The live pre-publication proof is rendered in the panel on the right, in the exact GBMN printed layout — A4, two columns, masthead and footer on every page.</p>'+
+    '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">'+
+      '<button type="button" class="btn t" id="pvPdf">Download PDF</button>'+
+      '<button type="button" class="btn" id="pvTitlePg">Show title page</button>'+
+      '<button type="button" class="btn" id="pvWeb">Show web version</button>'+
+      '<button type="button" class="btn" id="pvHtml">Export HTML</button>'+
+      '<button type="button" class="btn" id="pvJson">Export metadata (JSON)</button>'+
+    '</div></div>'+
+    '<div class="box" id="pvIssues"></div>';
+  $('#pvPdf').addEventListener('click',function(){ setMode('print'); setTimeout(function(){window.print()},150); });
+  $('#pvTitlePg').addEventListener('click',function(){ setMode('title'); });
+  $('#pvWeb').addEventListener('click',function(){ setMode('web'); });
+  $('#pvHtml').addEventListener('click',exportHtml);
+  $('#pvJson').addEventListener('click',exportJson);
+  paintIssues();
+};
+
+/* 17 ── summary & submit */
+VIEWS['summary-submit']=function(b){
+  function line(ok,txt){ return '<div style="display:flex;gap:8px;align-items:center">'+
+    ico('sq','',' width:15px;height:15px;flex:0 0 15px;color:'+(ok?'#16a34a':'#cbd5e1'))+
+    '<span style="'+(ok?'color:var(--s700);font-weight:600':'color:var(--s400)')+'">'+txt+'</span></div>'; }
+  b.innerHTML=
+   '<div style="background:var(--amber50);border:1px solid var(--amber200);border-radius:12px;padding:14px;display:flex;gap:10px;color:var(--amber900)">'+
+     ico('alert','',' width:17px;height:17px;flex:0 0 17px;color:#d97706;margin-top:2px')+
+     '<div><h4 style="font-size:12.5px">Final Pre-Submission integrity analysis</h4>'+
+     '<p style="font-size:11.5px;line-height:1.5">Once submitted, authors cannot modify structure of the study independently unless editors grant revision permissions. Please review your content diagnostics summary.</p></div></div>'+
+   '<div class="box"><h4 style="font-size:11.5px;text-transform:uppercase;color:var(--s800)">Mandatory Components appraisal:</h4>'+
+     '<div class="g2" style="gap:10px;font-size:11.5px">'+
+       line(!!M.title.trim(),'Paper Title completed')+
+       line(M.authors.length>0,'Authors affil roster linked')+
+       line(M.authors.some(function(a){return a.isCorresponding}),'Corresponding author selected')+
+       line(M.references.length>0,'AMA references bibliographic data filled')+
+       line(!!M.ethics.humanSubjectsApproved,'IRB statement of subjects disclosure')+
+     '</div></div>'+
+   '<div id="sumIssues" class="box"></div>'+
+   '<div style="text-align:center;padding-top:6px">'+
+     '<div style="display:flex;flex-direction:column;align-items:center;gap:10px">'+
+       '<button type="button" id="btnSubmit" class="btn t" style="padding:14px 30px;border-radius:12px;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;background:var(--teal-900);border-color:var(--teal-900)">Save &amp; Submit to Editorial Office</button>'+
+       '<button type="button" id="btnDraft" class="btn" style="padding:8px 22px;border-radius:12px">Save as Draft</button>'+
+     '</div>'+
+     '<p style="font-size:10px;color:var(--s400);margin-top:6px">A confirmation notification will be routed to your academic mailbox credentials.</p></div>';
+  paintIssues($('#sumIssues'));
+  $('#btnSubmit').addEventListener('click',function(){
+    if(!M.title.trim()){ notify('Submission error: Full title is missing from metadata.','error'); return; }
+    if(!M.authors.length){ notify('Submission error: Minimum of 1 author affiliate matching credentials required.','error'); return; }
+    M.status='Submitted'; M.submittedAt=new Date().toISOString();
+    notify('Manuscript marked as submitted. Download the PDF and send it with the editorial package.','success');
+    go('getting-started'); });
+  $('#btnDraft').addEventListener('click',function(){ save(); notify('Draft saved. You can return to continue editing.','success'); });
+};
+
+/* ── footer navigation ── */
+$('#btnPrev').addEventListener('click',function(){
+  var names=sectionNames(), i=names.indexOf(activeSection);
+  if(activeStep==='sections'&&i>0){ activeSection=names[i-1]; renderStep(); return; }
+  var k=STEPS.map(function(s){return s.id}).indexOf(activeStep);
+  if(k>0) go(STEPS[k-1].id); });
+$('#btnSave').addEventListener('click',function(){ save(); notify('Draft saved. You can safely continue later.','success'); });
+$('#btnNext').addEventListener('click',function(){
+  var names=sectionNames(), i=names.indexOf(activeSection);
+  if(activeStep==='sections'&&i>-1&&i<names.length-1){
+    save(); var nx=names[i+1]; notify(activeSection+' saved. Continue with '+nx+'.','success');
+    activeSection=nx; renderStep(); renderSidebar(); return; }
+  var k=STEPS.map(function(s){return s.id}).indexOf(activeStep);
+  if(k<STEPS.length-1) go(STEPS[k+1].id); });
+
+/* ══ document builders — printed GBMN layout ═══════════════════ */
+function ital(s){ return esc(s).replace(/\*([^*]+)\*/g,'<i>$1</i>'); }
+function affilList(){
+  var out=[]; M.authors.forEach(function(a){
+    (a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).forEach(function(x){ if(x&&out.indexOf(x)<0) out.push(x); }); });
+  return out;
+}
+function volLine(){
+  var p=[], pv=M.preview||{};
+  if(pv.vol) p.push('VOLUME '+pv.vol);
+  if(pv.iss) p.push('ISSUE '+pv.iss);
+  var s=p.join(' ');
+  return ((s? s+'.' : '')+(pv.period? ' '+pv.period : '')).toUpperCase().trim();
+}
+function masthead(){
+  return '<div class="pmast"><div class="mk"><img src="'+LOGO+'" alt="Georgian Biomedical and Medical Nexus"></div>'+
+    '<div class="vol">'+esc(volLine())+'</div></div><hr class="prule"><hr class="prule2">'; }
+function footer(){
+  var yr=(M.preview&&M.preview.year)||String(new Date().getFullYear());
+  return '<div class="pfoot">Georgian Biomedical and Medical Nexus (Former Georgian Biomedical News)<br>'+
+    'ISSN (Online): 2720-8796&nbsp;&nbsp;ISSN (Print): 2720-7994<br>'+
+    'Downloaded from gbmn.org. For personal use only. No other uses without permission.<br>'+
+    'Copyright &copy; '+esc(yr)+'. All rights reserved.</div>'; }
+function authorLine(){
+  var affs=affilList();
+  return M.authors.map(function(a){
+    var nums=(a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).map(function(x){ var i=affs.indexOf(x); return i<0?'':String(i+1); }).filter(Boolean);
+    var sup=nums.slice();
+    if(a.orcidId) sup.push('ID');
+    if(a.isCorresponding) sup.push('*');
+    var nm=[a.firstName,a.middleInitial,a.lastName].filter(Boolean).join(' ');
+    return esc(nm)+(sup.length?'<sup>'+esc(sup.join(','))+'</sup>':'');
+  }).join(', '); }
+function affilBlock(){
+  var affs=affilList(); if(!affs.length) return '';
+  return '<div class="paffil">'+affs.map(function(a,i){return '<div><sup>'+(i+1)+'</sup> '+esc(a)+'</div>'}).join('')+'</div>'; }
+function corrLine(){
+  var c=M.authors.filter(function(a){return a.isCorresponding})[0]; if(!c) return '';
+  var nm=[c.firstName,c.middleInitial,c.lastName].filter(Boolean).join(' ');
+  return '<div class="pcorr"><b>*</b> Corresponding author: '+esc(nm)+(c.email?' — '+esc(c.email):'')+'</div>'; }
+function doiLine(){ var d=(M.publicationInfo||{}).doi; return d? '<div class="pdoi">DOI. '+esc(d)+'</div>' : ''; }
+function absBlock(){
+  var txt=(M.abstractContents.text||'').trim(), kw=(M.sections['Keywords']||'').trim();
+  var none = cfg()&&cfg().abstractType==='none';
+  if((!txt||none) && !kw) return '';
+  return (none?'':'<div class="pabs-h">ABSTRACT</div>')+'<div class="pabs">'+
+    (none?'':txt)+ (kw? '<p><span class="lb">KEYWORDS.</span> '+esc(kw)+'</p>':'')+'</div>'; }
+function sectionsHtml(withIds){
+  return sectionNames().map(function(s,i){
+    var html=(M.sections[s]||'').trim(); if(!html) return '';
+    return '<h2'+(withIds?' id="s'+i+'"':'')+'>'+esc(s).toUpperCase()+'</h2>'+html;
+  }).join(''); }
+function declRows(){
+  var E=M.ethics,C=M.conflictDisclosure,F=M.fundingDetails,rows=[];
+  var eth=[];
+  if(E.humanSubjectsApproved==='yes') eth.push('Human subjects approval was obtained'+(E.irbInstitution?' from '+E.irbInstitution:'')+(E.irbApprovalNumber?' (approval '+E.irbApprovalNumber+')':'')+'.');
+  else if(E.humanSubjectsApproved==='exempt') eth.push('The study was granted exemption by the ethics board'+(E.irbInstitution?' of '+E.irbInstitution:'')+'.');
+  else if(E.humanSubjectsApproved==='not-applicable') eth.push('Ethics approval was not applicable to this work.');
+  if(E.informedConsentObtained==='yes') eth.push('Written informed consent was obtained from all subjects.');
+  else if(E.informedConsentObtained==='not-applicable') eth.push('Informed consent was not applicable.');
+  if(eth.length) rows.push(['Ethics approval',eth.join(' ')]);
+  rows.push(['Conflict of interest', C.hasConflict ? (C.conflictDetails||'The authors declare conflicts of interest.') : 'The authors declare no conflict of interest.']);
+  var fu=[F.fundingAgency,F.grantNumber?'Grant '+F.grantNumber:'',F.explanation].filter(Boolean).join('. ');
+  rows.push(['Funding', fu || 'This research received no external funding.']);
+  var contrib=M.authors.filter(function(a){return a.contributionRole}).map(function(a){
+    var ini=(a.firstName?a.firstName[0]+'.':'')+(a.lastName?a.lastName[0]+'.':'');
+    return ini+' '+a.contributionRole; }).join('; ');
+  if(contrib) rows.push(['Author contributions',contrib]);
+  return rows; }
+function declHtml(){
+  var rows=declRows(); if(!rows.length) return '';
+  return '<h2>DECLARATIONS</h2><div class="decl">'+rows.map(function(r){return '<p><b>'+r[0]+'.</b> '+esc(r[1])+'</p>'}).join('')+'</div>'; }
+function refsHtml(){
+  if(!M.references.length) return '';
+  return '<h2>REFERENCES</h2><ol class="refs">'+M.references.map(function(r){return '<li>'+ital(formatAMAReference(r))+'</li>'}).join('')+'</ol>'; }
+function frontMatter(){
+  return '<h1 class="ptitle">'+esc(M.title||'Untitled manuscript')+'</h1>'+
+    '<div class="pauth">'+authorLine()+'</div>'+ absBlock()+ doiLine(); }
+function bodyNodes(){
+  var holder=document.createElement('div');
+  holder.innerHTML = sectionsHtml(false)+declHtml();
+  holder.querySelectorAll('.gbmn-media-actions').forEach(function(n){n.remove()});
+  holder.querySelectorAll('[contenteditable]').forEach(function(n){n.removeAttribute('contenteditable')});
+  var nodes=Array.prototype.slice.call(holder.children);
+  if(M.references.length){
+    var h=document.createElement('h2'); h.textContent='REFERENCES'; nodes.push(h);
+    M.references.forEach(function(r,i){
+      var ol=document.createElement('ol'); ol.className='refs'; ol.setAttribute('start',String(i+1));
+      var li=document.createElement('li'); li.innerHTML=ital(formatAMAReference(r)); ol.appendChild(li); nodes.push(ol); });
+  }
+  return nodes; }
+function pageShell(first){
+  var pg=document.createElement('div'); pg.className='page';
+  pg.innerHTML = masthead() + (first? '<div class="pfront">'+frontMatter()+'</div>' : '') + '<div class="pbody"></div>' + footer();
+  return pg; }
+function wordCount(){ return sectionNames().reduce(function(n,s){ var t=stripTags(M.sections[s]||''); return n+(t?t.split(/\s+/).length:0); },0); }
+function titlePage(){
+  var orcids=M.authors.filter(function(a){return a.orcidId}).map(function(a){
+    return esc([a.firstName,a.lastName].filter(Boolean).join(' '))+' — '+esc(a.orcidId); });
+  var media=0; sectionNames().forEach(function(s){ media+=((M.sections[s]||'').match(/gbmn-inline-media /g)||[]).length; });
+  return '<div class="page">'+masthead()+
+    '<h1 class="ptitle">'+esc(M.title||'Untitled manuscript')+'</h1>'+
+    '<div class="pauth">'+authorLine()+'</div>'+affilBlock()+corrLine()+doiLine()+
+    '<div class="tp-meta">'+
+      '<div><span class="k">Article type</span><span class="v">'+esc(cfg()?cfg().name:'')+'</span></div>'+
+      '<div><span class="k">Running title</span><span class="v">'+esc(M.runningTitle)+'</span></div>'+
+      '<div><span class="k">Specialty</span><span class="v">'+esc(M.specialty)+'</span></div>'+
+      '<div><span class="k">Keywords</span><span class="v">'+esc(M.sections['Keywords']||'')+'</span></div>'+
+      '<div><span class="k">Word count (body)</span><span class="v">'+wordCount()+'</span></div>'+
+      '<div><span class="k">Figures / Tables</span><span class="v">'+media+'</span></div>'+
+      '<div><span class="k">References</span><span class="v">'+M.references.length+'</span></div>'+
+      (orcids.length?'<div><span class="k">ORCID</span><span class="v">'+orcids.join('<br>')+'</span></div>':'')+
+    '</div>'+
+    '<div class="tp-note">This title page is submitted separately from the main manuscript, so that the manuscript can be sent to reviewers without author identifying information.</div>'+
+    footer()+'</div>'; }
+function webVersion(){
+  var toc=sectionNames().filter(function(s){return (M.sections[s]||'').trim()}).map(function(s,i){return '<a href="#s'+i+'">'+esc(s)+'</a>'}).join('');
+  var body=sectionsHtml(true)+declHtml()+refsHtml();
+  var d=document.createElement('div'); d.innerHTML=body;
+  d.querySelectorAll('.gbmn-media-actions').forEach(function(n){n.remove()});
+  d.querySelectorAll('[contenteditable]').forEach(function(n){n.removeAttribute('contenteditable')});
+  return '<article class="web"><div class="wtop"><img src="'+LOGO+'" alt="GBMN"><div class="wv">'+esc(volLine())+'</div></div>'+
+    '<div class="wbody"><h1 class="ptitle">'+esc(M.title||'Untitled manuscript')+'</h1>'+
+    '<div class="pauth">'+authorLine()+'</div>'+affilBlock()+corrLine()+absBlock()+doiLine()+
+    (toc?'<nav class="toc"><b>CONTENTS</b>'+toc+'</nav>':'')+
+    '<div class="pbody">'+d.innerHTML+'</div></div></article>'; }
+
+/* ══ validation ════════════════════════════════════════════════ */
+function validate(){
+  var p=[], c=cfg();
+  if(!M.title.trim()) p.push('Title is empty.');
+  if(!M.runningTitle.trim()) p.push('Running title is empty.');
+  if(!M.specialty.trim()) p.push('Primary medical specialty is empty.');
+  if(!M.checklistAgreed) p.push('The manuscript integrity checklist has not been accepted.');
+  if(!M.authors.length) p.push('No authors have been added.');
+  if(M.authors.length && !M.authors.some(function(a){return a.isCorresponding})) p.push('No corresponding author is marked.');
+  M.authors.forEach(function(a){ if(!a.orcidId) p.push([a.firstName,a.lastName].filter(Boolean).join(' ')+' has no ORCID iD.'); });
+  if(c&&c.abstractType!=='none'){
+    var aw=stripTags(M.abstractContents.text||''); aw=aw?aw.split(/\s+/).length:0;
+    if(!aw) p.push('Abstract is empty.'); else if(aw>250) p.push('Abstract is '+aw+' words — the limit is 250.'); }
+  var kn=(M.sections['Keywords']||'').split(/[;,]/).map(function(x){return x.trim()}).filter(Boolean).length;
+  if(!kn) p.push('No keywords entered.'); else if(kn<3||kn>6) p.push(kn+' keywords — 3 to 6 are required.');
+  sectionNames().filter(function(s){return s!=='Acknowledgments'}).forEach(function(s){
+    if(stripTags(M.sections[s]||'').length<100) p.push('Section "'+s+'" is empty or too short.'); });
+  var w=wordCount(); if(c&&w>c.maxWordCount) p.push('Body is '+w+' words — the limit for '+c.name+' is '+c.maxWordCount+'.');
+  if(!M.references.length) p.push('Reference list is empty.');
+  else { if(c&&M.references.length>c.maxReferences) p.push(M.references.length+' references — the limit for '+c.name+' is '+c.maxReferences+'.');
+    M.references.forEach(function(r,i){ if(!r.authors||!r.title||!r.year||!r.journalOrBook) p.push('Reference '+(i+1)+' is incomplete.'); }); }
+  var media=0; sectionNames().forEach(function(s){ media+=((M.sections[s]||'').match(/gbmn-inline-media /g)||[]).length; });
+  if(c&&media>c.maxFiguresTables) p.push(media+' figures/tables — the limit for '+c.name+' is '+c.maxFiguresTables+'.');
+  if(M.conflictDisclosure.hasConflict && !M.conflictDisclosure.signedCoiFormName) p.push('A signed COI form is required when conflicts are declared.');
+  return p;
+}
+function paintIssues(box){
+  box=box||$('#pvIssues'); if(!box) return;
+  var p=validate();
+  if(!p.length){ box.innerHTML='<b style="color:var(--em700)">No issues</b><div class="note" style="margin-top:4px">The manuscript is ready to submit.</div>'; return; }
+  box.innerHTML='<b style="color:var(--amber700)">'+p.length+(p.length===1?' item to fix':' items to fix')+'</b>'+
+    '<ul style="margin:6px 0 0;padding-left:18px;font-size:11.5px;line-height:1.6;color:var(--s600)">'+
+    p.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>';
+}
+
+/* ══ pagination ════════════════════════════════════════════════ */
+function fitsIn(box){ return box.scrollWidth <= box.clientWidth + 1 && box.scrollHeight <= box.clientHeight + 1; }
+function splitBlock(box,node){
+  if(!/^(P|DIV)$/.test(node.tagName) || node.querySelector('img,table,figure')) return null;
+  var words=(node.textContent||'').split(/\s+/).filter(Boolean);
+  if(words.length<30) return null;
+  var head=node.cloneNode(false); box.appendChild(head);
+  var lo=0,hi=words.length,best=0;
+  while(lo<=hi){ var mid=(lo+hi)>>1; head.textContent=words.slice(0,mid).join(' ');
+    if(fitsIn(box)){ best=mid; lo=mid+1; } else hi=mid-1; }
+  if(best<15){ box.removeChild(head); return null; }
+  head.textContent=words.slice(0,best).join(' ');
+  var tail=node.cloneNode(false); tail.textContent=words.slice(best).join(' '); tail.style.textIndent='0';
+  return tail;
+}
+function paginate(){
+  var sc=$('#scroller'); sc.innerHTML='';
+  var queue=bodyNodes(), i=0, guard=0;
+  do{
+    var pg=pageShell(guard===0); sc.appendChild(pg);
+    var box=pg.querySelector('.pbody');
+    while(i<queue.length){
+      var node=queue[i].cloneNode(true);
+      box.appendChild(node);
+      if(fitsIn(box)){ i++; continue; }
+      box.removeChild(node);
+      if(!box.children.length){ box.appendChild(node); i++; break; }
+      var tail=splitBlock(box,queue[i]);
+      if(tail) queue[i]=tail;
+      break;
+    }
+    guard++;
+  } while(i<queue.length && guard<80);
+  return guard;
+}
+
+/* ══ preview render ════════════════════════════════════════════ */
+var pvMode='print';
+function setMode(m){ pvMode=m;
+  $$('#pvTgl button').forEach(function(x){ x.setAttribute('aria-selected', x.dataset.pv===m?'true':'false'); });
+  renderPreview(); }
+function fitPreview(){
+  var wrap=$('#prevWrap'), sc=$('#scroller'), pane=$('#prevPane');
+  if(!wrap||!sc||!pane) return;
+  if(window.matchMedia('(max-width:1040px)').matches){ sc.style.removeProperty('--pvs'); wrap.style.height='auto'; return; }
+  var avail=pane.clientWidth, natural=sc.offsetWidth||1;
+  var s=Math.min(1, avail/natural);
+  sc.style.setProperty('--pvs', String(s));
+  wrap.style.height = Math.ceil(sc.offsetHeight*s)+'px';
+}
+window.addEventListener('resize',function(){ fitPreview(); });
+
+function renderPreview(){
+  if(pvMode==='print'){
+    var n=paginate();
+    $('#pvNote').textContent='A4 · '+n+' page'+(n===1?'':'s')+' · two columns · '+wordCount()+' words';
+  } else if(pvMode==='title'){
+    $('#scroller').innerHTML=titlePage();
+    $('#pvNote').textContent='separate title page';
+  } else {
+    $('#scroller').innerHTML=webVersion();
+    $('#pvNote').textContent='how it will look on the site';
+  }
+  fitPreview();
+  if($('#pvIssues')) paintIssues($('#pvIssues'));
+  if($('#sumIssues')) paintIssues($('#sumIssues'));
+}
+$('#pvTgl').addEventListener('click',function(e){ var b=e.target.closest('button[data-pv]'); if(b) setMode(b.dataset.pv); });
+['pvVol','pvIss','pvPeriod'].forEach(function(id){
+  var el=$('#'+id), key=id.replace('pv','').toLowerCase();
+  el.value = (M.preview&&M.preview[key==='period'?'period':key])||'';
+  el.addEventListener('input',function(){ M.preview[key]=el.value; save(); renderPreview(); });
+});
+$('#pvDoi').value=(M.publicationInfo||{}).doi||'';
+$('#pvDoi').addEventListener('input',function(e){ M.publicationInfo.doi=e.target.value; save(); renderPreview(); });
+
+/* ══ exports ═══════════════════════════════════════════════════ */
+function slug(){ var a=M.authors[0]; var base=(a&&a.lastName)?a.lastName:'manuscript';
+  var pv=M.preview||{};
+  return ('GBMN-'+(pv.year||'')+'-'+(pv.vol||'')+'-'+(pv.iss||'')+'-'+base).replace(/[^A-Za-z0-9\-]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,''); }
+function dl(name,blob){ var u=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=u; a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); },1500); }
+function exportHtml(){
+  var css=Array.prototype.map.call(document.styleSheets,function(s){
+    try{ return Array.prototype.map.call(s.cssRules,function(r){return r.cssText}).join('\n'); }catch(e){ return ''; } }).join('\n');
+  var doc='<!doctype html><html lang="en"><head><meta charset="utf-8">'+
+    '<meta name="viewport" content="width=device-width, initial-scale=1"><title>'+esc(M.title)+'</title>'+
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap">'+
+    '<style>'+css+'\nbody{background:#8f979d;margin:0;padding:24px 12px;display:flex;justify-content:center;overflow:auto;height:auto}'+
+    '\n.web{box-shadow:0 2px 24px rgba(0,0,0,.3)}</style></head><body>'+webVersion()+'</body></html>';
+  dl(slug()+'.html', new Blob([doc],{type:'text/html;charset=utf-8'}));
+}
+function exportJson(){
+  var meta={ id:M.id, status:M.status, articleType:M.articleType, title:M.title, runningTitle:M.runningTitle, specialty:M.specialty,
+    publicationInfo:M.publicationInfo, checklistAgreed:M.checklistAgreed,
+    authors:M.authors, abstract:stripTags(M.abstractContents.text||''),
+    keywords:(M.sections['Keywords']||'').split(/[;,]/).map(function(x){return x.trim()}).filter(Boolean),
+    sections:M.sections, references:M.references, supplementaryFiles:M.supplementaryFiles.map(function(f){return {fileName:f.fileName,description:f.description,fileSize:f.fileSize}}),
+    ethics:M.ethics, conflictDisclosure:{hasConflict:M.conflictDisclosure.hasConflict,conflictDetails:M.conflictDisclosure.conflictDetails,signedCoiFormName:M.conflictDisclosure.signedCoiFormName},
+    fundingDetails:M.fundingDetails, wordCount:wordCount(), updatedAt:M.updatedAt };
+  dl(slug()+'.json', new Blob([JSON.stringify(meta,null,2)],{type:'application/json'}));
+}
+$('#btnPdf').addEventListener('click',function(){
+  if(pvMode!=='print') setMode('print');
+  setTimeout(function(){ window.print(); },150); });
+$('#btnHtml').addEventListener('click',exportHtml);
+
+/* ══ boot ══════════════════════════════════════════════════════ */
+function renderAll(){ renderSidebar(); renderStep(); renderPreview(); }
+renderAll();
+})();
+</script>
+</body>
+</html>

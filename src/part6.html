@@ -1,0 +1,299 @@
+
+/* ══ shared helpers ════════════════════════════════════════════ */
+function touch(){ save(); renderSidebar(); renderPreview(); }
+function restep(){ save(); renderAll(); }
+function cfg(){ return ARTICLE_TYPES[M.articleType]; }
+function sectionNames(){ return (cfg()?cfg().requiredSections:[]).filter(function(s){return s!=='Keywords'}); }
+function normalizeKeywords(v){ var k=v.split(/[;,]/).map(function(x){return x.trim()}).filter(Boolean); return k.length? k.join('; ')+'.' : ''; }
+function fileSizeLabel(f){ return f.size<1048576 ? Math.max(1,Math.round(f.size/1024))+' KB' : (f.size/1048576).toFixed(1)+' MB'; }
+function readDataUrl(f){ return new Promise(function(res){ var r=new FileReader(); r.onload=function(){res(String(r.result||''))}; r.readAsDataURL(f); }); }
+function formatAMAReference(ref){
+  if(!ref.authors||!ref.title||!ref.journalOrBook||!ref.year) return 'Incomplete citation data provided';
+  var a=ref.authors.trim(); if(a.slice(-1)!=='.') a+='.';
+  var t=ref.title.trim(), vol=ref.volume?String(ref.volume).trim():'', iss=ref.issue?'('+ref.issue+')':'',
+      pg=ref.pages?':'+ref.pages:'', sfx=ref.doi?' doi:'+ref.doi:(ref.url?' Available at: '+ref.url:'');
+  if(ref.type==='journal') return a+' '+t+'. *'+ref.journalOrBook+'*. '+ref.year+';'+vol+iss+pg+'.'+sfx;
+  if(ref.type==='book') return a+' *'+ref.journalOrBook+'*. '+ref.year+(vol?', Vol '+vol:'')+(ref.pages?', p. '+ref.pages:'')+'.'+sfx;
+  return a+' '+t+'. *'+ref.journalOrBook+'*. Published '+ref.year+'.'+sfx;
+}
+
+/* author editor state */
+var AF={first:'',middle:'',last:'',email:'',phone:'',orcid:'',spec:'Biochemistry',country:'Georgia',city:'Tbilisi',
+        inst:'',dept:'',affil:'',title:'MD, PhD',contrib:'Draft Writing & Methodology',affiliations:[],tags:[],corr:false,editingId:null,busy:false};
+function resetAF(){ AF.first='';AF.middle='';AF.last='';AF.email='';AF.phone='';AF.orcid='';AF.inst='';AF.dept='';AF.affil='';
+  AF.affiliations=[];AF.tags=[];AF.corr=false;AF.editingId=null; }
+/* citation editor state */
+var CF={type:'journal',authors:'',title:'',src:'',year:'',volume:'',issue:'',pages:'',doi:'',url:''};
+var SUPP={name:'',desc:'',url:'',size:''};
+var activeSection='';
+
+/* ══ step rendering ════════════════════════════════════════════ */
+function renderStep(){
+  var step=STEPS.filter(function(s){return s.id===activeStep})[0]||STEPS[0];
+  $('#stepKicker').textContent='Step Profile - '+activeStep.replace('-',' ');
+  $('#stepTitle').textContent=step.title;
+  $('#stepAction').innerHTML='';
+  var b=$('#stepBody'); b.innerHTML='';
+  var fn=VIEWS[activeStep]; if(fn) fn(b);
+  $('#btnPrev').disabled = activeStep==='getting-started';
+  $('#btnNext').disabled = activeStep==='summary-submit';
+  var names=sectionNames();
+  $('#btnNext').textContent = (activeStep==='sections' && names.indexOf(activeSection)<names.length-1)
+    ? 'Save and Continue Section →' : 'Save and Continue →';
+}
+
+var VIEWS={};
+
+/* 1 ── getting started */
+VIEWS['getting-started']=function(b){
+  b.innerHTML=
+   '<div class="infobox"><h4>'+ico('info','',' width:15px;height:15px;vertical-align:-2px')+' Online Academic Journal submission &amp; peer system</h4>'+
+   '<p>You are submitting to the official publication of <b>Georgian Biomedical and Medical Nexus (GBMN)</b>, representing elite biomedical research indices.</p></div>'+
+   '<p style="font-size:12.5px;line-height:1.6;color:var(--s600)">We leverage an advanced <b>Structured Entry Engine</b> inspired by top biomedical journals. Instead of submitting clumsy formatted Word documents containing styles errors, you enter your findings into structured databases.</p>'+
+   '<p style="font-size:12.5px;line-height:1.6;color:var(--s600)">The system then processes, validates, indexes, and compiles your paper into a beautiful pre-publication layout automatically, reducing editorial errors by up to <b>85%</b>.</p>'+
+   '<div class="box"><h5 style="font-size:11.5px;color:var(--s800)">Aesthetic Journal Guidelines Overview</h5>'+
+   '<ul style="margin:0;padding-left:18px;font-size:11px;line-height:1.7;color:var(--s600)">'+
+   '<li>References must use standard <b style="font-family:var(--mono);font-size:10px">AMA (American Medical Association)</b> style.</li>'+
+   '<li>MANDATED: Every author entered must have a linked, verified <b style="color:#4d7c0f;font-family:var(--mono)">ORCID iD</b>.</li>'+
+   '<li>All submissions are backed by the <b>Creative Commons Attribution (CC BY 4.0)</b> license.</li></ul></div>';
+};
+
+/* 2 ── policies */
+VIEWS['policies']=function(b){
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800)">CC-BY Open Access License</h4>'+
+   '<p style="font-size:11.5px;line-height:1.6;color:var(--s600)">Georgian Biomedical and Medical Nexus complies with global open-access initiatives. Authors retain copyright and grant the journal first publication privileges. The CC BY 4.0 license permits free dissemination, reading, indexing, and downloading provided authentic citations are preserved.</p></div>'+
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800)">Authorship Qualifications (ICMJE Rules)</h4>'+
+   '<p style="font-size:11.5px;line-height:1.6;color:var(--s600)">All listed authors must meet the four requirements set by the International Committee of Medical Journal Editors: (1) Substantial contributions to conception, design, or acquisition of studies; (2) Drafting or revising the intellectual content; (3) Final approval of the published copy; (4) Agree to be accountable for all aspects of work.</p></div>'+
+   '<label class="chk" style="padding-top:4px"><input type="checkbox" id="polAck" checked>'+
+   '<span style="color:var(--s600);font-weight:500">I hereby certify that all co-authors agree to the open-access CC-BY policies and ICMJE authorship rules.</span></label>';
+};
+
+/* 3 ── checklist */
+VIEWS['checklist']=function(b){
+  b.innerHTML='<p class="note">Please confirm each of primary submission criteria checkboxes before completing the structured fields:</p>'+
+   '<div class="box"><label class="chk"><input type="checkbox" id="ckAgree"'+(M.checklistAgreed?' checked':'')+'>'+
+   '<span style="color:var(--s700);font-weight:500"><b>Manuscript Integrity Assurance Checklist:</b> I declare that this scientific paper represents original, authentic scientific laboratory/clinical findings that are not currently under appraisal or draft review by other medical or publisher editorial boards. All corresponding authors endorse the data. We declare full IRB consent.</span></label></div>';
+  $('#ckAgree').addEventListener('change',function(e){
+    M.checklistAgreed=e.target.checked;
+    M.checklistAgreedAt=e.target.checked?new Date().toISOString():'';
+    touch(); });
+};
+
+/* 4 ── title & metadata */
+VIEWS['title-meta']=function(b){
+  b.innerHTML=
+   '<div><label class="lbl" for="mTitle">Full Scientific Title <span class="req">*</span></label>'+
+   '<input class="inp" id="mTitle" type="text" placeholder="e.g., Clinical trial of..." style="font-weight:600" value="'+esc(M.title)+'"></div>'+
+   '<div class="g2">'+
+     '<div><div style="display:flex;justify-content:space-between"><label class="lbl" for="mRun">Running Title (Abbreviated, Max 50 chars) <span class="req">*</span></label>'+
+       '<span style="font-size:10px;color:var(--s400);font-family:var(--mono)" id="runCount">'+M.runningTitle.length+' / 50</span></div>'+
+       '<input class="inp" id="mRun" type="text" maxlength="50" placeholder="e.g., Mitochondrial Deficits in Georgian Diabetes" value="'+esc(M.runningTitle)+'"></div>'+
+     '<div><label class="lbl" for="mSpec">Primary Medical Specialty <span class="req">*</span></label>'+
+       '<input class="inp" id="mSpec" type="text" placeholder="e.g., Medical Biochemistry &amp; Cardiology" value="'+esc(M.specialty)+'"></div>'+
+   '</div>';
+  $('#mTitle').addEventListener('input',function(e){ M.title=e.target.value; touch(); });
+  $('#mRun').addEventListener('input',function(e){ M.runningTitle=e.target.value; $('#runCount').textContent=e.target.value.length+' / 50'; touch(); });
+  $('#mSpec').addEventListener('input',function(e){ M.specialty=e.target.value; touch(); });
+};
+
+/* 5 ── authors */
+function savedAffiliations(){
+  var out=[]; M.authors.forEach(function(a){ (a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).forEach(function(x){ if(x&&out.indexOf(x)<0) out.push(x); }); });
+  return out;
+}
+VIEWS['authors']=function(b){
+  var roster = M.authors.length===0
+    ? '<p class="ital" style="text-align:center;padding:10px 0">No author affiliations linked. Use creation card below to append.</p>'
+    : M.authors.map(function(a,i){
+        return '<div class="rowcard"><div><div class="nm">'+(i+1)+'. '+esc(a.firstName)+' '+esc(a.lastName)+
+          (a.isCorresponding?' <span class="pill">Corresponding</span>':'')+'</div>'+
+          '<div class="af">'+esc(a.affiliation||'')+'</div><div class="or">Linked ORCID: '+esc(a.orcidId||'')+'</div></div>'+
+          '<div style="display:flex;gap:6px;align-items:center">'+
+          '<button class="iconbtn" data-mv="up" data-i="'+i+'"'+(i===0?' disabled':'')+' title="Move priority Up">'+ico('up')+'</button>'+
+          '<button class="iconbtn" data-mv="down" data-i="'+i+'"'+(i===M.authors.length-1?' disabled':'')+' title="Move priority Down">'+ico('down')+'</button>'+
+          '<button class="btn sm tl" data-edit="'+esc(a.id)+'">Edit</button>'+
+          '<button class="iconbtn" data-del="'+esc(a.id)+'" style="border-color:var(--rose200);background:var(--rose50);color:var(--rose700)" title="Exclude Affiliation">'+ico('trash')+'</button>'+
+          '</div></div>';
+      }).join('');
+
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800);display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--s200);padding-bottom:8px">'+
+     ico('users','',' width:15px;height:15px;color:var(--teal)')+' Indexed Manuscript Authors roster ('+M.authors.length+')</h4>'+roster+'</div>'+
+   '<form class="boxw" id="authForm">'+
+     '<h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--s800)">'+(AF.editingId?'Edit Author credentials':'Add Co-Author credentials')+'</h4>'+
+     '<div class="g4">'+
+       '<div><label class="lbl">First Name <span class="req">*</span></label><input class="inp sm" data-af="first" type="text" required placeholder="e.g., Ioseb" value="'+esc(AF.first)+'"></div>'+
+       '<div><label class="lbl">Middle Init.</label><input class="inp sm" data-af="middle" type="text" placeholder="T." value="'+esc(AF.middle)+'"></div>'+
+       '<div><label class="lbl">Last Name <span class="req">*</span></label><input class="inp sm" data-af="last" type="text" required placeholder="Kavtaradze" value="'+esc(AF.last)+'"></div>'+
+       '<div><label class="lbl">Mandatory ORCID iD <span class="req">*</span></label><input class="inp sm mono" data-af="orcid" type="text" required placeholder="0000-0002-1823-4412" value="'+esc(AF.orcid)+'">'+
+         '<button type="button" id="orcidFill" style="margin-top:4px;background:0;border:0;padding:0;font-size:10px;font-weight:700;color:var(--teal);cursor:pointer">'+(AF.busy?'Importing ORCID...':'Auto-fill author')+'</button></div>'+
+     '</div>'+
+     '<div class="g3">'+
+       '<div><label class="lbl">Academic Title (e.g., PhD) <span class="req">*</span></label><input class="inp sm" data-af="title" type="text" value="'+esc(AF.title)+'"></div>'+
+       '<div><label class="lbl">Email <span class="req">*</span></label><input class="inp sm" data-af="email" type="email" placeholder="author@tsmu.edu" value="'+esc(AF.email)+'"></div>'+
+       '<div><label class="lbl">Phone number</label><input class="inp sm" data-af="phone" type="text" placeholder="+995 599..." value="'+esc(AF.phone)+'"></div>'+
+     '</div>'+
+     '<div class="g3">'+
+       '<div><label class="lbl">Institutional Location <span class="req">*</span></label><input class="inp sm" data-af="inst" type="text" required placeholder="Tbilisi State Medical University" value="'+esc(AF.inst)+'"></div>'+
+       '<div><label class="lbl">Department</label><input class="inp sm" data-af="dept" type="text" placeholder="Department of Medical Biochemistry" value="'+esc(AF.dept)+'"></div>'+
+       '<div><label class="lbl">Specific scientific contributions <span class="req">*</span></label><input class="inp sm" data-af="contrib" type="text" placeholder="e.g., Conception, Biochemical Assays" value="'+esc(AF.contrib)+'"></div>'+
+     '</div>'+
+     '<div class="box" style="padding:12px">'+
+       '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">'+
+         '<div style="flex:1;min-width:240px"><label class="lbl">Affiliations for this author</label>'+
+           '<select class="sel sm" id="affPick" style="background:#fff"><option value="">Choose saved affiliation...</option>'+
+           savedAffiliations().map(function(a){return '<option value="'+esc(a)+'">'+esc(a)+'</option>'}).join('')+'</select></div>'+
+         '<div style="flex:1;min-width:240px"><label class="lbl">Add new affiliation</label>'+
+           '<input class="inp sm" id="affNew" style="background:#fff" placeholder="Department, Institution, City, Country"></div>'+
+         '<button type="button" class="btn t" id="affAdd">Add</button>'+
+       '</div>'+
+       (AF.affiliations.length? '<div style="display:flex;flex-wrap:wrap;gap:6px">'+AF.affiliations.map(function(a){
+          return '<button type="button" class="tagbtn" data-affx="'+esc(a)+'" title="Click to remove">'+esc(a)+' ×</button>'}).join('')+'</div>' : '')+
+     '</div>'+
+     '<div class="boxw" style="padding:12px">'+
+       '<h5 style="font-size:12px;color:var(--s800)">Contributions. How did each listed author contribute?</h5>'+
+       '<p style="font-size:10px;color:var(--s500)">Contributions (please check all that apply). All authors must contribute to at least one concept/data item, one writing/review item, and both required items.</p>'+
+       '<div class="g2" style="gap:7px">'+CONTRIB_OPTIONS.map(function(o){
+          return '<label class="chk" style="font-size:10.5px"><input type="checkbox" data-tag="'+esc(o)+'"'+(AF.tags.indexOf(o)>=0?' checked':'')+'><span>'+esc(o)+'</span></label>'}).join('')+'</div>'+
+     '</div>'+
+     '<label class="radio" style="gap:7px"><input type="checkbox" id="afCorr"'+(AF.corr?' checked':'')+'><span style="color:var(--s700)">Designate as corresponding author</span></label>'+
+     '<div><button type="submit" class="btn t">'+(AF.editingId?'Save Author Changes':'+ Link Author Affiliate to Manuscript')+'</button></div>'+
+   '</form>';
+
+  $$('[data-af]',b).forEach(function(el){ el.addEventListener('input',function(){ AF[el.dataset.af]=el.value; }); });
+  $$('[data-tag]',b).forEach(function(el){ el.addEventListener('change',function(){
+    var t=el.dataset.tag, i=AF.tags.indexOf(t); if(el.checked){ if(i<0)AF.tags.push(t) } else if(i>=0) AF.tags.splice(i,1); }); });
+  $('#afCorr').addEventListener('change',function(e){ AF.corr=e.target.checked; });
+  $('#affPick').addEventListener('change',function(e){ addAffil(e.target.value); e.target.value=''; });
+  $('#affAdd').addEventListener('click',function(){ addAffil($('#affNew').value); });
+  $('#affNew').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); addAffil(e.target.value); } });
+  $$('[data-affx]',b).forEach(function(el){ el.addEventListener('click',function(){
+    AF.affiliations=AF.affiliations.filter(function(x){return x!==el.dataset.affx}); renderStep(); }); });
+  $('#orcidFill').addEventListener('click',orcidLookup);
+  $$('[data-mv]',b).forEach(function(el){ el.addEventListener('click',function(){
+    var i=+el.dataset.i, d=el.dataset.mv, l=M.authors.slice();
+    if(d==='up'&&i>0){ var t=l[i];l[i]=l[i-1];l[i-1]=t; } else if(d==='down'&&i<l.length-1){ var u=l[i];l[i]=l[i+1];l[i+1]=u; }
+    M.authors=l; restep(); }); });
+  $$('[data-del]',b).forEach(function(el){ el.addEventListener('click',function(){
+    M.authors=M.authors.filter(function(a){return a.id!==el.dataset.del}); notify('Author removed from draft lists.','info'); restep(); }); });
+  $$('[data-edit]',b).forEach(function(el){ el.addEventListener('click',function(){
+    var a=M.authors.filter(function(x){return x.id===el.dataset.edit})[0]; if(!a)return;
+    AF.editingId=a.id; AF.first=a.firstName; AF.middle=a.middleInitial||''; AF.last=a.lastName; AF.email=a.email||'';
+    AF.phone=a.phone||''; AF.orcid=a.orcidId||''; AF.spec=a.specialty||AF.spec; AF.country=a.country||AF.country;
+    AF.city=a.city||AF.city; AF.inst=a.institution||''; AF.dept=a.department||''; AF.affil=a.affiliation||'';
+    AF.affiliations=(a.affiliations&&a.affiliations.length)?a.affiliations.slice():(a.affiliation?[a.affiliation]:[]);
+    AF.title=a.academicTitle||''; AF.contrib=a.contributionRole||''; AF.tags=(a.contributionTags||[]).slice(); AF.corr=!!a.isCorresponding;
+    renderStep(); $('#midPane').scrollTop=$('#midPane').scrollHeight; }); });
+  $('#authForm').addEventListener('submit',addAuthor);
+
+  function addAffil(v){ var c=(v||'').trim(); if(!c||AF.affiliations.indexOf(c)>=0)return;
+    AF.affiliations.push(c); if(!AF.affil) AF.affil=c; $('#affNew').value=''; renderStep(); }
+}
+function orcidLookup(){
+  var clean=(AF.orcid||'').replace(/^https?:\/\/orcid\.org\//i,'').trim();
+  if(!clean) return;
+  AF.busy=true; renderStep();
+  fetch('https://pub.orcid.org/v3.0/'+clean+'/record',{headers:{Accept:'application/json'}})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(rec){
+      var nm=rec&&rec.person&&rec.person.name||{};
+      var given=(nm['given-names']||{}).value||'', family=(nm['family-name']||{}).value||'';
+      var emails=((rec.person||{}).emails||{}).email||[];
+      var grp=((rec['activities-summary']||{}).employments||{})['affiliation-group']||[];
+      var org=grp[0]&&grp[0].summaries&&grp[0].summaries[0]&&grp[0].summaries[0]['employment-summary']&&grp[0].summaries[0]['employment-summary'].organization;
+      if(given&&!AF.first)AF.first=given; if(family&&!AF.last)AF.last=family;
+      if(emails[0]&&emails[0].email&&!AF.email)AF.email=emails[0].email;
+      if(org&&org.name){ if(!AF.inst)AF.inst=org.name;
+        if(org.address){ if(!AF.city&&org.address.city)AF.city=org.address.city; if(!AF.country&&org.address.country)AF.country=org.address.country; }
+        var full=[AF.dept,org.name,org.address&&org.address.city,org.address&&org.address.country].filter(Boolean).join(', ');
+        if(full&&AF.affiliations.indexOf(full)<0) AF.affiliations.push(full); }
+      AF.orcid=clean; AF.busy=false; renderStep();
+      notify('ORCID author metadata imported where available.','success'); })
+    .catch(function(){ AF.busy=false; renderStep();
+      notify('ORCID metadata could not be imported. You can complete author fields manually.','error'); });
+}
+function addAuthor(e){
+  e.preventDefault();
+  var affs = AF.affiliations.length ? AF.affiliations.slice()
+           : [AF.affil || [AF.dept,AF.inst,AF.city,AF.country].filter(Boolean).join(', ')].filter(Boolean);
+  if(!AF.first||!AF.last||!AF.orcid||(!AF.inst&&!affs.length)){
+    notify('First name, Last Name, Affiliation, and Mandated ORCID iD are required.','error'); return; }
+  var core=AF.tags.some(function(t){return ['Substantial contributions to concept or design','Acquisition, analysis, or interpretation of data'].indexOf(t)>=0});
+  var writ=AF.tags.some(function(t){return ['Drafting of the manuscript','Critical review of the manuscript for important intellectual content'].indexOf(t)>=0});
+  var req=['Agreed to be accountable for all aspects of the work','Will review the final version to be published'].every(function(t){return AF.tags.indexOf(t)>=0});
+  if(!core||!writ||!req){ notify('Each author must have concept/data, writing/review, accountability, and final review contributions checked.','error'); return; }
+  var a={ id:AF.editingId||nid('auth'), firstName:AF.first, middleInitial:AF.middle||undefined, lastName:AF.last,
+    email:AF.email, phone:AF.phone, orcidId:AF.orcid, specialty:AF.spec, country:AF.country, city:AF.city,
+    institution:AF.inst, department:AF.dept, affiliation:affs[0], affiliations:affs, academicTitle:AF.title,
+    contributionRole:AF.contrib||AF.tags.join('; '), contributionTags:AF.tags.slice(), isCorresponding:AF.corr };
+  var list = AF.editingId ? M.authors.filter(function(x){return x.id!==AF.editingId}) : M.authors.slice();
+  if(AF.corr) list=list.map(function(x){ x.isCorresponding=false; return x; });
+  if(AF.editingId){ var idx=M.authors.map(function(x){return x.id}).indexOf(AF.editingId);
+    list.splice(idx>=0?Math.min(idx,list.length):list.length,0,a); } else list.push(a);
+  M.authors=list;
+  notify('Author '+AF.first+' '+AF.last+' successfully '+(AF.editingId?'updated':'added')+'!','success');
+  resetAF(); restep();
+}
+
+/* 6 ── article type */
+VIEWS['article-type']=function(b){
+  b.innerHTML='<p class="note">Select the article profile category that corresponds with the scope of your investigation:</p>'+
+   '<div class="g2">'+Object.keys(ARTICLE_TYPES).map(function(k){ var t=ARTICLE_TYPES[k];
+     return '<button type="button" class="tile'+(M.articleType===k?' on':'')+'" data-at="'+k+'">'+
+       '<b>'+esc(t.name)+'</b><p>'+esc(t.description)+'</p>'+
+       '<div class="m"><span>Max Words: <b>'+t.maxWordCount+'</b></span><span>Max Refs: <b>'+t.maxReferences+'</b></span></div></button>'; }).join('')+'</div>';
+  $$('[data-at]',b).forEach(function(el){ el.addEventListener('click',function(){
+    M.articleType=el.dataset.at; activeSection=''; restep(); }); });
+};
+
+/* 7 ── abstract */
+VIEWS['abstract']=function(b){
+  if(cfg()&&cfg().abstractType==='none'){
+    b.innerHTML='<div class="box" style="text-align:center;padding:26px;color:var(--s500);font-size:13px">Abstract is not required for this article type. Proceed to next step.</div>';
+    return; }
+  var host=document.createElement('div'); b.appendChild(host);
+  mountRTE(host,{label:'Abstract *',hint:'Maximum 250 words. Use the toolbar for bold, italic, and lists.',
+    value:M.abstractContents.text||'', placeholder:'Enter your abstract here...',
+    onChange:function(v){ M.abstractContents={text:v}; touch(); }});
+};
+
+/* 8 ── keywords */
+VIEWS['keywords']=function(b){
+  var v=M.sections['Keywords']||'';
+  b.innerHTML='<div class="box"><label class="lbl" for="kwIn">Academic Indexing Keywords (3 to 6 MeSH terms, semicolon separated) <span class="req">*</span></label>'+
+    '<input class="inp" id="kwIn" type="text" style="background:#fff" placeholder="e.g., Diabetes Mellitus; Cardiomyopathies; Cytokines" value="'+esc(v)+'"></div>'+
+    '<p class="ital">Use semicolons between terms. Commas are converted automatically, and the final period is added on save. Number of tags entered: <b id="kwN">'+
+      v.split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean).length+'</b></p>';
+  $('#kwIn').addEventListener('input',function(e){
+    M.sections['Keywords']=e.target.value.replace(/,/g,';');
+    $('#kwN').textContent=M.sections['Keywords'].split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean).length;
+    touch(); });
+  $('#kwIn').addEventListener('blur',function(e){
+    M.sections['Keywords']=normalizeKeywords(e.target.value); e.target.value=M.sections['Keywords']; touch(); });
+};
+
+/* 9 ── manuscript sections */
+VIEWS['sections']=function(b){
+  var names=sectionNames();
+  if(!names.length){ b.innerHTML='<div class="box">Select an article type first.</div>'; return; }
+  if(!activeSection||names.indexOf(activeSection)<0) activeSection=names[0];
+  var idx=names.indexOf(activeSection);
+  b.innerHTML=
+   '<div class="box">'+
+     '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:center">'+
+       '<div><h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--s800)">Manuscript subsections</h4>'+
+       '<p class="ital" style="margin-top:3px">Fill one subsection at a time for '+esc(cfg().name)+'. Preview generation keeps the journal order unchanged.</p></div>'+
+       '<span style="font-size:10.5px;font-weight:700;color:var(--teal-d);background:var(--teal-50);border:1px solid var(--teal-100);border-radius:99px;padding:3px 11px">'+(idx+1)+' / '+names.length+'</span>'+
+     '</div>'+
+     '<div class="g3" style="gap:8px">'+names.map(function(s,i){ var saved=stripTags(M.sections[s]||'');
+       return '<button type="button" class="secbtn'+(s===activeSection?' on':'')+'" data-sec="'+esc(s)+'">'+
+         '<span class="n">Section '+(i+1)+'</span><span class="t">'+esc(s)+'</span>'+
+         '<span class="s '+(saved?'ok':'no')+'">'+(saved?'Saved content':'Empty')+'</span></button>'; }).join('')+'</div>'+
+   '</div>';
+  var host=document.createElement('div'); b.appendChild(host);
+  mountRTE(host,{label:activeSection+' *', value:M.sections[activeSection]||'', showWordCount:true,
+    placeholder:'Write the full structured '+activeSection.toLowerCase()+' of the study...',
+    onChange:function(v){ M.sections[activeSection]=v; touch(); }});
+  $$('[data-sec]',b).forEach(function(el){ el.addEventListener('click',function(){ activeSection=el.dataset.sec; renderStep(); }); });
+};

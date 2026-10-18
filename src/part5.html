@@ -1,0 +1,272 @@
+
+/* ══ rich text editor ═════════════════════════════════════════ */
+function escHtml(t){return esc(t)}
+function tableFromDelimitedText(text){
+  var rows=text.trim().split(/\r?\n/).filter(Boolean).map(function(r){return r.split(/\t|,/).map(function(c){return c.trim()})});
+  if(!rows.length) return '';
+  return '<table class="gbmn-inline-table"><tbody>'+rows.map(function(row,ri){
+    return '<tr>'+row.map(function(c){return ri===0?'<th>'+escHtml(c)+'</th>':'<td>'+escHtml(c)+'</td>'}).join('')+'</tr>';
+  }).join('')+'</tbody></table>';
+}
+function mediaActionsHtml(){
+  return '<div class="gbmn-media-actions" contenteditable="false">'+
+    '<button type="button" data-media-action="edit">Edit</button>'+
+    '<button type="button" data-media-action="delete">Delete</button></div>';
+}
+function sanitizeRichPaste(html){
+  var d=document.createElement('div'); d.innerHTML=html;
+  d.querySelectorAll('script,style,meta,link').forEach(function(n){n.remove()});
+  d.querySelectorAll('*').forEach(function(n){
+    Array.prototype.slice.call(n.attributes).forEach(function(a){
+      if(/^on/i.test(a.name)) n.removeAttribute(a.name);
+      if(a.name==='class'&&!/gbmn-/.test(a.value)) n.removeAttribute('class');
+      if(a.name==='style') n.removeAttribute('style');
+    });
+    if(n.tagName==='TABLE') n.className='gbmn-inline-table';
+  });
+  return d.innerHTML;
+}
+
+function mountRTE(host,o){
+  var selId=null, markerId=null, history=[], editing=null;
+  host.className='rte';
+  host.innerHTML =
+    (o.label?'<div class="cap">'+esc(o.label)+'</div>':'')+
+    (o.hint?'<div class="hint">'+esc(o.hint)+'</div>':'')+
+    '<div class="rtbar">'+
+      '<select data-blk title="Block style"><option value="normal">Normal</option><option value="subheading">Subheading</option></select>'+
+      '<button type="button" data-cmd="bold" title="Bold">'+ico('bold')+'</button>'+
+      '<button type="button" data-cmd="italic" title="Italic">'+ico('italic')+'</button>'+
+      '<button type="button" data-cmd="underline" title="Underline">'+ico('under')+'</button>'+
+      '<button type="button" data-cmd="superscript" title="Superscript">'+ico('sup')+'</button>'+
+      '<button type="button" data-cmd="subscript" title="Subscript">'+ico('sub')+'</button>'+
+      '<span class="div"></span>'+
+      '<button type="button" data-cmd="insertUnorderedList" title="Bullet list">'+ico('ul')+'</button>'+
+      '<button type="button" data-cmd="insertOrderedList" title="Numbered list">'+ico('ol')+'</button>'+
+      '<span class="div"></span>'+
+      '<button type="button" data-cmd="removeFormat" title="Remove formatting">'+ico('clear')+'</button>'+
+      '<span class="div"></span>'+
+      '<button type="button" data-act="undo" title="Undo">'+ico('undo')+'</button>'+
+      '<button type="button" data-act="image" title="Insert image at cursor">'+ico('image')+'</button>'+
+      '<button type="button" data-act="table" title="Paste table at cursor">'+ico('table')+'</button>'+
+      '<button type="button" data-act="diagram" title="Paste diagram at cursor">'+ico('chart')+'</button>'+
+      '<button type="button" data-act="del" title="Delete selected table, figure, or diagram">'+ico('trash')+'</button>'+
+      '<button type="button" data-act="up" title="Move selected table, figure, or diagram up">'+ico('up')+'</button>'+
+      '<button type="button" data-act="down" title="Move selected table, figure, or diagram down">'+ico('down')+'</button>'+
+    '</div>'+
+    '<div class="rtsel" style="display:none"><b>Selected table / figure</b>'+
+      '<button type="button" class="btn sm" data-act="edit">Edit</button>'+
+      '<button type="button" class="btn sm rd" data-act="del">Delete</button>'+
+      '<button type="button" class="btn sm" data-act="up">Move up</button>'+
+      '<button type="button" class="btn sm" data-act="down">Move down</button></div>'+
+    '<div class="rtarea" contenteditable="true" data-ph="'+esc(o.placeholder||'Enter text here...')+'"'+
+      (o.minHeight?' style="min-height:'+o.minHeight+'"':'')+'></div>'+
+    (o.showWordCount?'<div class="rtwc"></div>':'');
+
+  var area=$('.rtarea',host), bar=$('.rtbar',host), selbar=$('.rtsel',host), wc=$('.rtwc',host), blk=$('[data-blk]',host);
+  var savedRange=null;
+  area.innerHTML=o.value||'';
+  updWc();
+
+  function emit(){ o.onChange(area.innerHTML); updWc(); }
+  function updWc(){ if(!wc)return; var n=stripTags(area.innerHTML); wc.textContent='Word count: '+(n?n.split(/\s+/).length:0); }
+  function push(){ history=history.slice(-24).concat([area.innerHTML]); }
+  function saveSel(){ var s=window.getSelection(); if(!s||!s.rangeCount)return;
+    var r=s.getRangeAt(0); if(area.contains(r.commonAncestorContainer)) savedRange=r.cloneRange(); }
+  function caretAfter(n){ var s=window.getSelection(); if(!s)return; var r=document.createRange();
+    r.setStartAfter(n); r.collapse(true); s.removeAllRanges(); s.addRange(r); savedRange=r.cloneRange(); }
+  function clearMarker(){ if(!markerId)return; var m=area.querySelector('[data-mk="'+markerId+'"]'); if(m)m.remove(); markerId=null; }
+  function makeMarker(){ clearMarker(); area.focus();
+    var s=window.getSelection(), live=(s&&s.rangeCount)?s.getRangeAt(0):null;
+    var r = (savedRange&&area.contains(savedRange.commonAncestorContainer)) ? savedRange.cloneRange()
+          : (live&&area.contains(live.commonAncestorContainer)) ? live.cloneRange() : document.createRange();
+    if(!(savedRange&&area.contains(savedRange.commonAncestorContainer))&&!(live&&area.contains(live.commonAncestorContainer))){
+      r.selectNodeContents(area); r.collapse(false); }
+    r.deleteContents();
+    var id=nid('mk'), sp=document.createElement('span');
+    sp.setAttribute('data-mk',id); sp.style.cssText='display:inline-block;width:0;height:0;overflow:hidden';
+    sp.textContent='﻿'; r.insertNode(sp); markerId=id; caretAfter(sp); }
+  function insertHtml(html){
+    push(); area.focus();
+    var mk = markerId ? area.querySelector('[data-mk="'+markerId+'"]') : null;
+    var tpl=document.createElement('template'); tpl.innerHTML=html;
+    var frag=tpl.content, last=frag.lastChild;
+    if(mk && mk.parentNode){ mk.parentNode.replaceChild(frag,mk); }
+    else if(savedRange&&area.contains(savedRange.commonAncestorContainer)){ savedRange.deleteContents(); savedRange.insertNode(frag); }
+    else area.appendChild(frag);
+    markerId=null;
+    if(last) caretAfter(last);
+    emit();
+  }
+  function pickMedia(){ return selId? area.querySelector('.gbmn-inline-media[data-media-id="'+selId+'"]') : null; }
+  function setSel(id){ selId=id;
+    area.querySelectorAll('.gbmn-inline-media').forEach(function(f){ f.classList.toggle('sel', f.dataset.mediaId===id); });
+    selbar.style.display = id? 'flex':'none'; }
+
+  bar.addEventListener('mousedown',function(e){ if(e.target.closest('button')) e.preventDefault(); });
+  selbar.addEventListener('mousedown',function(e){ if(e.target.closest('button')) e.preventDefault(); });
+  bar.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b)return;
+    if(b.dataset.cmd){ area.focus(); if(savedRange){var s=window.getSelection();s.removeAllRanges();s.addRange(savedRange);} 
+      document.execCommand(b.dataset.cmd,false,null); emit(); return; }
+    handleAct(b.dataset.act);
+  });
+  selbar.addEventListener('click',function(e){ var b=e.target.closest('button'); if(b) handleAct(b.dataset.act); });
+  blk.addEventListener('change',function(){ area.focus();
+    document.execCommand('formatBlock',false, blk.value==='subheading'?'h3':'p'); emit(); });
+
+  function handleAct(a){
+    if(a==='undo'){ var prev=history.pop(); if(prev===undefined){document.execCommand('undo'); } else { area.innerHTML=prev; setSel(null); } emit(); return; }
+    if(a==='del'){ var m=pickMedia(); if(!m)return; push(); m.remove(); setSel(null); emit(); return; }
+    if(a==='up'||a==='down'){ var md=pickMedia(); if(!md)return; push();
+      var sib = a==='up'? md.previousElementSibling : md.nextElementSibling;
+      if(!sib)return;
+      if(a==='up') md.parentNode.insertBefore(md,sib); else md.parentNode.insertBefore(sib,md);
+      emit(); return; }
+    if(a==='edit'){ var me=pickMedia(); if(!me)return; openEditFor(me); return; }
+    saveSel(); makeMarker(); editing=null;
+    if(a==='image') openImageDialog({});
+    if(a==='table') openPasteDialog('table',{});
+    if(a==='diagram') openPasteDialog('diagram',{});
+  }
+  function openEditFor(m){
+    editing=m.dataset.mediaId;
+    var fc=m.querySelector('figcaption'), st=fc?fc.querySelector('strong'):null;
+    var title = st? st.textContent : '';
+    var legend = fc? fc.textContent.replace(title,'').replace(/^\s*—\s*/,'').trim() : '';
+    var layout = m.dataset.layout==='one-column'?'one-column':'two-column';
+    if(m.classList.contains('gbmn-inline-media-figure')){
+      var img=m.querySelector('img');
+      openImageDialog({title:title,legend:legend,layout:layout,src:img?img.src:''});
+    } else {
+      var kind=m.classList.contains('gbmn-inline-media-table')?'table':'diagram';
+      var inner=Array.prototype.slice.call(m.childNodes).filter(function(n){
+        return !(n.nodeType===1&&(n.matches('figcaption')||n.matches('.gbmn-media-actions')));
+      }).map(function(n){return n.nodeType===1?n.outerHTML:(n.textContent||'')}).join('');
+      openPasteDialog(kind,{title:title,legend:legend,layout:layout,buffer:inner});
+    }
+  }
+  function replaceOrInsert(html){
+    if(editing){ var old=area.querySelector('.gbmn-inline-media[data-media-id="'+editing+'"]');
+      if(old){ push(); var t=document.createElement('template'); t.innerHTML=html;
+        var fresh=t.content.firstElementChild; old.parentNode.replaceChild(fresh,old); editing=null; setSel(null); emit(); return; } }
+    insertHtml(html+'<p><br></p>');
+  }
+
+  /* ── modals ── */
+  function openImageDialog(init){
+    var state={src:init.src||'',name:'',title:init.title||'',legend:init.legend||'',layout:init.layout||'two-column'};
+    var root=$('#modalRoot');
+    root.innerHTML='<div class="modal"><div class="sheet">'+
+      '<div class="mh"><div><h3>Insert Figure</h3><p>Upload an image, add title and legend, then insert it exactly where the cursor was.</p></div><button class="x" data-c>&times;</button></div>'+
+      '<div class="mb">'+
+        '<div class="drop" id="imgDrop" tabindex="0">'+
+          '<div id="imgPrev">'+(state.src?'<img src="'+state.src+'" style="max-height:220px;margin:0 auto;display:block;background:#fff;border:1px solid #e2e8f0">':'<p class="note">Upload, drag &amp; drop, or paste copied image here.</p>')+'</div>'+
+          '<button type="button" class="btn sm" id="imgPick" style="margin-top:12px">Upload Image</button>'+
+          '<input type="file" accept="image/*" id="imgFile" hidden></div>'+
+        '<div><label class="lbl">Title <span class="req">*</span></label>'+
+          '<input type="text" id="imgTitle" placeholder="Figure 1. Descriptive title" value="'+esc(state.title)+'"></div>'+
+        '<textarea id="imgLegend" rows="4" placeholder="Legend (optional)">'+esc(state.legend)+'</textarea>'+
+        '<select id="imgLayout"><option value="two-column">Two-column width</option><option value="one-column">One-column full article width</option></select>'+
+      '</div>'+
+      '<div class="mf"><button class="btn-c" data-c>Cancel</button><button class="btn-ins" id="imgGo" disabled>'+(editing?'Update':'Insert')+'</button></div>'+
+      '</div></div>';
+    $('#imgLayout').value=state.layout;
+    var go=$('#imgGo'), ti=$('#imgTitle');
+    function sync(){ go.disabled = !(state.src && ti.value.trim()); }
+    sync();
+    ti.addEventListener('input',sync);
+    function takeFile(f){ if(!f)return; var r=new FileReader();
+      r.onload=function(){ state.src=String(r.result||''); $('#imgPrev').innerHTML='<img src="'+state.src+'" style="max-height:220px;margin:0 auto;display:block;background:#fff;border:1px solid #e2e8f0">';
+        $('#imgPick').textContent=f.name; if(!ti.value) ti.value=f.name; sync(); };
+      r.readAsDataURL(f); }
+    $('#imgPick').onclick=function(){ $('#imgFile').click(); };
+    $('#imgFile').onchange=function(e){ takeFile(e.target.files[0]); };
+    var dz=$('#imgDrop');
+    dz.addEventListener('dragover',function(e){e.preventDefault()});
+    dz.addEventListener('drop',function(e){ e.preventDefault();
+      takeFile(Array.prototype.slice.call(e.dataTransfer.files).filter(function(f){return /^image\//.test(f.type)})[0]); });
+    dz.addEventListener('paste',function(e){
+      var f=Array.prototype.slice.call(e.clipboardData.files).filter(function(x){return /^image\//.test(x.type)})[0];
+      if(!f){ var it=Array.prototype.slice.call(e.clipboardData.items).filter(function(i){return i.kind==='file'&&/^image\//.test(i.type)})[0]; if(it) f=it.getAsFile(); }
+      if(f){ e.preventDefault(); takeFile(f); } });
+    go.onclick=function(){
+      var cap=ti.value.trim(), lg=$('#imgLegend').value.trim(), lay=$('#imgLayout').value;
+      closeModal();
+      replaceOrInsert('<figure class="gbmn-inline-media gbmn-inline-media-figure gbmn-media-'+lay+'" data-layout="'+lay+'" contenteditable="false" draggable="true" data-media-id="'+nid('md')+'">'+
+        mediaActionsHtml()+'<figcaption><strong>'+escHtml(cap)+'</strong>'+(lg?' — '+escHtml(lg):'')+'</figcaption>'+
+        '<img src="'+state.src+'" alt="'+escHtml(cap)+'"></figure>');
+    };
+    wireClose();
+  }
+  function openPasteDialog(kind,init){
+    var isT=kind==='table';
+    var root=$('#modalRoot');
+    root.innerHTML='<div class="modal"><div class="sheet" style="max-width:860px">'+
+      '<div class="mh"><div><h3>'+(isT?'Insert Table':'Insert Diagram')+'</h3><p>'+
+        (isT?'Create your table in Excel, Word, PowerPoint, Google Docs or Sheets, then paste it here.'
+            :'Paste SVG/HTML, chart markup, or diagram text. It will be inserted exactly where the cursor was.')+
+        '</p></div><button class="x" data-c>&times;</button></div>'+
+      '<div class="mb">'+
+        '<div style="border:1px solid var(--s300)"><div style="display:flex;gap:8px;padding:6px 8px;border-bottom:1px solid var(--s200);background:var(--s50);color:var(--s600)">'+
+          ico('bold')+ico('italic')+ico('sup')+ico('sub')+'</div>'+
+          '<textarea id="pbBuf" rows="8" style="border:0;padding:14px;font-size:12.5px" placeholder="'+(isT?'Paste table here. Required before Insert.':'Paste diagram here. Required before Insert.')+'">'+esc(init.buffer||'')+'</textarea></div>'+
+        '<select id="pbLayout"><option value="two-column">Two-column width</option><option value="one-column">One-column full article width</option></select>'+
+        '<div><label class="lbl">Title <span class="req">*</span></label><input type="text" id="pbTitle" value="'+esc(init.title||'')+'" placeholder="'+
+          (isT?'Table 1: Enter your descriptive title here (required). Do not include reference citations.':'Figure 1: Enter your diagram title here (required).')+'"></div>'+
+        '<div style="border:1px solid var(--s300)"><div style="display:flex;gap:8px;padding:6px 8px;border-bottom:1px solid var(--s200);background:var(--s50);color:var(--s600)">'+
+          ico('italic')+ico('sup')+ico('sub')+'</div>'+
+          '<textarea id="pbLegend" rows="4" style="border:0;padding:14px;font-size:12.5px" placeholder="Enter your legend here (optional). Please include abbreviation definitions and reference citations here.">'+esc(init.legend||'')+'</textarea></div>'+
+      '</div>'+
+      '<div class="mf"><button class="btn-c" data-c>Cancel</button><button class="btn-ins" id="pbGo">'+(editing?'Update':'Insert')+'</button></div>'+
+      '</div></div>';
+    $('#pbLayout').value=init.layout||'two-column';
+    var buf=$('#pbBuf'), tt=$('#pbTitle'), go=$('#pbGo');
+    function sync(){ go.disabled = !(buf.value.trim() && tt.value.trim()); } sync();
+    buf.addEventListener('input',sync); tt.addEventListener('input',sync);
+    buf.addEventListener('paste',function(e){
+      var html=e.clipboardData.getData('text/html');
+      if(html){ e.preventDefault(); buf.value=sanitizeRichPaste(html); sync(); } });
+    go.onclick=function(){
+      var raw=buf.value.trim(), cap=tt.value.trim(), lg=$('#pbLegend').value.trim(), lay=$('#pbLayout').value;
+      var content = /<table|<svg|<img/i.test(raw) ? sanitizeRichPaste(raw)
+                  : isT ? tableFromDelimitedText(raw) : '<pre>'+escHtml(raw)+'</pre>';
+      closeModal();
+      replaceOrInsert('<figure class="gbmn-inline-media gbmn-inline-media-'+kind+' gbmn-media-'+lay+'" data-layout="'+lay+'" contenteditable="false" draggable="true" data-media-id="'+nid('md')+'">'+
+        mediaActionsHtml()+'<figcaption><strong>'+escHtml(cap)+'</strong>'+(lg?' — '+escHtml(lg):'')+'</figcaption>'+content+'</figure>');
+    };
+    wireClose();
+  }
+  function closeModal(){ $('#modalRoot').innerHTML=''; }
+  function wireClose(){ $$('#modalRoot [data-c]').forEach(function(b){ b.onclick=function(){ closeModal(); clearMarker(); editing=null; }; }); }
+
+  /* editor events */
+  area.addEventListener('input',function(){ emit(); });
+  area.addEventListener('keyup',function(){ saveSel(); detect(); });
+  area.addEventListener('mouseup',function(){ setTimeout(function(){saveSel();detect()},0); });
+  area.addEventListener('focus',function(){ saveSel(); detect(); });
+  area.addEventListener('keydown',function(e){
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); handleAct('undo'); return; }
+    if(e.key!=='Backspace'&&e.key!=='Delete')return;
+    var m=pickMedia(); if(!m)return; e.preventDefault(); push(); m.remove(); setSel(null); emit(); });
+  area.addEventListener('click',function(e){
+    var act=e.target.closest('[data-media-action]');
+    var fig=e.target.closest('.gbmn-inline-media');
+    if(act&&fig){ setSel(fig.dataset.mediaId);
+      if(act.dataset.mediaAction==='delete'){ push(); fig.remove(); setSel(null); emit(); }
+      else openEditFor(fig);
+      return; }
+    setSel(fig?fig.dataset.mediaId:null); });
+  area.addEventListener('paste',function(e){
+    var html=e.clipboardData.getData('text/html');
+    if(html&&/<table/i.test(html)){ e.preventDefault(); saveSel(); makeMarker();
+      insertHtml('<figure class="gbmn-inline-media gbmn-inline-media-table gbmn-media-two-column" data-layout="two-column" contenteditable="false" draggable="true" data-media-id="'+nid('md')+'">'+
+        mediaActionsHtml()+'<figcaption><strong>Table.</strong> Add title and legend...</figcaption>'+sanitizeRichPaste(html)+'</figure><p><br></p>'); } });
+  function detect(){ var s=window.getSelection(); if(!s||!s.rangeCount){blk.value='normal';return}
+    var n=s.getRangeAt(0).commonAncestorContainer;
+    while(n&&n!==area){ if(n.nodeType===1){ var t=n.tagName;
+      if(/^H[2-5]$/.test(t)){blk.value='subheading';return} if(/^(P|DIV|LI|BLOCKQUOTE)$/.test(t)){blk.value='normal';return} }
+      n=n.parentNode; }
+    blk.value='normal'; }
+  return { setValue:function(v){ area.innerHTML=v||''; updWc(); } };
+}

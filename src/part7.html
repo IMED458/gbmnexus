@@ -1,0 +1,282 @@
+
+/* 10 ── references (AMA) */
+VIEWS['references']=function(b){
+  var lib = M.references.length===0
+    ? '<p class="ital">No citations cataloged yet.</p>'
+    : '<ol class="reflist">'+M.references.map(function(r,i){
+        return '<li><span>'+esc(formatAMAReference(r))+'</span>'+
+          '<button class="lk" data-rup="'+i+'"'+(i===0?' disabled':'')+'>[Up]</button>'+
+          '<button class="lk" data-rdn="'+i+'"'+(i===M.references.length-1?' disabled':'')+'>[Down]</button>'+
+          '<button class="lk rd" data-rdel="'+esc(r.id)+'">[Delete]</button></li>'; }).join('')+'</ol>';
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:11px;text-transform:uppercase;color:var(--s800)">Manuscript Reference Library ('+M.references.length+')</h4>'+lib+'</div>'+
+   '<form class="boxw" id="citeForm">'+
+     '<h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--s800)">Add Reference</h4>'+
+     '<div style="background:var(--teal-50);border:1px solid var(--teal-200);border-radius:8px;padding:12px">'+
+       '<label class="lbl" style="color:var(--teal-900)">Quick fill via DOI</label>'+
+       '<div style="display:flex;gap:8px"><input class="inp sm mono" id="cDoi" style="background:#fff" placeholder="e.g., 10.1056/NEJMoa2026816" value="'+esc(CF.doi)+'">'+
+       '<button type="button" class="btn t" id="doiGo">Auto-fill</button></div>'+
+       '<p style="font-size:10px;color:var(--teal-d);margin-top:6px">Enter DOI and click Auto-fill, or fill fields manually below.</p></div>'+
+     '<div style="display:flex;gap:16px;flex-wrap:wrap">'+
+       ['journal:Medical Journal','book:Book Publication','web:Website'].map(function(p){ var k=p.split(':')[0];
+         return '<label class="radio" style="font-weight:400"><input type="radio" name="ctype" value="'+k+'"'+(CF.type===k?' checked':'')+'><span>'+p.split(':')[1]+'</span></label>'; }).join('')+
+     '</div>'+
+     '<div class="g3"><div><label class="lbl">Authors (Surname Initials) <span class="req">*</span></label><input class="inp sm" data-cf="authors" required placeholder="Smith AJ, Jones BJ" value="'+esc(CF.authors)+'"></div>'+
+       '<div class="span2"><label class="lbl">Article / Chapter Title <span class="req">*</span></label><input class="inp sm" data-cf="title" required placeholder="Title of the article..." value="'+esc(CF.title)+'"></div></div>'+
+     '<div class="g4"><div class="span2"><label class="lbl">Journal / Book Publisher <span class="req">*</span></label><input class="inp sm" data-cf="src" required placeholder="Journal or Publisher name" value="'+esc(CF.src)+'"></div>'+
+       '<div><label class="lbl">Year <span class="req">*</span></label><input class="inp sm" data-cf="year" required placeholder="2024" value="'+esc(CF.year)+'"></div>'+
+       '<div><label class="lbl">Volume</label><input class="inp sm" data-cf="volume" placeholder="34" value="'+esc(CF.volume)+'"></div></div>'+
+     '<div class="g4"><div><label class="lbl">Issue</label><input class="inp sm" data-cf="issue" placeholder="1" value="'+esc(CF.issue)+'"></div>'+
+       '<div><label class="lbl">Pages</label><input class="inp sm" data-cf="pages" placeholder="22-29" value="'+esc(CF.pages)+'"></div>'+
+       '<div class="span2"><label class="lbl">URL (for websites)</label><input class="inp sm mono" data-cf="url" placeholder="https://..." value="'+esc(CF.url)+'"></div></div>'+
+     '<div><button type="submit" class="btn t">+ Add Reference</button></div>'+
+   '</form>';
+  $$('[data-cf]',b).forEach(function(el){ el.addEventListener('input',function(){ CF[el.dataset.cf]=el.value; }); });
+  $('#cDoi').addEventListener('input',function(e){ CF.doi=e.target.value; });
+  $$('input[name=ctype]',b).forEach(function(el){ el.addEventListener('change',function(){ CF.type=el.value; }); });
+  $$('[data-rup]',b).forEach(function(el){ el.addEventListener('click',function(){ var i=+el.dataset.rup, l=M.references.slice();
+    var t=l[i-1]; l[i-1]=l[i]; l[i]=t; M.references=l; restep(); }); });
+  $$('[data-rdn]',b).forEach(function(el){ el.addEventListener('click',function(){ var i=+el.dataset.rdn, l=M.references.slice();
+    var t=l[i+1]; l[i+1]=l[i]; l[i]=t; M.references=l; restep(); }); });
+  $$('[data-rdel]',b).forEach(function(el){ el.addEventListener('click',function(){
+    M.references=M.references.filter(function(r){return r.id!==el.dataset.rdel}); restep(); }); });
+  $('#doiGo').addEventListener('click',function(){
+    var d=(CF.doi||'').trim(); if(!d) return;
+    notify('Looking up DOI metadata...','info');
+    fetch('https://api.crossref.org/works/'+encodeURIComponent(d)).then(function(r){return r.json()}).then(function(data){
+      var w=data.message||{};
+      var auth=(w.author||[]).map(function(a){ return (a.family||'')+' '+String(a.given||'').split(' ').map(function(n){return n[0]||''}).join(''); }).join(', ');
+      CF.type='journal'; CF.authors=auth; CF.title=(w.title||[])[0]||'';
+      CF.src=(w['container-title']||[])[0]||w.publisher||'';
+      CF.year=String((((w.published||{})['date-parts']||[])[0]||[])[0]||'');
+      CF.volume=w.volume||''; CF.issue=w.issue||''; CF.pages=w.page||''; CF.doi=d;
+      if(CF.authors&&CF.title&&CF.src&&CF.year){
+        M.references.push({id:nid('ref'),type:'journal',authors:CF.authors,title:CF.title,journalOrBook:CF.src,year:CF.year,
+          volume:CF.volume||undefined,issue:CF.issue||undefined,pages:CF.pages||undefined,doi:d});
+        CF={type:'journal',authors:'',title:'',src:'',year:'',volume:'',issue:'',pages:'',doi:'',url:''};
+        notify('DOI metadata loaded and reference added.','success');
+      } else notify('DOI metadata loaded. Review fields and click Add Reference.','info');
+      restep();
+    }).catch(function(){ notify('Could not fetch DOI. Fill fields manually.','error'); });
+  });
+  $('#citeForm').addEventListener('submit',function(e){ e.preventDefault();
+    if(!CF.authors||!CF.title||!CF.src||!CF.year){ notify('Please specify standard Authors, Title, Source, and Year.','error'); return; }
+    M.references.push({id:nid('ref'),type:CF.type,authors:CF.authors,title:CF.title,journalOrBook:CF.src,year:CF.year,
+      volume:CF.volume||undefined,issue:CF.issue||undefined,pages:CF.pages||undefined,doi:CF.doi||undefined,url:CF.url||undefined});
+    notify('AMA Reference indexed successfully!','success');
+    CF={type:'journal',authors:'',title:'',src:'',year:'',volume:'',issue:'',pages:'',doi:'',url:''};
+    restep(); });
+};
+
+/* 11 ── supplementary */
+VIEWS['supplementary']=function(b){
+  b.innerHTML='<p class="note">Register supplementary files such as massive biochemical spreadsheets, sequence datasets, of MRI imagery:</p>'+
+   '<div class="box"><h5 style="font-size:12px;color:var(--s800)">Appendix attachments ('+M.supplementaryFiles.length+')</h5>'+
+   (M.supplementaryFiles.length===0? '<p class="ital">None attached.</p>' :
+     M.supplementaryFiles.map(function(f){ return '<div class="rowcard"><div><span style="font-weight:700;font-family:var(--mono);font-size:10px;display:block">'+esc(f.fileName)+'</span>'+
+       '<span style="font-size:10px;color:var(--s400)">'+esc(f.description||'')+'</span></div>'+
+       '<span style="font-family:var(--mono);font-weight:700;font-size:10px;color:var(--s500)">'+esc(f.fileSize||'')+'</span></div>'; }).join(''))+'</div>'+
+   '<form class="boxw" id="suppForm">'+
+     '<div><label class="lbl">Upload File <span class="req">*</span></label><input class="inp sm" type="file" id="suppFile">'+
+       (SUPP.name?'<p style="font-size:10px;color:var(--teal-d);margin-top:4px;font-family:var(--mono)">'+esc(SUPP.name)+'</p>':'')+'</div>'+
+     '<div><label class="lbl">Description</label><input class="inp sm" id="suppDesc" placeholder="Describe the supplementary material..." value="'+esc(SUPP.desc)+'"></div>'+
+     '<div><button type="submit" class="btn t sm" style="padding:6px 12px;font-size:11.5px">+ Add Supplementary File</button></div>'+
+   '</form>';
+  $('#suppFile').addEventListener('change',function(e){ var f=e.target.files[0]; if(!f)return;
+    SUPP.name=f.name; SUPP.size=fileSizeLabel(f); readDataUrl(f).then(function(u){ SUPP.url=u; renderStep(); }); });
+  $('#suppDesc').addEventListener('input',function(e){ SUPP.desc=e.target.value; });
+  $('#suppForm').addEventListener('submit',function(e){ e.preventDefault(); if(!SUPP.name)return;
+    M.supplementaryFiles.push({id:nid('supp'),fileName:SUPP.name,description:SUPP.desc,fileSize:SUPP.size||'Attached',fileUrl:SUPP.url,uploadedAt:new Date().toISOString()});
+    notify('Dataset supplementary file registered.','success'); SUPP={name:'',desc:'',url:'',size:''}; restep(); });
+};
+
+/* 12 ── ethics */
+VIEWS['ethics']=function(b){
+  var E=M.ethics;
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800)">Human subjects approval and IRB clearance <span class="req">*</span></h4>'+
+     '<div class="g3">'+
+       '<div><label class="lbl">Involved testing approved?</label><select class="sel sm" id="eApp" style="background:#fff">'+
+         [['yes','Yes - Formal approval obtained'],['no','No - Not approved'],['exempt','Exempt by ethics board'],['not-applicable','Not Applicable']]
+         .map(function(o){return '<option value="'+o[0]+'"'+(E.humanSubjectsApproved===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
+       '<div><label class="lbl">IRB Approval reference ID</label><input class="inp sm" id="eIrb" style="background:#fff" placeholder="e.g., IRB-TSMU-22-88" value="'+esc(E.irbApprovalNumber||'')+'"></div>'+
+       '<div><label class="lbl">Instituting Board / University</label><input class="inp sm" id="eInst" style="background:#fff" placeholder="Tbilisi State Medical University Committee" value="'+esc(E.irbInstitution||'')+'"></div>'+
+     '</div></div>'+
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800)">Informed Patient Consent statement <span class="req">*</span></h4>'+
+     '<select class="sel" id="eCons" style="background:#fff">'+
+     [['yes','Yes - Written informed consent obtained from all subjects'],['no','No - Consent omitted'],['not-applicable','Not applicable']]
+     .map(function(o){return '<option value="'+o[0]+'"'+(E.informedConsentObtained===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></div>'+
+   '<div class="drop"><b>1. Upload Signed IRB/Ethics Statement Approval PDF</b>'+
+     '<p style="font-size:10.5px;color:var(--s400)">Drag &amp; drop or select signed laboratory authorization form</p>'+
+     '<input type="file" id="eFile" hidden>'+
+     '<button type="button" class="btn" id="ePick" style="margin-top:8px">'+(E.ethicsStatementFileName?'Change file ('+esc(E.ethicsStatementFileName)+')':'Attach IRB document')+'</button></div>';
+  $('#eApp').addEventListener('change',function(e){ M.ethics.humanSubjectsApproved=e.target.value; touch(); });
+  $('#eIrb').addEventListener('input',function(e){ M.ethics.irbApprovalNumber=e.target.value; touch(); });
+  $('#eInst').addEventListener('input',function(e){ M.ethics.irbInstitution=e.target.value; touch(); });
+  $('#eCons').addEventListener('change',function(e){ M.ethics.informedConsentObtained=e.target.value; touch(); });
+  $('#ePick').addEventListener('click',function(){ $('#eFile').click(); });
+  $('#eFile').addEventListener('change',function(e){ var f=e.target.files[0]; if(!f)return;
+    readDataUrl(f).then(function(u){ M.ethics.ethicsStatementFileName=f.name; M.ethics.ethicsStatementUploadedUrl=u;
+      notify('Signed Ethics IRB approval registered!','success'); restep(); }); });
+};
+
+/* 13 ── conflicts */
+VIEWS['conflicts']=function(b){
+  var C=M.conflictDisclosure;
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800)">GBMN Conflict of Interest disclosures</h4>'+
+     '<p style="font-size:11.5px;color:var(--s600)">You must disclose all conflicts. Select the corresponding option:</p>'+
+     '<div style="display:flex;gap:16px;flex-wrap:wrap">'+
+       '<label class="radio"><input type="radio" name="coi"'+(!C.hasConflict?' checked':'')+' data-coi="0"><span>No Conflicts to declare</span></label>'+
+       '<label class="radio"><input type="radio" name="coi"'+(C.hasConflict?' checked':'')+' data-coi="1"><span>Yes - I have conflicts to declare</span></label>'+
+     '</div>'+
+     (C.hasConflict? '<div><label class="lbl">Enter details of interests / industry sponsorship ties:</label>'+
+       '<textarea class="ta" id="coiTxt" rows="3" style="background:#fff" placeholder="Enter details...">'+esc(C.conflictDetails||'')+'</textarea></div>' : '')+
+   '</div>'+
+   (C.hasConflict?
+   '<div class="box"><h4 style="font-size:12.5px;color:var(--s800);display:flex;gap:6px;align-items:center">'+ico('code','',' width:14px;height:14px;color:var(--teal)')+' Mandatory Conflict of Interest Form Verification</h4>'+
+     '<div class="rowcard"><div><span style="font-weight:700;color:var(--s800);display:block;font-size:11.5px">GBMN COI form document package</span>'+
+       '<p style="font-size:10px;color:var(--s400)">Download, complete, sign, and upload proof</p></div>'+
+       '<button type="button" class="btn tl sm" id="coiTpl">Download template form</button></div>'+
+     '<div class="drop"><b>Upload completed and signed Conflict statement</b><input type="file" id="coiFile" hidden>'+
+       '<button type="button" class="btn" id="coiPick">'+(C.signedCoiFormName?'Change COI file ('+esc(C.signedCoiFormName)+')':'Attach signed PDF form')+'</button></div></div>'
+   : '<div style="background:var(--em50);border:1px solid var(--em200);border-radius:12px;padding:14px;color:var(--em900);font-size:12px">'+
+     '<b>No Conflicts to declare</b> selected. A signed COI upload is not required for this manuscript.</div>');
+  $$('[data-coi]',b).forEach(function(el){ el.addEventListener('change',function(){
+    M.conflictDisclosure.hasConflict = el.dataset.coi==='1'; restep(); }); });
+  if($('#coiTxt')) $('#coiTxt').addEventListener('input',function(e){ M.conflictDisclosure.conflictDetails=e.target.value; touch(); });
+  if($('#coiTpl')) $('#coiTpl').addEventListener('click',function(){ notify('The COI template is provided by the editorial office.','info'); });
+  if($('#coiPick')){ $('#coiPick').addEventListener('click',function(){ $('#coiFile').click(); });
+    $('#coiFile').addEventListener('change',function(e){ var f=e.target.files[0]; if(!f)return;
+      readDataUrl(f).then(function(u){ M.conflictDisclosure.signedCoiFormName=f.name; M.conflictDisclosure.signedCoiFormUrl=u;
+        notify('Signed COI form registered.','success'); restep(); }); }); }
+};
+
+/* 14 ── funding */
+VIEWS['funding']=function(b){
+  var F=M.fundingDetails;
+  b.innerHTML=
+   '<div style="background:var(--s50);border-left:4px solid var(--s300);border-radius:0 8px 8px 0;padding:11px 13px;color:var(--s600);font-size:11.5px">'+
+     'Funding information is <b>optional</b>. Fill in only if your research received external funding.</div>'+
+   '<div class="g2">'+
+     '<div><label class="lbl">Sponsoring Research Foundation / Agency</label><input class="inp" id="fAg" placeholder="e.g., Shota Rustaveli National Science Foundation" value="'+esc(F.fundingAgency||'')+'"></div>'+
+     '<div><label class="lbl">Funding reference Grant Identification ID</label><input class="inp" id="fNo" placeholder="e.g., FR-24-9128" value="'+esc(F.grantNumber||'')+'"></div>'+
+   '</div>'+
+   '<div><label class="lbl">Describe specific allocation of funding resources:</label><textarea class="ta" id="fEx" rows="3">'+esc(F.explanation||'')+'</textarea></div>';
+  $('#fAg').addEventListener('input',function(e){ M.fundingDetails.fundingAgency=e.target.value; touch(); });
+  $('#fNo').addEventListener('input',function(e){ M.fundingDetails.grantNumber=e.target.value; touch(); });
+  $('#fEx').addEventListener('input',function(e){ M.fundingDetails.explanation=e.target.value; touch(); });
+};
+
+/* 15 ── files for editorial office */
+function editorFileBlock(opts){
+  var f=M.editorFiles.filter(function(x){return x.type===opts.type})[0];
+  return '<div><h4 style="font-size:12.5px;color:var(--s800)">'+opts.heading+'</h4>'+
+    '<p class="note">'+opts.sub+'</p>'+
+    '<div class="rowcard" style="background:var(--s50);margin-top:8px"><div style="flex:1"><span style="font-weight:700;color:var(--s800);display:block;font-size:11.5px">'+opts.tplName+'</span>'+
+      '<p style="font-size:10px;color:var(--s400)">'+opts.tplSub+'</p></div>'+
+      '<button type="button" class="btn tl sm" data-tpl="'+opts.type+'">'+opts.tplBtn+'</button></div>'+
+    '<div class="drop" style="margin-top:8px"><b>'+opts.upLabel+'</b>'+
+      '<input type="file" hidden data-up="'+opts.type+'">'+
+      '<button type="button" class="btn" data-pick="'+opts.type+'">'+(f?esc(f.fileName):'Upload File')+'</button>'+
+      (f? '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;border:1px solid var(--teal-100);background:var(--teal-50);border-radius:8px;padding:7px">'+
+          '<span style="font-weight:700;color:var(--teal-900);font-size:11px">'+esc(f.fileName)+(f.fileSize?' · '+esc(f.fileSize):'')+'</span>'+
+          '<a class="btn sm" href="'+f.fileUrl+'" target="_blank" rel="noopener">Preview</a>'+
+          '<a class="btn sm" href="'+f.fileUrl+'" download="'+esc(f.fileName)+'">Open</a>'+
+          '<button type="button" class="btn sm" data-pick="'+opts.type+'">Replace</button>'+
+          '<button type="button" class="btn sm rd" data-rm="'+opts.type+'">Delete</button></div>' : '')+
+    '</div></div>';
+}
+VIEWS['editor-files']=function(b){
+  b.innerHTML=
+    editorFileBlock({type:'cover-letter',heading:'Cover Letter',
+      sub:'Download the cover letter template, fill it in, sign it, and upload the completed version.',
+      tplName:'GBMN Cover Letter Template',tplSub:'Download, complete, sign, and upload',tplBtn:'Download Template',
+      upLabel:'Upload Completed Cover Letter'})+
+    editorFileBlock({type:'copyright-transfer',heading:'Copyright Transfer Form',
+      sub:'Download the copyright form, fill it in, sign it, and upload the completed version.',
+      tplName:'GBMN Copyright Transfer Agreement',tplSub:'Required for all submissions — download, sign, upload',tplBtn:'Download Form',
+      upLabel:'Upload Signed Copyright Form'});
+  $$('[data-pick]',b).forEach(function(el){ el.addEventListener('click',function(){ $('[data-up="'+el.dataset.pick+'"]',b).click(); }); });
+  $$('[data-up]',b).forEach(function(el){ el.addEventListener('change',function(e){ var f=e.target.files[0]; if(!f)return;
+    var type=el.dataset.up;
+    readDataUrl(f).then(function(u){
+      M.editorFiles=M.editorFiles.filter(function(x){return x.type!==type});
+      M.editorFiles.push({id:type+'-'+Date.now(),fileName:f.name,type:type,fileUrl:u,uploadedAt:new Date().toISOString(),fileSize:fileSizeLabel(f)});
+      notify(type.replace('-',' ')+' uploaded: '+f.name,'success'); restep(); }); }); });
+  $$('[data-rm]',b).forEach(function(el){ el.addEventListener('click',function(){
+    M.editorFiles=M.editorFiles.filter(function(x){return x.type!==el.dataset.rm});
+    notify(el.dataset.rm.replace('-',' ')+' removed.','success'); restep(); }); });
+  $$('[data-tpl]',b).forEach(function(el){ el.addEventListener('click',function(){
+    notify('The template is provided by the editorial office.','info'); }); });
+};
+
+/* 16 ── preview */
+VIEWS['preview']=function(b){
+  b.innerHTML='<div class="box" style="text-align:center;padding:22px">'+
+    '<p style="font-size:12.5px;color:var(--s600)">The live pre-publication proof is rendered in the panel on the right, in the exact GBMN printed layout — A4, two columns, masthead and footer on every page.</p>'+
+    '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">'+
+      '<button type="button" class="btn t" id="pvPdf">Download PDF</button>'+
+      '<button type="button" class="btn" id="pvTitlePg">Show title page</button>'+
+      '<button type="button" class="btn" id="pvWeb">Show web version</button>'+
+      '<button type="button" class="btn" id="pvHtml">Export HTML</button>'+
+      '<button type="button" class="btn" id="pvJson">Export metadata (JSON)</button>'+
+    '</div></div>'+
+    '<div class="box" id="pvIssues"></div>';
+  $('#pvPdf').addEventListener('click',function(){ setMode('print'); setTimeout(function(){window.print()},150); });
+  $('#pvTitlePg').addEventListener('click',function(){ setMode('title'); });
+  $('#pvWeb').addEventListener('click',function(){ setMode('web'); });
+  $('#pvHtml').addEventListener('click',exportHtml);
+  $('#pvJson').addEventListener('click',exportJson);
+  paintIssues();
+};
+
+/* 17 ── summary & submit */
+VIEWS['summary-submit']=function(b){
+  function line(ok,txt){ return '<div style="display:flex;gap:8px;align-items:center">'+
+    ico('sq','',' width:15px;height:15px;flex:0 0 15px;color:'+(ok?'#16a34a':'#cbd5e1'))+
+    '<span style="'+(ok?'color:var(--s700);font-weight:600':'color:var(--s400)')+'">'+txt+'</span></div>'; }
+  b.innerHTML=
+   '<div style="background:var(--amber50);border:1px solid var(--amber200);border-radius:12px;padding:14px;display:flex;gap:10px;color:var(--amber900)">'+
+     ico('alert','',' width:17px;height:17px;flex:0 0 17px;color:#d97706;margin-top:2px')+
+     '<div><h4 style="font-size:12.5px">Final Pre-Submission integrity analysis</h4>'+
+     '<p style="font-size:11.5px;line-height:1.5">Once submitted, authors cannot modify structure of the study independently unless editors grant revision permissions. Please review your content diagnostics summary.</p></div></div>'+
+   '<div class="box"><h4 style="font-size:11.5px;text-transform:uppercase;color:var(--s800)">Mandatory Components appraisal:</h4>'+
+     '<div class="g2" style="gap:10px;font-size:11.5px">'+
+       line(!!M.title.trim(),'Paper Title completed')+
+       line(M.authors.length>0,'Authors affil roster linked')+
+       line(M.authors.some(function(a){return a.isCorresponding}),'Corresponding author selected')+
+       line(M.references.length>0,'AMA references bibliographic data filled')+
+       line(!!M.ethics.humanSubjectsApproved,'IRB statement of subjects disclosure')+
+     '</div></div>'+
+   '<div id="sumIssues" class="box"></div>'+
+   '<div style="text-align:center;padding-top:6px">'+
+     '<div style="display:flex;flex-direction:column;align-items:center;gap:10px">'+
+       '<button type="button" id="btnSubmit" class="btn t" style="padding:14px 30px;border-radius:12px;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;background:var(--teal-900);border-color:var(--teal-900)">Save &amp; Submit to Editorial Office</button>'+
+       '<button type="button" id="btnDraft" class="btn" style="padding:8px 22px;border-radius:12px">Save as Draft</button>'+
+     '</div>'+
+     '<p style="font-size:10px;color:var(--s400);margin-top:6px">A confirmation notification will be routed to your academic mailbox credentials.</p></div>';
+  paintIssues($('#sumIssues'));
+  $('#btnSubmit').addEventListener('click',function(){
+    if(!M.title.trim()){ notify('Submission error: Full title is missing from metadata.','error'); return; }
+    if(!M.authors.length){ notify('Submission error: Minimum of 1 author affiliate matching credentials required.','error'); return; }
+    M.status='Submitted'; M.submittedAt=new Date().toISOString();
+    notify('Manuscript marked as submitted. Download the PDF and send it with the editorial package.','success');
+    go('getting-started'); });
+  $('#btnDraft').addEventListener('click',function(){ save(); notify('Draft saved. You can return to continue editing.','success'); });
+};
+
+/* ── footer navigation ── */
+$('#btnPrev').addEventListener('click',function(){
+  var names=sectionNames(), i=names.indexOf(activeSection);
+  if(activeStep==='sections'&&i>0){ activeSection=names[i-1]; renderStep(); return; }
+  var k=STEPS.map(function(s){return s.id}).indexOf(activeStep);
+  if(k>0) go(STEPS[k-1].id); });
+$('#btnSave').addEventListener('click',function(){ save(); notify('Draft saved. You can safely continue later.','success'); });
+$('#btnNext').addEventListener('click',function(){
+  var names=sectionNames(), i=names.indexOf(activeSection);
+  if(activeStep==='sections'&&i>-1&&i<names.length-1){
+    save(); var nx=names[i+1]; notify(activeSection+' saved. Continue with '+nx+'.','success');
+    activeSection=nx; renderStep(); renderSidebar(); return; }
+  var k=STEPS.map(function(s){return s.id}).indexOf(activeStep);
+  if(k<STEPS.length-1) go(STEPS[k+1].id); });

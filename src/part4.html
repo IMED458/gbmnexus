@@ -1,0 +1,199 @@
+<script>
+(function(){
+"use strict";
+var LOGO = "data:image/webp;base64,__LOGO__";
+document.getElementById('brandLogo').src = LOGO;
+
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')};
+var uid=0, nid=function(p){return (p||'x')+'-'+(++uid)+Date.now().toString(36)};
+var stripTags=function(h){return String(h==null?'':h).replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim()};
+
+/* ── icons (24x24 stroke) ── */
+var P={
+ book:'M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z',
+ shield:'M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3zM9 12l2 2 4-4',
+ filecheck:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 15l2 2 4-4',
+ file:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h8',
+ users:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+ layers:'m12.8 2.7 8.5 4.3a1 1 0 0 1 0 1.8l-8.5 4.3a2 2 0 0 1-1.6 0L2.7 8.8a1 1 0 0 1 0-1.8l8.5-4.3a2 2 0 0 1 1.6 0M2.4 12.6 11.2 17a2 2 0 0 0 1.6 0l8.8-4.4M2.4 17.6 11.2 22a2 2 0 0 0 1.6 0l8.8-4.4',
+ spark:'m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM5 19l.7 1.8L7.5 21.5 5.7 22.2 5 24l-.7-1.8L2.5 21.5l1.8-.7z',
+ key:'m15.5 7.5 3 3L22 7l-3-3M2 22l1-1M9.5 14.5 3 21M16.5 13a5.5 5.5 0 1 1-5.5-5.5',
+ bookmark:'m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z',
+ clip:'m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l8.6-8.6a4 4 0 1 1 5.6 5.6l-8.5 8.5a2 2 0 1 1-2.8-2.8l7.8-7.8',
+ heart:'M11.6 5.4 8.4 8.6a2 2 0 0 0 0 2.8l1.2 1.2a2 2 0 0 0 2.8 0l3.2-3.2 4.2 4.2a2 2 0 0 1 0 2.8l-2.6 2.6a2 2 0 0 1-2.8 0L5 11a2 2 0 0 1 0-2.8l3-3a4 4 0 0 1 5.6 0',
+ dollar:'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+ eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6',
+ check:'M22 11.1V12a10 10 0 1 1-5.9-9.1M9 11l3 3L22 4',
+ alert:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 8v4M12 16h.01',
+ circle:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18',
+ bold:'M6 4h7a4 4 0 0 1 0 8H6zM6 12h8a4 4 0 0 1 0 8H6z',
+ italic:'M19 4h-9M14 20H5M15 4 9 20',
+ under:'M6 4v6a6 6 0 0 0 12 0V4M4 21h16',
+ sup:'m4 19 8-11M12 19 4 8M20 9h-4c0-1.5.44-2 1.5-2.5S20 5.4 20 4.5A1.5 1.5 0 0 0 17 4',
+ sub:'m4 5 8 11M12 5 4 16M20 20h-4c0-1.5.44-2 1.5-2.5s2.5-1.1 2.5-2a1.5 1.5 0 0 0-3-.5',
+ ul:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
+ ol:'M10 6h11M10 12h11M10 18h11M4 6h1v4M4 10h2M6 18H4c0-1 2-2 2-3a1 1 0 0 0-2 0',
+ clear:'M21 6H3M15 12H3M17 18H3',
+ undo:'M9 14 4 9l5-5M4 9h11a5 5 0 1 1 0 10h-5',
+ image:'M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M21 15l-5-5L5 21',
+ table:'M12 3v18M3 9h18M3 15h18M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2',
+ chart:'M3 21V3M7 21v-6M12 21V9M17 21v-9M21 21H3',
+ trash:'M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6',
+ up:'M12 19V5M5 12l7-7 7 7', down:'M12 5v14M19 12l-7 7-7-7',
+ code:'m10 20-6-8 6-8M14 4l6 8-6 8', info:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20M12 16v-4M12 8h.01',
+ sq:'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11'
+};
+function ico(n,cls,st){ var d=P[n]||P.circle;
+  return '<svg class="'+(cls||'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"'+(st?' style="'+st+'"':'')+'><path d="'+d+'"/></svg>'; }
+
+/* ── article types (ported verbatim) ── */
+var ARTICLE_TYPES={
+ 'clinical-cases':{key:'clinical-cases',name:'CLINICAL CASES',
+   description:'Brief Report or Clinical Problem Solving. Describes 1–3 patients, one family, or step-by-step clinical reasoning. Maximum words: 2000–2500. Up to 3 tables/figures and 15–25 references.',
+   maxWordCount:2500,maxReferences:25,maxFiguresTables:3,
+   requiredSections:['Introduction','Case Presentation','Clinical Reasoning','Discussion','Conclusions','Notes on Patient Consent','Acknowledgments','Keywords'],
+   abstractType:'unstructured'},
+ 'original-research':{key:'original-research',name:'ORIGINAL RESEARCH',
+   description:'Original Article or Special Article. Reports scientific results of original clinical research, policy, ethics, law, or health care delivery. Maximum words: 2700. Maximum of 5 tables/figures. Up to 40 references.',
+   maxWordCount:2700,maxReferences:40,maxFiguresTables:5,
+   requiredSections:['Introduction','Materials and Methods','Results','Discussion','Conclusions','Acknowledgments','Keywords'],
+   abstractType:'unstructured'},
+ 'review-articles':{key:'review-articles',name:'REVIEW ARTICLES',
+   description:'Clinical Practice Review or Other Review. Evidence-based review for clinical or mechanistic topics. Maximum words: 2500–3000. Up to 5 tables/figures and 50–55 references.',
+   maxWordCount:3000,maxReferences:55,maxFiguresTables:5,
+   requiredSections:['Introduction','Methods','Evidence Review','Clinical Implications','Discussion','Conclusions','Acknowledgments','Keywords'],
+   abstractType:'unstructured'},
+ 'commentary':{key:'commentary',name:'COMMENTARY',
+   description:'Editorial, Perspective, Clinical Implications of Basic Research, or Letter to the Editor. Maximum words: 400–1200 depending on format. Usually no abstract.',
+   maxWordCount:1200,maxReferences:10,maxFiguresTables:1,
+   requiredSections:['Commentary','Conclusions','Keywords'],
+   abstractType:'none'},
+ 'other':{key:'other',name:'OTHER',
+   description:'Special Report, Health Law/Ethics/Human Rights or Health Policy Report, Medicine and Society, or Sounding Board. Maximum words: 2000–2700.',
+   maxWordCount:2700,maxReferences:40,maxFiguresTables:5,
+   requiredSections:['Introduction','Background','Report','Analysis','Discussion','Conclusions','Acknowledgments','Keywords'],
+   abstractType:'unstructured'}
+};
+var CONTRIB_OPTIONS=[
+ 'Substantial contributions to concept or design',
+ 'Acquisition, analysis, or interpretation of data',
+ 'Drafting of the manuscript',
+ 'Critical review of the manuscript for important intellectual content',
+ 'Agreed to be accountable for all aspects of the work',
+ 'Will review the final version to be published',
+ 'Supervised the work'];
+
+/* ── manuscript model ── */
+function blankManuscript(){
+  return {
+    id:'GBMN-'+new Date().getFullYear()+'-'+Math.random().toString(36).slice(2,10).toUpperCase(),
+    status:'Draft', title:'', runningTitle:'', specialty:'', articleType:'original-research',
+    publicationInfo:{doi:'',volumeIssue:''}, checklistAgreed:false, checklistAgreedAt:'',
+    authors:[], abstractContents:{text:''}, sections:{}, figuresAndTables:[], references:[],
+    supplementaryFiles:[], editorFiles:[],
+    ethics:{humanSubjectsApproved:'yes',irbApprovalNumber:'',irbInstitution:'',informedConsentObtained:'yes',ethicsStatementFileName:'',ethicsStatementUploadedUrl:''},
+    conflictDisclosure:{hasConflict:false,conflictDetails:'',signedCoiFormName:'',signedCoiFormUrl:''},
+    fundingDetails:{fundingAgency:'',grantNumber:'',explanation:''},
+    preview:{vol:'',iss:'',period:'',year:String(new Date().getFullYear())},
+    createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+  };
+}
+var M = blankManuscript();
+var activeStep='getting-started';
+
+/* ── persistence ── */
+var KEY='gbmnManuscript';
+function save(){ try{ M.updatedAt=new Date().toISOString(); localStorage.setItem(KEY,JSON.stringify(M)); }catch(e){} }
+function load(){ try{ var raw=localStorage.getItem(KEY); if(!raw)return;
+  var o=JSON.parse(raw); if(!o||typeof o!=='object')return;
+  var base=blankManuscript();
+  Object.keys(base).forEach(function(k){ if(o[k]===undefined) o[k]=base[k]; });
+  ['publicationInfo','ethics','conflictDisclosure','fundingDetails','preview','abstractContents'].forEach(function(k){
+    o[k]=Object.assign({}, base[k], o[k]||{}); });
+  M=o;
+}catch(e){} }
+load();
+
+/* ── toast ── */
+var toastT;
+function notify(msg,type){ var t=$('#toast'); t.className='toast on'+(type==='error'?' err':(type==='info'?' info':''));
+  t.textContent=msg; clearTimeout(toastT); toastT=setTimeout(function(){t.className='toast'+(type==='error'?' err':'')},2600); }
+
+/* ── steps (ported verbatim) ── */
+var STEPS=[
+ {id:'getting-started',label:'Getting Started',icon:'book',title:'1. Complete Manuscript Generation Core',v:function(){return 'complete'}},
+ {id:'policies',label:'Journal Policies',icon:'shield',title:'2. GBMN Ethics & Open Access Declarations',v:function(){return 'complete'}},
+ {id:'checklist',label:'Manuscript Checklist',icon:'filecheck',title:'3. Mandatory Peer Submitting Checklist',v:function(m){return m.checklistAgreed?'complete':'warning'}},
+ {id:'title-meta',label:'Title & Metadata',icon:'file',title:'4. Title and Clinical Specialty Scope',
+   v:function(m){return (m.title.trim()&&m.runningTitle.trim()&&m.specialty.trim())?'complete':(m.title.trim()?'warning':'empty')}},
+ {id:'authors',label:'Authors',icon:'users',title:'5. GBMN Author Roster Management',
+   v:function(m){ if(!m.authors.length) return 'empty';
+     var hasCorr=m.authors.some(function(a){return a.isCorresponding});
+     var allOrcid=m.authors.every(function(a){return a.orcidId&&a.orcidId.length>5});
+     return (hasCorr&&allOrcid)?'complete':'warning'; }},
+ {id:'article-type',label:'Article Type',icon:'layers',title:'6. Article Type Quota Configuration',
+   v:function(m){return m.articleType?'complete':'empty'}},
+ {id:'abstract',label:'Abstract',icon:'spark',title:'7. Structured abstract compilation',
+   v:function(m){ var c=ARTICLE_TYPES[m.articleType]; if(!c||c.abstractType==='none')return 'complete';
+     var t=stripTags(m.abstractContents.text||''); return t.length>50?'complete':(t.length>0?'warning':'empty'); }},
+ {id:'keywords',label:'Keywords',icon:'key',title:'8. Indexed indexing Keywords',
+   v:function(m){ var n=(m.sections['Keywords']||'').split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean).length;
+     return (n>=3&&n<=6)?'complete':(n>0?'warning':'empty'); }},
+ {id:'sections',label:'Manuscript Sections',icon:'file',title:'9. Structured Manuscript Body Segments',
+   v:function(m){ var c=ARTICLE_TYPES[m.articleType]; if(!c)return 'empty';
+     var reqs=c.requiredSections.filter(function(s){return s!=='Acknowledgments'&&s!=='Keywords'});
+     var filled=reqs.filter(function(s){return m.sections[s]&&m.sections[s].length>100});
+     return filled.length===reqs.length?'complete':(filled.length?'warning':'empty'); }},
+ {id:'references',label:'References (AMA)',icon:'bookmark',title:'10. AMA Bibliography Reference Library',
+   v:function(m){ if(!m.references.length)return 'empty';
+     return m.references.some(function(r){return !r.authors||!r.title||!r.year||!r.journalOrBook})?'warning':'complete'; }},
+ {id:'supplementary',label:'Supplementary Files',icon:'clip',title:'11. Optional Appendix Datasets & Protocols',v:function(){return 'complete'}},
+ {id:'ethics',label:'Ethics Statement',icon:'heart',title:'12. Institutional Review Board (IRB) Clearance',
+   v:function(m){ var c=m.ethics.humanSubjectsApproved&&m.ethics.informedConsentObtained;
+     if(c&&(m.ethics.informedConsentObtained==='no'||m.ethics.humanSubjectsApproved==='not-applicable'||m.ethics.ethicsStatementFileName))return 'complete';
+     return c?'warning':'empty'; }},
+ {id:'conflicts',label:'Conflict Disclosures',icon:'shield',title:'13. Disclosure of Financial Conflicts (COI)',
+   v:function(m){ return (!m.conflictDisclosure.hasConflict||m.conflictDisclosure.signedCoiFormName)?'complete':'warning'; }},
+ {id:'funding',label:'Funding Info',icon:'dollar',title:'14. Rustaveli & Global Research Grants',v:function(){return 'complete'}},
+ {id:'editor-files',label:'Files for Editorial Office',icon:'filecheck',title:'15. Cover Letter & Referee Guidelines',v:function(){return 'complete'}},
+ {id:'preview',label:'Manuscript Preview',icon:'eye',title:'16. Pre-Publication Live Watermarked proof',v:function(){return 'complete'}},
+ {id:'summary-submit',label:'Summary & Submit',icon:'check',title:'17. Final Integrity Evaluation & Submitting',v:function(){return 'complete'}}
+];
+var STEP_HELP={
+ checklist:'Checklist must be accepted before submission.',
+ 'title-meta':'Full title, running title, and specialty are required.',
+ authors:'Add at least one author, ORCID, and a corresponding author.',
+ abstract:'Abstract is required for this article type.',
+ keywords:'Enter 3-6 MeSH-style keywords separated by semicolons.',
+ sections:'Required manuscript body sections need content.',
+ references:'Add complete AMA references.',
+ ethics:'Ethics fields and IRB upload should be completed.',
+ conflicts:'COI file is required only when conflicts are declared.'
+};
+
+/* ── sidebar ── */
+function renderSidebar(){
+  $('#sideTitle').textContent = M.title || 'Untitled Manuscript Draft';
+  $('#sideStatus').textContent = 'Manuscript Status: '+M.status;
+  var nav=$('#sideNav'), html='';
+  STEPS.forEach(function(s){
+    var st=s.v(M), on=activeStep===s.id;
+    var stIcon = st==='complete' ? ico('check','st',on?'color:#99f6e4':'color:#16a34a')
+               : st==='warning'  ? ico('alert','st',on?'color:#fde68a':'color:#f59e0b')
+               :                   ico('circle','st',on?'color:#5eead4;opacity:.6':'color:#cbd5e1');
+    html+='<button type="button" class="stp'+(on?' on':'')+'" data-step="'+s.id+'">'+
+          '<span class="lt">'+ico(s.icon,'ic',on?'color:#fff':'color:#94a3b8')+'<span class="lb">'+esc(s.label)+'</span></span>'+stIcon+'</button>';
+    if(on && st!=='complete' && STEP_HELP[s.id]) html+='<div class="sthelp">'+esc(STEP_HELP[s.id])+'</div>';
+  });
+  nav.innerHTML=html;
+  var done=STEPS.filter(function(s){return s.v(M)==='complete'}).length;
+  var pct=Math.round(done/STEPS.length*100);
+  $('#progPct').textContent=pct+'%'; $('#progBar').style.width=pct+'%';
+}
+$('#sideNav').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-step]'); if(!b)return;
+  go(b.dataset.step);
+});
+function go(id){ activeStep=id; renderAll(); $('#midPane').scrollTop=0; }

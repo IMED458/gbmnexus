@@ -1,0 +1,278 @@
+
+/* ══ document builders — printed GBMN layout ═══════════════════ */
+function ital(s){ return esc(s).replace(/\*([^*]+)\*/g,'<i>$1</i>'); }
+function affilList(){
+  var out=[]; M.authors.forEach(function(a){
+    (a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).forEach(function(x){ if(x&&out.indexOf(x)<0) out.push(x); }); });
+  return out;
+}
+function volLine(){
+  var p=[], pv=M.preview||{};
+  if(pv.vol) p.push('VOLUME '+pv.vol);
+  if(pv.iss) p.push('ISSUE '+pv.iss);
+  var s=p.join(' ');
+  return ((s? s+'.' : '')+(pv.period? ' '+pv.period : '')).toUpperCase().trim();
+}
+function masthead(){
+  return '<div class="pmast"><div class="mk"><img src="'+LOGO+'" alt="Georgian Biomedical and Medical Nexus"></div>'+
+    '<div class="vol">'+esc(volLine())+'</div></div><hr class="prule"><hr class="prule2">'; }
+function footer(){
+  var yr=(M.preview&&M.preview.year)||String(new Date().getFullYear());
+  return '<div class="pfoot">Georgian Biomedical and Medical Nexus (Former Georgian Biomedical News)<br>'+
+    'ISSN (Online): 2720-8796&nbsp;&nbsp;ISSN (Print): 2720-7994<br>'+
+    'Downloaded from gbmn.org. For personal use only. No other uses without permission.<br>'+
+    'Copyright &copy; '+esc(yr)+'. All rights reserved.</div>'; }
+function authorLine(){
+  var affs=affilList();
+  return M.authors.map(function(a){
+    var nums=(a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).map(function(x){ var i=affs.indexOf(x); return i<0?'':String(i+1); }).filter(Boolean);
+    var sup=nums.slice();
+    if(a.orcidId) sup.push('ID');
+    if(a.isCorresponding) sup.push('*');
+    var nm=[a.firstName,a.middleInitial,a.lastName].filter(Boolean).join(' ');
+    return esc(nm)+(sup.length?'<sup>'+esc(sup.join(','))+'</sup>':'');
+  }).join(', '); }
+function affilBlock(){
+  var affs=affilList(); if(!affs.length) return '';
+  return '<div class="paffil">'+affs.map(function(a,i){return '<div><sup>'+(i+1)+'</sup> '+esc(a)+'</div>'}).join('')+'</div>'; }
+function corrLine(){
+  var c=M.authors.filter(function(a){return a.isCorresponding})[0]; if(!c) return '';
+  var nm=[c.firstName,c.middleInitial,c.lastName].filter(Boolean).join(' ');
+  return '<div class="pcorr"><b>*</b> Corresponding author: '+esc(nm)+(c.email?' — '+esc(c.email):'')+'</div>'; }
+function doiLine(){ var d=(M.publicationInfo||{}).doi; return d? '<div class="pdoi">DOI. '+esc(d)+'</div>' : ''; }
+function absBlock(){
+  var txt=(M.abstractContents.text||'').trim(), kw=(M.sections['Keywords']||'').trim();
+  var none = cfg()&&cfg().abstractType==='none';
+  if((!txt||none) && !kw) return '';
+  return (none?'':'<div class="pabs-h">ABSTRACT</div>')+'<div class="pabs">'+
+    (none?'':txt)+ (kw? '<p><span class="lb">KEYWORDS.</span> '+esc(kw)+'</p>':'')+'</div>'; }
+function sectionsHtml(withIds){
+  return sectionNames().map(function(s,i){
+    var html=(M.sections[s]||'').trim(); if(!html) return '';
+    return '<h2'+(withIds?' id="s'+i+'"':'')+'>'+esc(s).toUpperCase()+'</h2>'+html;
+  }).join(''); }
+function declRows(){
+  var E=M.ethics,C=M.conflictDisclosure,F=M.fundingDetails,rows=[];
+  var eth=[];
+  if(E.humanSubjectsApproved==='yes') eth.push('Human subjects approval was obtained'+(E.irbInstitution?' from '+E.irbInstitution:'')+(E.irbApprovalNumber?' (approval '+E.irbApprovalNumber+')':'')+'.');
+  else if(E.humanSubjectsApproved==='exempt') eth.push('The study was granted exemption by the ethics board'+(E.irbInstitution?' of '+E.irbInstitution:'')+'.');
+  else if(E.humanSubjectsApproved==='not-applicable') eth.push('Ethics approval was not applicable to this work.');
+  if(E.informedConsentObtained==='yes') eth.push('Written informed consent was obtained from all subjects.');
+  else if(E.informedConsentObtained==='not-applicable') eth.push('Informed consent was not applicable.');
+  if(eth.length) rows.push(['Ethics approval',eth.join(' ')]);
+  rows.push(['Conflict of interest', C.hasConflict ? (C.conflictDetails||'The authors declare conflicts of interest.') : 'The authors declare no conflict of interest.']);
+  var fu=[F.fundingAgency,F.grantNumber?'Grant '+F.grantNumber:'',F.explanation].filter(Boolean).join('. ');
+  rows.push(['Funding', fu || 'This research received no external funding.']);
+  var contrib=M.authors.filter(function(a){return a.contributionRole}).map(function(a){
+    var ini=(a.firstName?a.firstName[0]+'.':'')+(a.lastName?a.lastName[0]+'.':'');
+    return ini+' '+a.contributionRole; }).join('; ');
+  if(contrib) rows.push(['Author contributions',contrib]);
+  return rows; }
+function declHtml(){
+  var rows=declRows(); if(!rows.length) return '';
+  return '<h2>DECLARATIONS</h2><div class="decl">'+rows.map(function(r){return '<p><b>'+r[0]+'.</b> '+esc(r[1])+'</p>'}).join('')+'</div>'; }
+function refsHtml(){
+  if(!M.references.length) return '';
+  return '<h2>REFERENCES</h2><ol class="refs">'+M.references.map(function(r){return '<li>'+ital(formatAMAReference(r))+'</li>'}).join('')+'</ol>'; }
+function frontMatter(){
+  return '<h1 class="ptitle">'+esc(M.title||'Untitled manuscript')+'</h1>'+
+    '<div class="pauth">'+authorLine()+'</div>'+ absBlock()+ doiLine(); }
+function bodyNodes(){
+  var holder=document.createElement('div');
+  holder.innerHTML = sectionsHtml(false)+declHtml();
+  holder.querySelectorAll('.gbmn-media-actions').forEach(function(n){n.remove()});
+  holder.querySelectorAll('[contenteditable]').forEach(function(n){n.removeAttribute('contenteditable')});
+  var nodes=Array.prototype.slice.call(holder.children);
+  if(M.references.length){
+    var h=document.createElement('h2'); h.textContent='REFERENCES'; nodes.push(h);
+    M.references.forEach(function(r,i){
+      var ol=document.createElement('ol'); ol.className='refs'; ol.setAttribute('start',String(i+1));
+      var li=document.createElement('li'); li.innerHTML=ital(formatAMAReference(r)); ol.appendChild(li); nodes.push(ol); });
+  }
+  return nodes; }
+function pageShell(first){
+  var pg=document.createElement('div'); pg.className='page';
+  pg.innerHTML = masthead() + (first? '<div class="pfront">'+frontMatter()+'</div>' : '') + '<div class="pbody"></div>' + footer();
+  return pg; }
+function wordCount(){ return sectionNames().reduce(function(n,s){ var t=stripTags(M.sections[s]||''); return n+(t?t.split(/\s+/).length:0); },0); }
+function titlePage(){
+  var orcids=M.authors.filter(function(a){return a.orcidId}).map(function(a){
+    return esc([a.firstName,a.lastName].filter(Boolean).join(' '))+' — '+esc(a.orcidId); });
+  var media=0; sectionNames().forEach(function(s){ media+=((M.sections[s]||'').match(/gbmn-inline-media /g)||[]).length; });
+  return '<div class="page">'+masthead()+
+    '<h1 class="ptitle">'+esc(M.title||'Untitled manuscript')+'</h1>'+
+    '<div class="pauth">'+authorLine()+'</div>'+affilBlock()+corrLine()+doiLine()+
+    '<div class="tp-meta">'+
+      '<div><span class="k">Article type</span><span class="v">'+esc(cfg()?cfg().name:'')+'</span></div>'+
+      '<div><span class="k">Running title</span><span class="v">'+esc(M.runningTitle)+'</span></div>'+
+      '<div><span class="k">Specialty</span><span class="v">'+esc(M.specialty)+'</span></div>'+
+      '<div><span class="k">Keywords</span><span class="v">'+esc(M.sections['Keywords']||'')+'</span></div>'+
+      '<div><span class="k">Word count (body)</span><span class="v">'+wordCount()+'</span></div>'+
+      '<div><span class="k">Figures / Tables</span><span class="v">'+media+'</span></div>'+
+      '<div><span class="k">References</span><span class="v">'+M.references.length+'</span></div>'+
+      (orcids.length?'<div><span class="k">ORCID</span><span class="v">'+orcids.join('<br>')+'</span></div>':'')+
+    '</div>'+
+    '<div class="tp-note">This title page is submitted separately from the main manuscript, so that the manuscript can be sent to reviewers without author identifying information.</div>'+
+    footer()+'</div>'; }
+function webVersion(){
+  var toc=sectionNames().filter(function(s){return (M.sections[s]||'').trim()}).map(function(s,i){return '<a href="#s'+i+'">'+esc(s)+'</a>'}).join('');
+  var body=sectionsHtml(true)+declHtml()+refsHtml();
+  var d=document.createElement('div'); d.innerHTML=body;
+  d.querySelectorAll('.gbmn-media-actions').forEach(function(n){n.remove()});
+  d.querySelectorAll('[contenteditable]').forEach(function(n){n.removeAttribute('contenteditable')});
+  return '<article class="web"><div class="wtop"><img src="'+LOGO+'" alt="GBMN"><div class="wv">'+esc(volLine())+'</div></div>'+
+    '<div class="wbody"><h1 class="ptitle">'+esc(M.title||'Untitled manuscript')+'</h1>'+
+    '<div class="pauth">'+authorLine()+'</div>'+affilBlock()+corrLine()+absBlock()+doiLine()+
+    (toc?'<nav class="toc"><b>CONTENTS</b>'+toc+'</nav>':'')+
+    '<div class="pbody">'+d.innerHTML+'</div></div></article>'; }
+
+/* ══ validation ════════════════════════════════════════════════ */
+function validate(){
+  var p=[], c=cfg();
+  if(!M.title.trim()) p.push('Title is empty.');
+  if(!M.runningTitle.trim()) p.push('Running title is empty.');
+  if(!M.specialty.trim()) p.push('Primary medical specialty is empty.');
+  if(!M.checklistAgreed) p.push('The manuscript integrity checklist has not been accepted.');
+  if(!M.authors.length) p.push('No authors have been added.');
+  if(M.authors.length && !M.authors.some(function(a){return a.isCorresponding})) p.push('No corresponding author is marked.');
+  M.authors.forEach(function(a){ if(!a.orcidId) p.push([a.firstName,a.lastName].filter(Boolean).join(' ')+' has no ORCID iD.'); });
+  if(c&&c.abstractType!=='none'){
+    var aw=stripTags(M.abstractContents.text||''); aw=aw?aw.split(/\s+/).length:0;
+    if(!aw) p.push('Abstract is empty.'); else if(aw>250) p.push('Abstract is '+aw+' words — the limit is 250.'); }
+  var kn=(M.sections['Keywords']||'').split(/[;,]/).map(function(x){return x.trim()}).filter(Boolean).length;
+  if(!kn) p.push('No keywords entered.'); else if(kn<3||kn>6) p.push(kn+' keywords — 3 to 6 are required.');
+  sectionNames().filter(function(s){return s!=='Acknowledgments'}).forEach(function(s){
+    if(stripTags(M.sections[s]||'').length<100) p.push('Section "'+s+'" is empty or too short.'); });
+  var w=wordCount(); if(c&&w>c.maxWordCount) p.push('Body is '+w+' words — the limit for '+c.name+' is '+c.maxWordCount+'.');
+  if(!M.references.length) p.push('Reference list is empty.');
+  else { if(c&&M.references.length>c.maxReferences) p.push(M.references.length+' references — the limit for '+c.name+' is '+c.maxReferences+'.');
+    M.references.forEach(function(r,i){ if(!r.authors||!r.title||!r.year||!r.journalOrBook) p.push('Reference '+(i+1)+' is incomplete.'); }); }
+  var media=0; sectionNames().forEach(function(s){ media+=((M.sections[s]||'').match(/gbmn-inline-media /g)||[]).length; });
+  if(c&&media>c.maxFiguresTables) p.push(media+' figures/tables — the limit for '+c.name+' is '+c.maxFiguresTables+'.');
+  if(M.conflictDisclosure.hasConflict && !M.conflictDisclosure.signedCoiFormName) p.push('A signed COI form is required when conflicts are declared.');
+  return p;
+}
+function paintIssues(box){
+  box=box||$('#pvIssues'); if(!box) return;
+  var p=validate();
+  if(!p.length){ box.innerHTML='<b style="color:var(--em700)">No issues</b><div class="note" style="margin-top:4px">The manuscript is ready to submit.</div>'; return; }
+  box.innerHTML='<b style="color:var(--amber700)">'+p.length+(p.length===1?' item to fix':' items to fix')+'</b>'+
+    '<ul style="margin:6px 0 0;padding-left:18px;font-size:11.5px;line-height:1.6;color:var(--s600)">'+
+    p.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>';
+}
+
+/* ══ pagination ════════════════════════════════════════════════ */
+function fitsIn(box){ return box.scrollWidth <= box.clientWidth + 1 && box.scrollHeight <= box.clientHeight + 1; }
+function splitBlock(box,node){
+  if(!/^(P|DIV)$/.test(node.tagName) || node.querySelector('img,table,figure')) return null;
+  var words=(node.textContent||'').split(/\s+/).filter(Boolean);
+  if(words.length<30) return null;
+  var head=node.cloneNode(false); box.appendChild(head);
+  var lo=0,hi=words.length,best=0;
+  while(lo<=hi){ var mid=(lo+hi)>>1; head.textContent=words.slice(0,mid).join(' ');
+    if(fitsIn(box)){ best=mid; lo=mid+1; } else hi=mid-1; }
+  if(best<15){ box.removeChild(head); return null; }
+  head.textContent=words.slice(0,best).join(' ');
+  var tail=node.cloneNode(false); tail.textContent=words.slice(best).join(' '); tail.style.textIndent='0';
+  return tail;
+}
+function paginate(){
+  var sc=$('#scroller'); sc.innerHTML='';
+  var queue=bodyNodes(), i=0, guard=0;
+  do{
+    var pg=pageShell(guard===0); sc.appendChild(pg);
+    var box=pg.querySelector('.pbody');
+    while(i<queue.length){
+      var node=queue[i].cloneNode(true);
+      box.appendChild(node);
+      if(fitsIn(box)){ i++; continue; }
+      box.removeChild(node);
+      if(!box.children.length){ box.appendChild(node); i++; break; }
+      var tail=splitBlock(box,queue[i]);
+      if(tail) queue[i]=tail;
+      break;
+    }
+    guard++;
+  } while(i<queue.length && guard<80);
+  return guard;
+}
+
+/* ══ preview render ════════════════════════════════════════════ */
+var pvMode='print';
+function setMode(m){ pvMode=m;
+  $$('#pvTgl button').forEach(function(x){ x.setAttribute('aria-selected', x.dataset.pv===m?'true':'false'); });
+  renderPreview(); }
+function fitPreview(){
+  var wrap=$('#prevWrap'), sc=$('#scroller'), pane=$('#prevPane');
+  if(!wrap||!sc||!pane) return;
+  if(window.matchMedia('(max-width:1040px)').matches){ sc.style.removeProperty('--pvs'); wrap.style.height='auto'; return; }
+  var avail=pane.clientWidth, natural=sc.offsetWidth||1;
+  var s=Math.min(1, avail/natural);
+  sc.style.setProperty('--pvs', String(s));
+  wrap.style.height = Math.ceil(sc.offsetHeight*s)+'px';
+}
+window.addEventListener('resize',function(){ fitPreview(); });
+
+function renderPreview(){
+  if(pvMode==='print'){
+    var n=paginate();
+    $('#pvNote').textContent='A4 · '+n+' page'+(n===1?'':'s')+' · two columns · '+wordCount()+' words';
+  } else if(pvMode==='title'){
+    $('#scroller').innerHTML=titlePage();
+    $('#pvNote').textContent='separate title page';
+  } else {
+    $('#scroller').innerHTML=webVersion();
+    $('#pvNote').textContent='how it will look on the site';
+  }
+  fitPreview();
+  if($('#pvIssues')) paintIssues($('#pvIssues'));
+  if($('#sumIssues')) paintIssues($('#sumIssues'));
+}
+$('#pvTgl').addEventListener('click',function(e){ var b=e.target.closest('button[data-pv]'); if(b) setMode(b.dataset.pv); });
+['pvVol','pvIss','pvPeriod'].forEach(function(id){
+  var el=$('#'+id), key=id.replace('pv','').toLowerCase();
+  el.value = (M.preview&&M.preview[key==='period'?'period':key])||'';
+  el.addEventListener('input',function(){ M.preview[key]=el.value; save(); renderPreview(); });
+});
+$('#pvDoi').value=(M.publicationInfo||{}).doi||'';
+$('#pvDoi').addEventListener('input',function(e){ M.publicationInfo.doi=e.target.value; save(); renderPreview(); });
+
+/* ══ exports ═══════════════════════════════════════════════════ */
+function slug(){ var a=M.authors[0]; var base=(a&&a.lastName)?a.lastName:'manuscript';
+  var pv=M.preview||{};
+  return ('GBMN-'+(pv.year||'')+'-'+(pv.vol||'')+'-'+(pv.iss||'')+'-'+base).replace(/[^A-Za-z0-9\-]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,''); }
+function dl(name,blob){ var u=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=u; a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); },1500); }
+function exportHtml(){
+  var css=Array.prototype.map.call(document.styleSheets,function(s){
+    try{ return Array.prototype.map.call(s.cssRules,function(r){return r.cssText}).join('\n'); }catch(e){ return ''; } }).join('\n');
+  var doc='<!doctype html><html lang="en"><head><meta charset="utf-8">'+
+    '<meta name="viewport" content="width=device-width, initial-scale=1"><title>'+esc(M.title)+'</title>'+
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400;1,700&display=swap">'+
+    '<style>'+css+'\nbody{background:#8f979d;margin:0;padding:24px 12px;display:flex;justify-content:center;overflow:auto;height:auto}'+
+    '\n.web{box-shadow:0 2px 24px rgba(0,0,0,.3)}</style></head><body>'+webVersion()+'</body></html>';
+  dl(slug()+'.html', new Blob([doc],{type:'text/html;charset=utf-8'}));
+}
+function exportJson(){
+  var meta={ id:M.id, status:M.status, articleType:M.articleType, title:M.title, runningTitle:M.runningTitle, specialty:M.specialty,
+    publicationInfo:M.publicationInfo, checklistAgreed:M.checklistAgreed,
+    authors:M.authors, abstract:stripTags(M.abstractContents.text||''),
+    keywords:(M.sections['Keywords']||'').split(/[;,]/).map(function(x){return x.trim()}).filter(Boolean),
+    sections:M.sections, references:M.references, supplementaryFiles:M.supplementaryFiles.map(function(f){return {fileName:f.fileName,description:f.description,fileSize:f.fileSize}}),
+    ethics:M.ethics, conflictDisclosure:{hasConflict:M.conflictDisclosure.hasConflict,conflictDetails:M.conflictDisclosure.conflictDetails,signedCoiFormName:M.conflictDisclosure.signedCoiFormName},
+    fundingDetails:M.fundingDetails, wordCount:wordCount(), updatedAt:M.updatedAt };
+  dl(slug()+'.json', new Blob([JSON.stringify(meta,null,2)],{type:'application/json'}));
+}
+$('#btnPdf').addEventListener('click',function(){
+  if(pvMode!=='print') setMode('print');
+  setTimeout(function(){ window.print(); },150); });
+$('#btnHtml').addEventListener('click',exportHtml);
+
+/* ══ boot ══════════════════════════════════════════════════════ */
+function renderAll(){ renderSidebar(); renderStep(); renderPreview(); }
+renderAll();
+})();
+</script>
+</body>
+</html>
