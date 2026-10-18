@@ -3,7 +3,7 @@
    A4 595.3×841.9pt · text 40→556pt · columns 240.3pt, gap 35.3pt
    body Calibri 11/14.3pt · masthead and footer on every page       */
 .paper{background:transparent}
-.page{width:210mm;height:297mm;background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.28);
+.page{width:210mm;height:296mm;background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.28);
   font-family:var(--doc);color:#1F2A2A;padding:6mm 13.86mm 8.4mm 14.11mm;
   display:flex;flex-direction:column;overflow:hidden;position:relative}
 .page + .page{margin-top:18px}
@@ -91,7 +91,9 @@
   .prev{overflow:visible;background:#fff}
   .prevwrap{overflow:visible;height:auto !important}
   .scroller{width:auto;transform:none !important;padding:0;gap:0;display:block;align-items:stretch}
-  .page{width:210mm;height:297mm;box-shadow:none;break-after:page;page-break-after:always;margin:0;overflow:hidden}
+  .page{width:210mm;height:296mm;box-shadow:none;margin:0;overflow:hidden;
+    break-inside:avoid;page-break-inside:avoid;break-after:page;page-break-after:always}
+  .pfoot{break-inside:avoid;page-break-inside:avoid}
   .page:last-child{break-after:auto;page-break-after:auto}
   a{color:inherit}
 }
