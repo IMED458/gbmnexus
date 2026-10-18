@@ -213,20 +213,55 @@ VIEWS['editor-files']=function(b){
 
 /* 16 ── preview */
 VIEWS['preview']=function(b){
-  b.innerHTML='<div class="box" style="text-align:center;padding:22px">'+
-    '<p style="font-size:12.5px;color:var(--s600)">The live pre-publication proof is rendered in the panel on the right, in the exact GBMN printed layout — A4, two columns, masthead and footer on every page.</p>'+
-    '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">'+
-      '<button type="button" class="btn t" id="pvPdf">Download PDF</button>'+
-      '<button type="button" class="btn" id="pvTitlePg">Show title page</button>'+
-      '<button type="button" class="btn" id="pvWeb">Show web version</button>'+
-      '<button type="button" class="btn" id="pvHtml">Export HTML</button>'+
-      '<button type="button" class="btn" id="pvJson">Export metadata (JSON)</button>'+
-    '</div></div>'+
-    '<div class="box" id="pvIssues"></div>';
+  var pv=M.preview||{};
+  function fld(id,label,val,ph,w){ return '<div><label class="lbl">'+label+'</label>'+
+    '<input class="inp sm" id="'+id+'" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'"></div>'; }
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--s800)">Publication data</h4>'+
+     '<p class="note">Used in the masthead, on the title page and in the XML deposits. The editorial office normally fills these in.</p>'+
+     '<div class="g4">'+
+       fld('pvVol','Volume',pv.vol,'4')+fld('pvIss','Issue',pv.iss,'3')+
+       fld('pvYear','Year',pv.year,'2026')+fld('pvPeriod','Issue period',pv.period,'JUL–SEP 2026')+
+     '</div>'+
+     '<div class="g4">'+
+       '<div><label class="lbl">Publication date</label><input class="inp sm" type="date" id="pvDate" value="'+esc(pv.date||'')+'"></div>'+
+       fld('pvFpage','First page',pv.fpage,'23')+fld('pvLpage','Last page',pv.lpage,'31')+
+       fld('pvEloc','E-location ID',pv.elocation,'e0423')+
+     '</div>'+
+     '<div><label class="lbl">DOI</label><input class="inp sm mono" id="pvDoi" value="'+esc((M.publicationInfo||{}).doi||'')+'" placeholder="10.52340/gbmn.2026.04.03.01"></div>'+
+   '</div>'+
+   '<div class="box"><h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--s800)">Download</h4>'+
+     '<p class="note">The proof on the right is the printed GBMN layout — A4, two columns, masthead and footer on every page.</p>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">'+
+       '<button type="button" class="btn t" id="pvPdf">PDF (print layout)</button>'+
+       '<button type="button" class="btn" id="pvDocx">Word (.docx)</button>'+
+       '<button type="button" class="btn" id="pvHtml">HTML article</button>'+
+       '<button type="button" class="btn" id="pvTitlePg">Title page</button>'+
+       '<button type="button" class="btn" id="pvWeb">Web view</button>'+
+     '</div></div>'+
+   '<div class="box"><h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--s800)">Indexing deposits</h4>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+       '<button type="button" class="btn t" id="pvJats">JATS XML package (.zip)</button>'+
+       '<button type="button" class="btn" id="pvPubmed">PubMed citation XML</button>'+
+       '<button type="button" class="btn" id="pvJson">Metadata (JSON)</button>'+
+     '</div>'+
+     '<ul style="margin:8px 0 0;padding-left:18px;font-size:11px;line-height:1.65;color:var(--s600)">'+
+       '<li><b>JATS XML package</b> — NISO JATS (Z39.96) Journal Publishing DTD v1.3, plus every figure as a separate file. This is the full-text format PubMed Central recommends, and the same file Scopus and Web of Science ingest. Add the article PDF under the same base name before depositing, and swap the PNG figures for the original high-resolution TIFF or EPS.</li>'+
+       '<li><b>PubMed citation XML</b> — PubMed 3.0 DTD (<span style="font-family:var(--mono);font-size:10px">ArticleSet</span>). A citation-only deposit; a different schema from the PMC full text, so both are produced separately.</li>'+
+     '</ul></div>'+
+   '<div class="box" id="pvIssues"></div>';
+  function bind(id,key){ var el=$('#'+id); if(!el)return;
+    el.addEventListener('input',function(){ M.preview[key]=el.value; save(); renderPreview(); }); }
+  bind('pvVol','vol'); bind('pvIss','iss'); bind('pvYear','year'); bind('pvPeriod','period');
+  bind('pvDate','date'); bind('pvFpage','fpage'); bind('pvLpage','lpage'); bind('pvEloc','elocation');
+  $('#pvDoi').addEventListener('input',function(e){ M.publicationInfo.doi=e.target.value; save(); renderPreview(); });
   $('#pvPdf').addEventListener('click',function(){ setMode('print'); setTimeout(function(){window.print()},150); });
+  $('#pvDocx').addEventListener('click',function(){ exportDocx(); });
+  $('#pvHtml').addEventListener('click',exportHtml);
   $('#pvTitlePg').addEventListener('click',function(){ setMode('title'); });
   $('#pvWeb').addEventListener('click',function(){ setMode('web'); });
-  $('#pvHtml').addEventListener('click',exportHtml);
+  $('#pvJats').addEventListener('click',function(){ exportJats(); });
+  $('#pvPubmed').addEventListener('click',exportPubmed);
   $('#pvJson').addEventListener('click',exportJson);
   paintIssues();
 };

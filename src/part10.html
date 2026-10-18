@@ -1,0 +1,271 @@
+
+/* ══ JATS 1.3 (NISO Z39.96) Journal Publishing XML ═════════════ */
+var JOURNAL={ title:'Georgian Biomedical and Medical Nexus', abbrev:'Georgian Biomed Med Nexus',
+  pid:'gbmn', nlmta:'Georgian Biomed Med Nexus', issnP:'2720-7994', issnE:'2720-8796',
+  publisher:'Tbilisi State Medical University', loc:'Tbilisi, Georgia' };
+var JATS_TYPE={'original-research':'research-article','review-articles':'review-article',
+  'clinical-cases':'case-report','commentary':'article-commentary','other':'other'};
+var PM_TYPE={'original-research':'Journal Article','review-articles':'Review',
+  'clinical-cases':'Case Reports','commentary':'Editorial','other':'Journal Article'};
+var SEC_TYPE={'Introduction':'intro','Background':'intro','Materials and Methods':'materials|methods',
+  'Methods':'methods','Results':'results','Discussion':'discussion','Conclusions':'conclusions',
+  'Case Presentation':'cases','Evidence Review':'review','Clinical Implications':'discussion'};
+
+function jRuns(runs){
+  return runs.map(function(r){
+    if(r.br) return ' ';
+    var t=xe(r.t);
+    if(r.sup) t='<sup>'+t+'</sup>'; if(r.sub) t='<sub>'+t+'</sub>';
+    if(r.b) t='<bold>'+t+'</bold>'; if(r.i) t='<italic>'+t+'</italic>'; if(r.u) t='<underline>'+t+'</underline>';
+    return t; }).join('');
+}
+function pubDateParts(){
+  var pv=M.preview||{}, d=pv.date?new Date(pv.date+'T00:00:00'):null;
+  if(d&&!isNaN(d)) return {y:d.getFullYear(),m:d.getMonth()+1,d:d.getDate()};
+  return {y:parseInt(pv.year,10)||new Date().getFullYear(),m:0,d:0};
+}
+function refPersons(authors){
+  var parts=String(authors||'').split(/\s*,\s*/).filter(Boolean);
+  return parts.map(function(p){
+    var m=p.match(/^(.+?)\s+([A-Za-z]{1,4})\.?$/);
+    if(m) return '<name><surname>'+xe(m[1])+'</surname><given-names>'+xe(m[2])+'</given-names></name>';
+    return '<string-name>'+xe(p)+'</string-name>';
+  }).join('');
+}
+function jatsRef(r,i){
+  var type = r.type==='book'?'book':(r.type==='web'?'webpage':'journal');
+  var s='<ref id="R'+(i+1)+'"><label>'+(i+1)+'</label><element-citation publication-type="'+type+'">';
+  s+='<person-group person-group-type="author">'+refPersons(r.authors)+'</person-group>';
+  if(r.title) s+='<article-title>'+xe(r.title)+'</article-title>';
+  if(r.journalOrBook) s+='<source>'+xe(r.journalOrBook)+'</source>';
+  if(r.year) s+='<year iso-8601-date="'+xe(r.year)+'">'+xe(r.year)+'</year>';
+  if(r.volume) s+='<volume>'+xe(r.volume)+'</volume>';
+  if(r.issue) s+='<issue>'+xe(r.issue)+'</issue>';
+  if(r.pages){ var pp=String(r.pages).split(/[-–]/);
+    s+='<fpage>'+xe(pp[0])+'</fpage>'+(pp[1]?'<lpage>'+xe(pp[1])+'</lpage>':''); }
+  if(r.doi) s+='<pub-id pub-id-type="doi">'+xe(r.doi)+'</pub-id>';
+  if(r.url) s+='<ext-link ext-link-type="uri" xlink:href="'+xe(r.url)+'">'+xe(r.url)+'</ext-link>';
+  return s+'</element-citation></ref>';
+}
+function buildJats(figNames){
+  var A=articleModel(), affs=affilList(), pv=M.preview||{}, pd=pubDateParts();
+  var base=slug(), x='';
+  x+='<?xml version="1.0" encoding="UTF-8"?>\n';
+  x+='<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.3 20210610//EN" "JATS-journalpublishing1-3.dtd">\n';
+  x+='<article xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:mml="http://www.w3.org/1998/Math/MathML" '+
+     'dtd-version="1.3" article-type="'+(JATS_TYPE[M.articleType]||'other')+'" xml:lang="en">\n';
+  /* ── front ── */
+  x+='<front>\n<journal-meta>';
+  x+='<journal-id journal-id-type="publisher-id">'+JOURNAL.pid+'</journal-id>';
+  x+='<journal-id journal-id-type="nlm-ta">'+xe(JOURNAL.nlmta)+'</journal-id>';
+  x+='<journal-title-group><journal-title>'+xe(JOURNAL.title)+'</journal-title>'+
+     '<abbrev-journal-title abbrev-type="publisher">'+xe(JOURNAL.abbrev)+'</abbrev-journal-title></journal-title-group>';
+  x+='<issn pub-type="ppub">'+JOURNAL.issnP+'</issn><issn pub-type="epub">'+JOURNAL.issnE+'</issn>';
+  x+='<publisher><publisher-name>'+xe(JOURNAL.publisher)+'</publisher-name><publisher-loc>'+xe(JOURNAL.loc)+'</publisher-loc></publisher>';
+  x+='</journal-meta>\n<article-meta>';
+  if((M.publicationInfo||{}).doi) x+='<article-id pub-id-type="doi">'+xe(M.publicationInfo.doi)+'</article-id>';
+  x+='<article-categories><subj-group subj-group-type="heading"><subject>'+xe(cfg()?cfg().name.replace(/\b\w+/g,function(w){return w[0]+w.slice(1).toLowerCase()}):'Article')+'</subject></subj-group>';
+  if(M.specialty) x+='<subj-group subj-group-type="specialty"><subject>'+xe(M.specialty)+'</subject></subj-group>';
+  x+='</article-categories>';
+  x+='<title-group><article-title>'+xe(M.title)+'</article-title>'+
+     (M.runningTitle?'<alt-title alt-title-type="running-head">'+xe(M.runningTitle)+'</alt-title>':'')+'</title-group>';
+  x+='<contrib-group>';
+  M.authors.forEach(function(a,i){
+    x+='<contrib contrib-type="author"'+(a.isCorresponding?' corresp="yes"':'')+'>';
+    if(a.orcidId) x+='<contrib-id contrib-id-type="orcid">https://orcid.org/'+xe(a.orcidId.replace(/^https?:\/\/orcid\.org\//i,''))+'</contrib-id>';
+    x+='<name><surname>'+xe(a.lastName)+'</surname><given-names>'+xe([a.firstName,a.middleInitial].filter(Boolean).join(' '))+'</given-names>'+
+       (a.academicTitle?'<degrees>'+xe(a.academicTitle)+'</degrees>':'')+'</name>';
+    (a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).forEach(function(af){
+      var k=affs.indexOf(af); if(k>=0) x+='<xref ref-type="aff" rid="aff'+(k+1)+'"/>'; });
+    if(a.isCorresponding) x+='<xref ref-type="corresp" rid="cor1"/>';
+    if(a.contributionRole) x+='<role>'+xe(a.contributionRole)+'</role>';
+    if(a.email) x+='<email>'+xe(a.email)+'</email>';
+    x+='</contrib>';
+  });
+  affs.forEach(function(af,i){
+    var bits=af.split(/\s*,\s*/);
+    x+='<aff id="aff'+(i+1)+'"><label>'+(i+1)+'</label><institution>'+xe(bits.slice(0,Math.max(1,bits.length-2)).join(', '))+'</institution>'+
+       (bits.length>2?'<city>'+xe(bits[bits.length-2])+'</city>':'')+
+       (bits.length>1?'<country>'+xe(bits[bits.length-1])+'</country>':'')+'</aff>';
+  });
+  x+='</contrib-group>';
+  var corr=M.authors.filter(function(a){return a.isCorresponding})[0];
+  if(corr) x+='<author-notes><corresp id="cor1"><label>*</label>Corresponding author: '+
+    xe([corr.firstName,corr.middleInitial,corr.lastName].filter(Boolean).join(' '))+
+    (corr.email?'. <email>'+xe(corr.email)+'</email>':'')+'</corresp></author-notes>';
+  x+='<pub-date publication-format="electronic" date-type="pub">'+
+     (pd.d?'<day>'+pd.d+'</day>':'')+(pd.m?'<month>'+pd.m+'</month>':'')+'<year>'+pd.y+'</year></pub-date>';
+  if(pv.vol) x+='<volume>'+xe(pv.vol)+'</volume>';
+  if(pv.iss) x+='<issue>'+xe(pv.iss)+'</issue>';
+  if(pv.fpage) x+='<fpage>'+xe(pv.fpage)+'</fpage>'+(pv.lpage?'<lpage>'+xe(pv.lpage)+'</lpage>':'');
+  else if(pv.elocation) x+='<elocation-id>'+xe(pv.elocation)+'</elocation-id>';
+  x+='<permissions><copyright-statement>&#169; '+pd.y+' '+xe(M.authors.map(function(a){return a.lastName}).filter(Boolean).join(', ')||'The Authors')+'</copyright-statement>'+
+     '<copyright-year>'+pd.y+'</copyright-year><copyright-holder>The Authors</copyright-holder>'+
+     '<license license-type="open-access" xlink:href="https://creativecommons.org/licenses/by/4.0/">'+
+     '<license-p>This is an open access article distributed under the terms of the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/), which permits unrestricted use, distribution and reproduction in any medium, provided the original work is properly cited.</license-p>'+
+     '</license></permissions>';
+  if(cfg()&&cfg().abstractType!=='none'&&(M.abstractContents.text||'').trim()){
+    x+='<abstract>';
+    parseBlocks(M.abstractContents.text).forEach(function(b){ if(b.t==='p') x+='<p>'+jRuns(b.runs)+'</p>'; });
+    x+='</abstract>';
+  }
+  var kws=(M.sections['Keywords']||'').replace(/\.$/,'').split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean);
+  if(kws.length) x+='<kwd-group kwd-group-type="author">'+kws.map(function(k){return '<kwd>'+xe(k)+'</kwd>'}).join('')+'</kwd-group>';
+  var F=M.fundingDetails;
+  if(F.fundingAgency||F.grantNumber||F.explanation){
+    x+='<funding-group>';
+    if(F.fundingAgency) x+='<award-group><funding-source>'+xe(F.fundingAgency)+'</funding-source>'+
+      (F.grantNumber?'<award-id>'+xe(F.grantNumber)+'</award-id>':'')+'</award-group>';
+    x+='<funding-statement>'+xe([F.fundingAgency,F.grantNumber?'Grant '+F.grantNumber:'',F.explanation].filter(Boolean).join('. '))+'</funding-statement></funding-group>';
+  } else x+='<funding-group><funding-statement>This research received no external funding.</funding-statement></funding-group>';
+  x+='<counts><fig-count count="'+A.figCount+'"/><table-count count="'+A.tabCount+'"/>'+
+     '<ref-count count="'+M.references.length+'"/><word-count count="'+wordCount()+'"/></counts>';
+  x+='</article-meta>\n</front>\n';
+  /* ── body ── */
+  x+='<body>\n';
+  var sn=0;
+  A.secs.forEach(function(s){
+    if(s.name==='Acknowledgments') return;
+    sn++;
+    var st=SEC_TYPE[s.name];
+    x+='<sec id="sec'+sn+'"'+(st?' sec-type="'+st+'"':'')+'><title>'+xe(s.name)+'</title>';
+    /* a subheading opens a nested <sec>; everything after it belongs inside, because
+       JATS does not allow a <p> to follow a nested <sec> in the same parent */
+    var sub=0, open=false;
+    s.blocks.forEach(function(b){
+      if(b.t==='h'){ if(open) x+='</sec>'; sub++; open=true;
+        x+='<sec id="sec'+sn+'-'+sub+'"><title>'+jRuns(b.runs)+'</title>'; return; }
+      if(b.t==='p') x+='<p>'+jRuns(b.runs)+'</p>';
+      else if(b.t==='list') x+='<list list-type="'+(b.ordered?'order':'bullet')+'">'+
+        b.items.map(function(it){return '<list-item><p>'+jRuns(it)+'</p></list-item>'}).join('')+'</list>';
+      else if(b.t==='fig') x+='<fig id="fig'+b.n+'" position="float"><label>Figure '+b.n+'</label>'+
+        '<caption><title>'+xe(b.title)+'</title>'+(b.legend?'<p>'+xe(b.legend)+'</p>':'')+'</caption>'+
+        '<graphic xlink:href="'+xe(figNames[b.n]||(base+'-fig'+b.n+'.png'))+'"/></fig>';
+      else if(b.t==='table'){
+        x+='<table-wrap id="tbl'+b.n+'" position="float"><label>Table '+b.n+'</label>'+
+           '<caption><title>'+xe(b.title)+'</title></caption><table frame="hsides" rules="groups">';
+        var head=b.rows.length&&b.rows[0].every(function(c){return c.head})?b.rows[0]:null;
+        if(head) x+='<thead><tr>'+head.map(function(c){return '<th>'+xe(c.text)+'</th>'}).join('')+'</tr></thead>';
+        x+='<tbody>'+b.rows.slice(head?1:0).map(function(r){
+          return '<tr>'+r.map(function(c){return '<td>'+xe(c.text)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table>'+
+           (b.legend?'<table-wrap-foot><fn><p>'+xe(b.legend)+'</p></fn></table-wrap-foot>':'')+'</table-wrap>';
+      }
+      else if(b.t==='pre') x+='<boxed-text id="box'+b.n+'"><caption><title>'+xe(b.title)+'</title></caption><preformat>'+xe(b.text)+'</preformat></boxed-text>';
+    });
+    if(open) x+='</sec>';
+    x+='</sec>';
+  });
+  x+='\n</body>\n<back>\n';
+  var ack=A.secs.filter(function(s){return s.name==='Acknowledgments'})[0];
+  if(ack&&ack.blocks.length) x+='<ack><title>Acknowledgments</title>'+
+    ack.blocks.map(function(b){return b.t==='p'?'<p>'+jRuns(b.runs)+'</p>':''}).join('')+'</ack>';
+  var E=M.ethics, C=M.conflictDisclosure, fns=[];
+  fns.push('<fn fn-type="COI-statement"><p>'+xe(C.hasConflict?(C.conflictDetails||'The authors declare conflicts of interest.'):'The authors declare no conflict of interest.')+'</p></fn>');
+  var ethTxt=declRows().filter(function(r){return r[0]==='Ethics approval'})[0];
+  if(ethTxt) fns.push('<fn fn-type="other"><label>Ethics approval</label><p>'+xe(ethTxt[1])+'</p></fn>');
+  var contrib=declRows().filter(function(r){return r[0]==='Author contributions'})[0];
+  if(contrib) fns.push('<fn fn-type="con"><label>Author contributions</label><p>'+xe(contrib[1])+'</p></fn>');
+  x+='<fn-group>'+fns.join('')+'</fn-group>';
+  if(M.references.length) x+='<ref-list><title>References</title>'+M.references.map(jatsRef).join('')+'</ref-list>';
+  x+='\n</back>\n</article>\n';
+  return x;
+}
+async function exportJats(){
+  notify('Building the JATS package...','info');
+  var A=articleModel(), base=slug(), names={}, files=[];
+  for(var i=0;i<A.secs.length;i++){
+    var blocks=A.secs[i].blocks;
+    for(var j=0;j<blocks.length;j++){
+      var b=blocks[j];
+      if(b.t==='fig'&&b.src){
+        var png=await toPng(b.src);
+        if(png){ var nm=base+'-fig'+b.n+'.png'; names[b.n]=nm; files.push({name:nm,data:png.bytes}); }
+      }
+    }
+  }
+  var xml=buildJats(names);
+  files.unshift({name:base+'.xml',data:xml});
+  files.push({name:'README.txt',data:
+    'GBMN JATS deposit package\n'+
+    '=========================\n\n'+
+    'File          : '+base+'.xml\n'+
+    'Tag set       : NISO JATS (Z39.96) Journal Publishing DTD v1.3 20210610\n'+
+    'Article type  : '+(JATS_TYPE[M.articleType]||'other')+'\n'+
+    'Figures       : '+A.figCount+'   Tables: '+A.tabCount+'   References: '+M.references.length+'\n\n'+
+    'PubMed Central\n'+
+    '  Deposit the whole package by SFTP. Add the article PDF with the SAME base\n'+
+    '  name ('+base+'.pdf) before sending - PMC requires the XML and PDF base names\n'+
+    '  to match, and figure file names to match the graphic/@xlink:href values above.\n'+
+    '  Replace the PNG figures with the original high-resolution TIFF or EPS files\n'+
+    '  and update the href extensions accordingly.\n'+
+    '  Check the file with the PMC Style Checker before sending.\n\n'+
+    'PubMed (citation deposit)\n'+
+    '  Use the separate PubMed 3.0 XML export; PMC full text and PubMed citations\n'+
+    '  are different schemas.\n\n'+
+    'Scopus / Web of Science\n'+
+    '  Both ingest JATS full-text XML through the delivery channel agreed with the\n'+
+    '  publisher after the title has been accepted. Send this same package.\n'});
+  dl(base+'-jats.zip', zipStore(files));
+  notify('JATS package downloaded.','success');
+}
+
+/* ══ PubMed 3.0 citation XML ═══════════════════════════════════ */
+function buildPubmed(){
+  var pv=M.preview||{}, pd=pubDateParts(), MO=['','01','02','03','04','05','06','07','08','09','10','11','12'];
+  var x='<?xml version="1.0" encoding="UTF-8"?>\n';
+  x+='<!DOCTYPE ArticleSet PUBLIC "-//NLM//DTD PubMed 3.0//EN" "https://dtd.nlm.nih.gov/ncbi/pubmed/in/PubMed.dtd">\n';
+  x+='<ArticleSet>\n<Article>\n';
+  x+='<Journal><PublisherName>'+xe(JOURNAL.publisher)+'</PublisherName>'+
+     '<JournalTitle>'+xe(JOURNAL.title)+'</JournalTitle>'+
+     '<Issn>'+JOURNAL.issnE+'</Issn>'+
+     (pv.vol?'<Volume>'+xe(pv.vol)+'</Volume>':'')+
+     (pv.iss?'<Issue>'+xe(pv.iss)+'</Issue>':'')+
+     '<PubDate PubStatus="epublish"><Year>'+pd.y+'</Year>'+
+       (pd.m?'<Month>'+MO[pd.m]+'</Month>':'')+(pd.m&&pd.d?'<Day>'+(pd.d<10?'0':'')+pd.d+'</Day>':'')+
+     '</PubDate></Journal>\n';
+  x+='<ArticleTitle>'+xe(M.title)+'</ArticleTitle>\n';
+  if(pv.fpage){ x+='<FirstPage>'+xe(pv.fpage)+'</FirstPage>'+(pv.lpage?'<LastPage>'+xe(pv.lpage)+'</LastPage>':'')+'\n'; }
+  else if(pv.elocation) x+='<ELocationID EIdType="pii">'+xe(pv.elocation)+'</ELocationID>\n';
+  if((M.publicationInfo||{}).doi) x+='<ELocationID EIdType="doi">'+xe(M.publicationInfo.doi)+'</ELocationID>\n';
+  x+='<Language>EN</Language>\n<AuthorList>';
+  M.authors.forEach(function(a){
+    x+='<Author><FirstName>'+xe(a.firstName)+'</FirstName>'+
+       (a.middleInitial?'<MiddleName>'+xe(a.middleInitial.replace(/\.$/,''))+'</MiddleName>':'')+
+       '<LastName>'+xe(a.lastName)+'</LastName>';
+    (a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).filter(Boolean).forEach(function(af){
+      x+='<AffiliationInfo><Affiliation>'+xe(af)+'</Affiliation></AffiliationInfo>'; });
+    if(a.orcidId) x+='<AffiliationInfo><Identifier Source="ORCID">https://orcid.org/'+
+      xe(a.orcidId.replace(/^https?:\/\/orcid\.org\//i,''))+'</Identifier></AffiliationInfo>';
+    x+='</Author>';
+  });
+  x+='</AuthorList>\n';
+  x+='<PublicationType>'+xe(PM_TYPE[M.articleType]||'Journal Article')+'</PublicationType>\n';
+  if((M.publicationInfo||{}).doi) x+='<ArticleIdList><ArticleId IdType="doi">'+xe(M.publicationInfo.doi)+'</ArticleId></ArticleIdList>\n';
+  var abs=stripTags(M.abstractContents.text||'');
+  if(abs) x+='<Abstract><AbstractText>'+xe(abs)+'</AbstractText></Abstract>\n';
+  var kws=(M.sections['Keywords']||'').replace(/\.$/,'').split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean);
+  var F=M.fundingDetails, objs='';
+  kws.forEach(function(k){ objs+='<Object Type="keyword"><Param Name="value">'+xe(k)+'</Param></Object>'; });
+  if(F.grantNumber||F.fundingAgency) objs+='<Object Type="grant">'+
+    (F.grantNumber?'<Param Name="id">'+xe(F.grantNumber)+'</Param>':'')+
+    (F.fundingAgency?'<Param Name="grantor">'+xe(F.fundingAgency)+'</Param>':'')+'</Object>';
+  if(objs) x+='<ObjectList>'+objs+'</ObjectList>\n';
+  x+='<CopyrightInformation>&#169; '+pd.y+' The Authors. Open access under CC BY 4.0.</CopyrightInformation>\n';
+  var C=M.conflictDisclosure;
+  x+='<CoiStatement>'+xe(C.hasConflict?(C.conflictDetails||'The authors declare conflicts of interest.'):'The authors declare no conflict of interest.')+'</CoiStatement>\n';
+  if(M.references.length) x+='<ReferenceList>'+M.references.map(function(r){
+    return '<Reference><Citation>'+xe(formatAMAReference(r).replace(/\*/g,''))+'</Citation>'+
+      (r.doi?'<ArticleIdList><ArticleId IdType="doi">'+xe(r.doi)+'</ArticleId></ArticleIdList>':'')+'</Reference>'; }).join('')+'</ReferenceList>\n';
+  x+='</Article>\n</ArticleSet>\n';
+  return x;
+}
+function exportPubmed(){
+  dl(slug()+'-pubmed.xml', new Blob([buildPubmed()],{type:'application/xml;charset=utf-8'}));
+  notify('PubMed citation XML downloaded.','success');
+}
+
+/* ── well-formedness self-check ── */
+function xmlOk(src){
+  try{ var d=new DOMParser().parseFromString(src.replace(/<!DOCTYPE[^>]*>/,''),'application/xml');
+    return !d.querySelector('parsererror'); }catch(e){ return false; }
+}

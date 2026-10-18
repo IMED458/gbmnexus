@@ -377,12 +377,11 @@ p{margin:0}
         <button type="button" data-pv="title" aria-selected="false">Title page</button>
         <button type="button" data-pv="web" aria-selected="false">Web</button>
       </div>
-      <input id="pvVol" placeholder="Vol" title="Volume" style="width:48px">
-      <input id="pvIss" placeholder="Iss" title="Issue" style="width:48px">
-      <input id="pvPeriod" placeholder="JUL–SEP 2026" title="Issue period" style="width:120px">
-      <input id="pvDoi" placeholder="DOI" title="DOI" style="width:150px">
-      <button class="pbtn" id="btnPdf" type="button">Download PDF</button>
+      <button class="pbtn" id="btnPdf" type="button">PDF</button>
+      <button class="pbtn" id="btnDocx" type="button">Word</button>
       <button class="pbtn" id="btnHtml" type="button">HTML</button>
+      <button class="pbtn" id="btnJats" type="button">JATS XML</button>
+      <button class="pbtn" id="btnPubmed" type="button">PubMed XML</button>
       <span class="note" id="pvNote"></span>
     </div>
     <div class="prevwrap" id="prevWrap"><div class="scroller" id="scroller"></div></div>
@@ -401,7 +400,8 @@ var $=function(s,r){return (r||document).querySelector(s)};
 var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
 var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')};
 var uid=0, nid=function(p){return (p||'x')+'-'+(++uid)+Date.now().toString(36)};
-var stripTags=function(h){return String(h==null?'':h).replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim()};
+var stripTags=function(h){ var d=document.createElement('div'); d.innerHTML=String(h==null?'':h);
+  return (d.textContent||'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim(); };
 
 /* ── icons (24x24 stroke) ── */
 var P={
@@ -1376,20 +1376,55 @@ VIEWS['editor-files']=function(b){
 
 /* 16 ── preview */
 VIEWS['preview']=function(b){
-  b.innerHTML='<div class="box" style="text-align:center;padding:22px">'+
-    '<p style="font-size:12.5px;color:var(--s600)">The live pre-publication proof is rendered in the panel on the right, in the exact GBMN printed layout — A4, two columns, masthead and footer on every page.</p>'+
-    '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">'+
-      '<button type="button" class="btn t" id="pvPdf">Download PDF</button>'+
-      '<button type="button" class="btn" id="pvTitlePg">Show title page</button>'+
-      '<button type="button" class="btn" id="pvWeb">Show web version</button>'+
-      '<button type="button" class="btn" id="pvHtml">Export HTML</button>'+
-      '<button type="button" class="btn" id="pvJson">Export metadata (JSON)</button>'+
-    '</div></div>'+
-    '<div class="box" id="pvIssues"></div>';
+  var pv=M.preview||{};
+  function fld(id,label,val,ph,w){ return '<div><label class="lbl">'+label+'</label>'+
+    '<input class="inp sm" id="'+id+'" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'"></div>'; }
+  b.innerHTML=
+   '<div class="box"><h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--s800)">Publication data</h4>'+
+     '<p class="note">Used in the masthead, on the title page and in the XML deposits. The editorial office normally fills these in.</p>'+
+     '<div class="g4">'+
+       fld('pvVol','Volume',pv.vol,'4')+fld('pvIss','Issue',pv.iss,'3')+
+       fld('pvYear','Year',pv.year,'2026')+fld('pvPeriod','Issue period',pv.period,'JUL–SEP 2026')+
+     '</div>'+
+     '<div class="g4">'+
+       '<div><label class="lbl">Publication date</label><input class="inp sm" type="date" id="pvDate" value="'+esc(pv.date||'')+'"></div>'+
+       fld('pvFpage','First page',pv.fpage,'23')+fld('pvLpage','Last page',pv.lpage,'31')+
+       fld('pvEloc','E-location ID',pv.elocation,'e0423')+
+     '</div>'+
+     '<div><label class="lbl">DOI</label><input class="inp sm mono" id="pvDoi" value="'+esc((M.publicationInfo||{}).doi||'')+'" placeholder="10.52340/gbmn.2026.04.03.01"></div>'+
+   '</div>'+
+   '<div class="box"><h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--s800)">Download</h4>'+
+     '<p class="note">The proof on the right is the printed GBMN layout — A4, two columns, masthead and footer on every page.</p>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">'+
+       '<button type="button" class="btn t" id="pvPdf">PDF (print layout)</button>'+
+       '<button type="button" class="btn" id="pvDocx">Word (.docx)</button>'+
+       '<button type="button" class="btn" id="pvHtml">HTML article</button>'+
+       '<button type="button" class="btn" id="pvTitlePg">Title page</button>'+
+       '<button type="button" class="btn" id="pvWeb">Web view</button>'+
+     '</div></div>'+
+   '<div class="box"><h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--s800)">Indexing deposits</h4>'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+       '<button type="button" class="btn t" id="pvJats">JATS XML package (.zip)</button>'+
+       '<button type="button" class="btn" id="pvPubmed">PubMed citation XML</button>'+
+       '<button type="button" class="btn" id="pvJson">Metadata (JSON)</button>'+
+     '</div>'+
+     '<ul style="margin:8px 0 0;padding-left:18px;font-size:11px;line-height:1.65;color:var(--s600)">'+
+       '<li><b>JATS XML package</b> — NISO JATS (Z39.96) Journal Publishing DTD v1.3, plus every figure as a separate file. This is the full-text format PubMed Central recommends, and the same file Scopus and Web of Science ingest. Add the article PDF under the same base name before depositing, and swap the PNG figures for the original high-resolution TIFF or EPS.</li>'+
+       '<li><b>PubMed citation XML</b> — PubMed 3.0 DTD (<span style="font-family:var(--mono);font-size:10px">ArticleSet</span>). A citation-only deposit; a different schema from the PMC full text, so both are produced separately.</li>'+
+     '</ul></div>'+
+   '<div class="box" id="pvIssues"></div>';
+  function bind(id,key){ var el=$('#'+id); if(!el)return;
+    el.addEventListener('input',function(){ M.preview[key]=el.value; save(); renderPreview(); }); }
+  bind('pvVol','vol'); bind('pvIss','iss'); bind('pvYear','year'); bind('pvPeriod','period');
+  bind('pvDate','date'); bind('pvFpage','fpage'); bind('pvLpage','lpage'); bind('pvEloc','elocation');
+  $('#pvDoi').addEventListener('input',function(e){ M.publicationInfo.doi=e.target.value; save(); renderPreview(); });
   $('#pvPdf').addEventListener('click',function(){ setMode('print'); setTimeout(function(){window.print()},150); });
+  $('#pvDocx').addEventListener('click',function(){ exportDocx(); });
+  $('#pvHtml').addEventListener('click',exportHtml);
   $('#pvTitlePg').addEventListener('click',function(){ setMode('title'); });
   $('#pvWeb').addEventListener('click',function(){ setMode('web'); });
-  $('#pvHtml').addEventListener('click',exportHtml);
+  $('#pvJats').addEventListener('click',function(){ exportJats(); });
+  $('#pvPubmed').addEventListener('click',exportPubmed);
   $('#pvJson').addEventListener('click',exportJson);
   paintIssues();
 };
@@ -1443,6 +1478,576 @@ $('#btnNext').addEventListener('click',function(){
     activeSection=nx; renderStep(); renderSidebar(); return; }
   var k=STEPS.map(function(s){return s.id}).indexOf(activeStep);
   if(k<STEPS.length-1) go(STEPS[k+1].id); });
+
+/* ══ ZIP writer (stored, no deflate) ═══════════════════════════ */
+var CRCT=(function(){var t=new Int32Array(256);for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=c&1?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c;}return t;})();
+function crc32(buf){var c=-1;for(var i=0;i<buf.length;i++)c=CRCT[(c^buf[i])&0xFF]^(c>>>8);return (c^-1)>>>0;}
+function utf8(s){return new TextEncoder().encode(s);}
+function zipStore(entries){
+  var parts=[],central=[],offset=0;
+  function u16(n){return [n&255,(n>>8)&255]} function u32(n){return [n&255,(n>>8)&255,(n>>16)&255,(n>>24)&255]}
+  entries.forEach(function(e){
+    var name=utf8(e.name), data=(e.data instanceof Uint8Array)?e.data:utf8(e.data), crc=crc32(data);
+    var h=[].concat(u32(0x04034b50),u16(20),u16(0x0800),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0));
+    var head=new Uint8Array(h.length+name.length); head.set(h,0); head.set(name,h.length);
+    parts.push(head,data);
+    var c=[].concat(u32(0x02014b50),u16(20),u16(20),u16(0x0800),u16(0),u16(0),u16(0),u32(crc),u32(data.length),u32(data.length),
+      u16(name.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(offset));
+    var cen=new Uint8Array(c.length+name.length); cen.set(c,0); cen.set(name,c.length);
+    central.push(cen); offset+=head.length+data.length;
+  });
+  var csize=central.reduce(function(n,c){return n+c.length},0);
+  var end=new Uint8Array([].concat(u32(0x06054b50),u16(0),u16(0),u16(entries.length),u16(entries.length),u32(csize),u32(offset),u16(0)));
+  return new Blob(parts.concat(central,[end]),{type:'application/zip'});
+}
+
+/* ══ HTML → normalised blocks ══════════════════════════════════ */
+function runsOf(node,fmt){
+  var out=[];
+  Array.prototype.forEach.call(node.childNodes,function(n){
+    if(n.nodeType===3){ var t=n.textContent.replace(/\s+/g,' '); if(t) out.push({t:t,b:fmt.b,i:fmt.i,u:fmt.u,sup:fmt.sup,sub:fmt.sub}); return; }
+    if(n.nodeType!==1) return;
+    var g=n.tagName, f={b:fmt.b||/^(B|STRONG|H[1-6])$/.test(g), i:fmt.i||/^(I|EM)$/.test(g),
+      u:fmt.u||g==='U', sup:fmt.sup||g==='SUP', sub:fmt.sub||g==='SUB'};
+    if(g==='BR'){ out.push({t:'\n',br:true}); return; }
+    out.push.apply(out,runsOf(n,f));
+  });
+  return out;
+}
+function figParts(fig){
+  var fc=fig.querySelector('figcaption'), st=fc?fc.querySelector('strong'):null;
+  var title=st?st.textContent.trim():'';
+  var legend=fc?fc.textContent.replace(title,'').replace(/^\s*—\s*/,'').trim():'';
+  return {title:title,legend:legend,layout:fig.dataset.layout==='one-column'?'one-column':'two-column'};
+}
+function parseBlocks(html){
+  var d=document.createElement('div'); d.innerHTML=html||'';
+  d.querySelectorAll('.gbmn-media-actions').forEach(function(n){n.remove()});
+  var out=[];
+  Array.prototype.forEach.call(d.children,function(el){
+    var g=el.tagName;
+    if(g==='FIGURE'&&el.classList.contains('gbmn-inline-media')){
+      var p=figParts(el);
+      if(el.classList.contains('gbmn-inline-media-figure')){
+        var img=el.querySelector('img');
+        out.push({t:'fig',title:p.title,legend:p.legend,layout:p.layout,src:img?img.getAttribute('src'):''});
+      } else if(el.classList.contains('gbmn-inline-media-table')){
+        var tb=el.querySelector('table'), rows=[];
+        if(tb) Array.prototype.forEach.call(tb.querySelectorAll('tr'),function(tr){
+          rows.push(Array.prototype.map.call(tr.children,function(c){return {text:c.textContent.trim(),head:c.tagName==='TH'}}));
+        });
+        out.push({t:'table',title:p.title,legend:p.legend,layout:p.layout,rows:rows});
+      } else {
+        out.push({t:'pre',title:p.title,legend:p.legend,layout:p.layout,text:el.textContent.replace(p.title,'').replace(p.legend,'').trim()});
+      }
+      return;
+    }
+    if(/^H[2-6]$/.test(g)){ out.push({t:'h',runs:runsOf(el,{})}); return; }
+    if(g==='UL'||g==='OL'){
+      out.push({t:'list',ordered:g==='OL',items:Array.prototype.map.call(el.children,function(li){return runsOf(li,{})})}); return; }
+    if(g==='TABLE'){
+      var rws=[]; Array.prototype.forEach.call(el.querySelectorAll('tr'),function(tr){
+        rws.push(Array.prototype.map.call(tr.children,function(c){return {text:c.textContent.trim(),head:c.tagName==='TH'}}));});
+      out.push({t:'table',title:'',legend:'',layout:'two-column',rows:rws}); return; }
+    var r=runsOf(el,{});
+    if(r.some(function(x){return !x.br&&x.t.trim()})) out.push({t:'p',runs:r});
+  });
+  return out;
+}
+/* the whole article as ordered sections of blocks */
+function articleModel(){
+  var secs=[];
+  sectionNames().forEach(function(name){
+    var html=(M.sections[name]||'').trim(); if(!html) return;
+    secs.push({name:name,blocks:parseBlocks(html)});
+  });
+  var fign=0,tabn=0;
+  secs.forEach(function(s){ s.blocks.forEach(function(b){
+    if(b.t==='fig'||b.t==='pre') b.n=++fign; if(b.t==='table') b.n=++tabn; }); });
+  return {secs:secs,figCount:fign,tabCount:tabn};
+}
+
+/* ══ image helpers ═════════════════════════════════════════════ */
+function toPng(src){
+  return new Promise(function(res){
+    var im=new Image();
+    im.onload=function(){ var c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight;
+      c.getContext('2d').drawImage(im,0,0);
+      var url=c.toDataURL('image/png');
+      res({w:im.naturalWidth,h:im.naturalHeight,bytes:b64bytes(url.split(',')[1])}); };
+    im.onerror=function(){ res(null); };
+    im.src=src;
+  });
+}
+function b64bytes(b64){ var bin=atob(b64), a=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i); return a; }
+
+/* ══ DOCX ══════════════════════════════════════════════════════ */
+function xe(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function wRuns(runs,base){
+  base=base||{};
+  return runs.map(function(r){
+    if(r.br) return '<w:r><w:br/></w:r>';
+    var p=[];
+    if(base.sz) p.push('<w:sz w:val="'+base.sz+'"/><w:szCs w:val="'+base.sz+'"/>');
+    if(base.color) p.push('<w:color w:val="'+base.color+'"/>');
+    if(r.b||base.b) p.push('<w:b/>');
+    if(r.i||base.i) p.push('<w:i/>');
+    if(r.u) p.push('<w:u w:val="single"/>');
+    if(r.sup) p.push('<w:vertAlign w:val="superscript"/>');
+    if(r.sub) p.push('<w:vertAlign w:val="subscript"/>');
+    return '<w:r>'+(p.length?'<w:rPr>'+p.join('')+'</w:rPr>':'')+'<w:t xml:space="preserve">'+xe(r.t)+'</w:t></w:r>';
+  }).join('');
+}
+function wP(runs,o){
+  o=o||{}; var pr=[];
+  if(o.align) pr.push('<w:jc w:val="'+o.align+'"/>');
+  if(o.indent) pr.push('<w:ind w:firstLine="'+o.indent+'"/>');
+  if(o.hang) pr.push('<w:ind w:left="'+o.hang+'" w:hanging="'+o.hang+'"/>');
+  pr.push('<w:spacing w:before="'+(o.before||0)+'" w:after="'+(o.after==null?100:o.after)+'" w:line="'+(o.line||240)+'" w:lineRule="auto"/>');
+  if(o.keep) pr.push('<w:keepNext/>');
+  return '<w:p><w:pPr>'+pr.join('')+'</w:pPr>'+wRuns(runs,o)+'</w:p>';
+}
+function wText(t,o){ return wP([{t:t}],o); }
+function wTable(rows){
+  var cols=rows.reduce(function(n,r){return Math.max(n,r.length)},1), w=Math.floor(9360/cols);
+  var bd='<w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(function(s){
+    return '<w:'+s+' w:val="single" w:sz="4" w:space="0" w:color="9AA5A5"/>'}).join('')+'</w:tblBorders>';
+  return '<w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/>'+bd+'</w:tblPr>'+
+    '<w:tblGrid>'+rows[0].map(function(){return '<w:gridCol w:w="'+w+'"/>'}).join('')+'</w:tblGrid>'+
+    rows.map(function(r){
+      return '<w:tr>'+r.map(function(c){
+        return '<w:tc><w:tcPr><w:tcW w:w="'+w+'" w:type="dxa"/>'+(c.head?'<w:shd w:val="clear" w:fill="E6F0EE"/>':'')+'</w:tcPr>'+
+          wP([{t:c.text,b:c.head}],{sz:18,after:0})+'</w:tc>'; }).join('')+'</w:tr>'; }).join('')+'</w:tbl>';
+}
+function wImage(rid,wEmu,hEmu,name){
+  return '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="120" w:after="60"/></w:pPr><w:r><w:drawing>'+
+    '<wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+wEmu+'" cy="'+hEmu+'"/>'+
+    '<wp:docPr id="'+(rid.replace(/\D/g,'')||'1')+'" name="'+xe(name)+'"/>'+
+    '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="'+xe(name)+'"/><pic:cNvPicPr/></pic:nvPicPr>'+
+    '<pic:blipFill><a:blip r:embed="'+rid+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
+    '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+wEmu+'" cy="'+hEmu+'"/></a:xfrm>'+
+    '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+}
+async function exportDocx(){
+  notify('Building the Word file...','info');
+  var A=articleModel(), affs=affilList(), media=[], rels=[], body=[];
+  var MAXW=5943600; /* 17 cm content width in EMU */
+
+  var logo=await toPng(LOGO);
+  if(logo){ media.push({name:'word/media/masthead.png',bytes:logo.bytes});
+    rels.push({id:'rIdImg1',target:'media/masthead.png'});
+    var lw=Math.min(MAXW,logo.w*9525), lh=Math.round(lw*logo.h/logo.w);
+    body.push('<w:p><w:pPr><w:jc w:val="left"/><w:spacing w:after="40"/><w:pBdr><w:bottom w:val="single" w:sz="18" w:space="2" w:color="0E7A72"/></w:pBdr></w:pPr>'+
+      '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+lw+'" cy="'+lh+'"/><wp:docPr id="900" name="GBMN masthead"/>'+
+      '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+      '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="masthead"/><pic:cNvPicPr/></pic:nvPicPr>'+
+      '<pic:blipFill><a:blip r:embed="rIdImg1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
+      '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+lw+'" cy="'+lh+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'+
+      '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>');
+  }
+  if(volLine()) body.push(wText(volLine(),{sz:18,align:'right',after:160}));
+
+  body.push(wP([{t:M.title||'Untitled manuscript'}],{sz:39,b:true,color:'006F68',align:'center',after:160,keep:true}));
+
+  var auRuns=[];
+  M.authors.forEach(function(a,i){
+    if(i) auRuns.push({t:', '});
+    auRuns.push({t:[a.firstName,a.middleInitial,a.lastName].filter(Boolean).join(' ')});
+    var nums=(a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).map(function(x){var k=affs.indexOf(x);return k<0?'':String(k+1)}).filter(Boolean);
+    var sup=nums.slice(); if(a.orcidId) sup.push('ID'); if(a.isCorresponding) sup.push('*');
+    if(sup.length) auRuns.push({t:sup.join(','),sup:true,b:true});
+  });
+  if(auRuns.length) body.push(wP(auRuns,{sz:24,color:'686868',align:'center',after:140}));
+  affs.forEach(function(a,i){ body.push(wP([{t:String(i+1),sup:true,b:true},{t:' '+a}],{sz:17,after:20})); });
+  var corr=M.authors.filter(function(a){return a.isCorresponding})[0];
+  if(corr) body.push(wP([{t:'* Corresponding author: ',b:true},
+    {t:[corr.firstName,corr.middleInitial,corr.lastName].filter(Boolean).join(' ')+(corr.email?' — '+corr.email:'')}],{sz:17,after:140}));
+  if((M.publicationInfo||{}).doi) body.push(wP([{t:'DOI. '+M.publicationInfo.doi,u:true}],{sz:22,b:true,color:'008080',after:200}));
+
+  if(cfg()&&cfg().abstractType!=='none'&&(M.abstractContents.text||'').trim()){
+    body.push(wText('ABSTRACT',{sz:22,b:true,color:'B9353A',after:60,keep:true}));
+    parseBlocks(M.abstractContents.text).forEach(function(b){ if(b.t==='p') body.push(wP(b.runs,{sz:20,align:'both',after:60})); });
+  }
+  if((M.sections['Keywords']||'').trim())
+    body.push(wP([{t:'KEYWORDS. ',b:true,color:'006F68'},{t:M.sections['Keywords']}],{sz:20,after:200}));
+
+  var imgIdx=0;
+  for(var si=0;si<A.secs.length;si++){
+    var s=A.secs[si];
+    if(s.name==='Acknowledgments') continue;
+    body.push(wText(s.name.toUpperCase(),{sz:22,b:true,color:'B9353A',before:200,after:60,keep:true}));
+    for(var bi=0;bi<s.blocks.length;bi++){
+      var blk=s.blocks[bi];
+      if(blk.t==='p'){ body.push(wP(blk.runs,{sz:22,align:'both',indent:bi>0?283:0,after:0})); }
+      else if(blk.t==='h'){ body.push(wP(blk.runs,{sz:22,b:true,before:140,after:40,keep:true})); }
+      else if(blk.t==='list'){ blk.items.forEach(function(it){ body.push(wP([{t:'• '}].concat(it),{sz:22,hang:283,after:0})); }); }
+      else if(blk.t==='fig'){
+        var png=blk.src?await toPng(blk.src):null;
+        if(png){ imgIdx++; var rid='rIdFig'+imgIdx;
+          media.push({name:'word/media/figure'+imgIdx+'.png',bytes:png.bytes});
+          rels.push({id:rid,target:'media/figure'+imgIdx+'.png'});
+          var iw=Math.min(MAXW,png.w*9525), ih=Math.round(iw*png.h/png.w);
+          body.push(wImage(rid,iw,ih,'Figure '+blk.n)); }
+        body.push(wP([{t:'Figure '+blk.n+'. ',b:true,color:'006F68'},{t:blk.title+(blk.legend?' '+blk.legend:'')}],{sz:17,after:160}));
+      }
+      else if(blk.t==='table'){
+        body.push(wP([{t:'Table '+blk.n+'. ',b:true,color:'006F68'},{t:blk.title+(blk.legend?' '+blk.legend:'')}],{sz:17,after:60,keep:true}));
+        if(blk.rows.length) body.push(wTable(blk.rows));
+        body.push(wText('',{sz:12,after:120}));
+      }
+      else if(blk.t==='pre'){
+        body.push(wP([{t:'Figure '+blk.n+'. ',b:true,color:'006F68'},{t:blk.title+(blk.legend?' '+blk.legend:'')}],{sz:17,after:60,keep:true}));
+        body.push(wText(blk.text,{sz:18,after:140}));
+      }
+    }
+  }
+  var ack=A.secs.filter(function(s){return s.name==='Acknowledgments'})[0];
+  if(ack){ body.push(wText('ACKNOWLEDGMENTS',{sz:22,b:true,color:'B9353A',before:200,after:60,keep:true}));
+    ack.blocks.forEach(function(b){ if(b.t==='p') body.push(wP(b.runs,{sz:22,align:'both',after:0})); }); }
+
+  var rows=declRows();
+  if(rows.length){ body.push(wText('DECLARATIONS',{sz:22,b:true,color:'B9353A',before:200,after:60,keep:true}));
+    rows.forEach(function(r){ body.push(wP([{t:r[0]+'. ',b:true,color:'006F68'},{t:r[1]}],{sz:22,align:'both',after:60})); }); }
+
+  if(M.references.length){
+    body.push(wText('REFERENCES',{sz:22,b:true,color:'B9353A',before:200,after:60,keep:true}));
+    M.references.forEach(function(r,i){
+      var txt=formatAMAReference(r), runs=[{t:(i+1)+'. '}];
+      txt.split(/(\*[^*]+\*)/).forEach(function(seg){ if(!seg)return;
+        if(seg[0]==='*'&&seg.slice(-1)==='*') runs.push({t:seg.slice(1,-1),i:true}); else runs.push({t:seg}); });
+      body.push(wP(runs,{sz:19,hang:283,after:40}));
+    });
+  }
+
+  var doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+   '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '+
+   'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '+
+   'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>'+
+   body.join('')+
+   '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr>'+
+   '</w:body></w:document>';
+
+  var styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+   '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr>'+
+   '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:color w:val="1F2A2A"/>'+
+   '</w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'+
+   '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>';
+
+  var ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+   '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+   '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+   '<Default Extension="xml" ContentType="application/xml"/>'+
+   '<Default Extension="png" ContentType="image/png"/>'+
+   '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
+   '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'+
+   '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'+
+   '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>';
+
+  var mainRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+   '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+   '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'+
+   '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>'+
+   '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>';
+
+  var docRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+   '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+   '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+   rels.map(function(r){return '<Relationship Id="'+r.id+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="'+r.target+'"/>'}).join('')+
+   '</Relationships>';
+
+  var now=new Date().toISOString().replace(/\.\d+Z$/,'Z');
+  var core='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+   '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" '+
+   'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'+
+   '<dc:title>'+xe(M.title)+'</dc:title><dc:creator>'+xe(M.authors.map(function(a){return a.firstName+' '+a.lastName}).join('; '))+'</dc:creator>'+
+   '<cp:keywords>'+xe(M.sections['Keywords']||'')+'</cp:keywords>'+
+   '<dcterms:created xsi:type="dcterms:W3CDTF">'+now+'</dcterms:created>'+
+   '<dcterms:modified xsi:type="dcterms:W3CDTF">'+now+'</dcterms:modified></cp:coreProperties>';
+  var app='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+   '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">'+
+   '<Application>GBMN Manuscript Builder</Application><Company>Georgian Biomedical and Medical Nexus</Company>'+
+   '<Words>'+wordCount()+'</Words></Properties>';
+
+  var files=[{name:'[Content_Types].xml',data:ct},{name:'_rels/.rels',data:mainRels},
+    {name:'word/document.xml',data:doc},{name:'word/styles.xml',data:styles},
+    {name:'word/_rels/document.xml.rels',data:docRels},
+    {name:'docProps/core.xml',data:core},{name:'docProps/app.xml',data:app}]
+    .concat(media.map(function(m){return {name:m.name,data:m.bytes}}));
+  dl(slug()+'.docx', new Blob([zipStore(files)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}));
+  notify('Word file downloaded.','success');
+}
+
+/* ══ JATS 1.3 (NISO Z39.96) Journal Publishing XML ═════════════ */
+var JOURNAL={ title:'Georgian Biomedical and Medical Nexus', abbrev:'Georgian Biomed Med Nexus',
+  pid:'gbmn', nlmta:'Georgian Biomed Med Nexus', issnP:'2720-7994', issnE:'2720-8796',
+  publisher:'Tbilisi State Medical University', loc:'Tbilisi, Georgia' };
+var JATS_TYPE={'original-research':'research-article','review-articles':'review-article',
+  'clinical-cases':'case-report','commentary':'article-commentary','other':'other'};
+var PM_TYPE={'original-research':'Journal Article','review-articles':'Review',
+  'clinical-cases':'Case Reports','commentary':'Editorial','other':'Journal Article'};
+var SEC_TYPE={'Introduction':'intro','Background':'intro','Materials and Methods':'materials|methods',
+  'Methods':'methods','Results':'results','Discussion':'discussion','Conclusions':'conclusions',
+  'Case Presentation':'cases','Evidence Review':'review','Clinical Implications':'discussion'};
+
+function jRuns(runs){
+  return runs.map(function(r){
+    if(r.br) return ' ';
+    var t=xe(r.t);
+    if(r.sup) t='<sup>'+t+'</sup>'; if(r.sub) t='<sub>'+t+'</sub>';
+    if(r.b) t='<bold>'+t+'</bold>'; if(r.i) t='<italic>'+t+'</italic>'; if(r.u) t='<underline>'+t+'</underline>';
+    return t; }).join('');
+}
+function pubDateParts(){
+  var pv=M.preview||{}, d=pv.date?new Date(pv.date+'T00:00:00'):null;
+  if(d&&!isNaN(d)) return {y:d.getFullYear(),m:d.getMonth()+1,d:d.getDate()};
+  return {y:parseInt(pv.year,10)||new Date().getFullYear(),m:0,d:0};
+}
+function refPersons(authors){
+  var parts=String(authors||'').split(/\s*,\s*/).filter(Boolean);
+  return parts.map(function(p){
+    var m=p.match(/^(.+?)\s+([A-Za-z]{1,4})\.?$/);
+    if(m) return '<name><surname>'+xe(m[1])+'</surname><given-names>'+xe(m[2])+'</given-names></name>';
+    return '<string-name>'+xe(p)+'</string-name>';
+  }).join('');
+}
+function jatsRef(r,i){
+  var type = r.type==='book'?'book':(r.type==='web'?'webpage':'journal');
+  var s='<ref id="R'+(i+1)+'"><label>'+(i+1)+'</label><element-citation publication-type="'+type+'">';
+  s+='<person-group person-group-type="author">'+refPersons(r.authors)+'</person-group>';
+  if(r.title) s+='<article-title>'+xe(r.title)+'</article-title>';
+  if(r.journalOrBook) s+='<source>'+xe(r.journalOrBook)+'</source>';
+  if(r.year) s+='<year iso-8601-date="'+xe(r.year)+'">'+xe(r.year)+'</year>';
+  if(r.volume) s+='<volume>'+xe(r.volume)+'</volume>';
+  if(r.issue) s+='<issue>'+xe(r.issue)+'</issue>';
+  if(r.pages){ var pp=String(r.pages).split(/[-–]/);
+    s+='<fpage>'+xe(pp[0])+'</fpage>'+(pp[1]?'<lpage>'+xe(pp[1])+'</lpage>':''); }
+  if(r.doi) s+='<pub-id pub-id-type="doi">'+xe(r.doi)+'</pub-id>';
+  if(r.url) s+='<ext-link ext-link-type="uri" xlink:href="'+xe(r.url)+'">'+xe(r.url)+'</ext-link>';
+  return s+'</element-citation></ref>';
+}
+function buildJats(figNames){
+  var A=articleModel(), affs=affilList(), pv=M.preview||{}, pd=pubDateParts();
+  var base=slug(), x='';
+  x+='<?xml version="1.0" encoding="UTF-8"?>\n';
+  x+='<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.3 20210610//EN" "JATS-journalpublishing1-3.dtd">\n';
+  x+='<article xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:mml="http://www.w3.org/1998/Math/MathML" '+
+     'dtd-version="1.3" article-type="'+(JATS_TYPE[M.articleType]||'other')+'" xml:lang="en">\n';
+  /* ── front ── */
+  x+='<front>\n<journal-meta>';
+  x+='<journal-id journal-id-type="publisher-id">'+JOURNAL.pid+'</journal-id>';
+  x+='<journal-id journal-id-type="nlm-ta">'+xe(JOURNAL.nlmta)+'</journal-id>';
+  x+='<journal-title-group><journal-title>'+xe(JOURNAL.title)+'</journal-title>'+
+     '<abbrev-journal-title abbrev-type="publisher">'+xe(JOURNAL.abbrev)+'</abbrev-journal-title></journal-title-group>';
+  x+='<issn pub-type="ppub">'+JOURNAL.issnP+'</issn><issn pub-type="epub">'+JOURNAL.issnE+'</issn>';
+  x+='<publisher><publisher-name>'+xe(JOURNAL.publisher)+'</publisher-name><publisher-loc>'+xe(JOURNAL.loc)+'</publisher-loc></publisher>';
+  x+='</journal-meta>\n<article-meta>';
+  if((M.publicationInfo||{}).doi) x+='<article-id pub-id-type="doi">'+xe(M.publicationInfo.doi)+'</article-id>';
+  x+='<article-categories><subj-group subj-group-type="heading"><subject>'+xe(cfg()?cfg().name.replace(/\b\w+/g,function(w){return w[0]+w.slice(1).toLowerCase()}):'Article')+'</subject></subj-group>';
+  if(M.specialty) x+='<subj-group subj-group-type="specialty"><subject>'+xe(M.specialty)+'</subject></subj-group>';
+  x+='</article-categories>';
+  x+='<title-group><article-title>'+xe(M.title)+'</article-title>'+
+     (M.runningTitle?'<alt-title alt-title-type="running-head">'+xe(M.runningTitle)+'</alt-title>':'')+'</title-group>';
+  x+='<contrib-group>';
+  M.authors.forEach(function(a,i){
+    x+='<contrib contrib-type="author"'+(a.isCorresponding?' corresp="yes"':'')+'>';
+    if(a.orcidId) x+='<contrib-id contrib-id-type="orcid">https://orcid.org/'+xe(a.orcidId.replace(/^https?:\/\/orcid\.org\//i,''))+'</contrib-id>';
+    x+='<name><surname>'+xe(a.lastName)+'</surname><given-names>'+xe([a.firstName,a.middleInitial].filter(Boolean).join(' '))+'</given-names>'+
+       (a.academicTitle?'<degrees>'+xe(a.academicTitle)+'</degrees>':'')+'</name>';
+    (a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).forEach(function(af){
+      var k=affs.indexOf(af); if(k>=0) x+='<xref ref-type="aff" rid="aff'+(k+1)+'"/>'; });
+    if(a.isCorresponding) x+='<xref ref-type="corresp" rid="cor1"/>';
+    if(a.contributionRole) x+='<role>'+xe(a.contributionRole)+'</role>';
+    if(a.email) x+='<email>'+xe(a.email)+'</email>';
+    x+='</contrib>';
+  });
+  affs.forEach(function(af,i){
+    var bits=af.split(/\s*,\s*/);
+    x+='<aff id="aff'+(i+1)+'"><label>'+(i+1)+'</label><institution>'+xe(bits.slice(0,Math.max(1,bits.length-2)).join(', '))+'</institution>'+
+       (bits.length>2?'<city>'+xe(bits[bits.length-2])+'</city>':'')+
+       (bits.length>1?'<country>'+xe(bits[bits.length-1])+'</country>':'')+'</aff>';
+  });
+  x+='</contrib-group>';
+  var corr=M.authors.filter(function(a){return a.isCorresponding})[0];
+  if(corr) x+='<author-notes><corresp id="cor1"><label>*</label>Corresponding author: '+
+    xe([corr.firstName,corr.middleInitial,corr.lastName].filter(Boolean).join(' '))+
+    (corr.email?'. <email>'+xe(corr.email)+'</email>':'')+'</corresp></author-notes>';
+  x+='<pub-date publication-format="electronic" date-type="pub">'+
+     (pd.d?'<day>'+pd.d+'</day>':'')+(pd.m?'<month>'+pd.m+'</month>':'')+'<year>'+pd.y+'</year></pub-date>';
+  if(pv.vol) x+='<volume>'+xe(pv.vol)+'</volume>';
+  if(pv.iss) x+='<issue>'+xe(pv.iss)+'</issue>';
+  if(pv.fpage) x+='<fpage>'+xe(pv.fpage)+'</fpage>'+(pv.lpage?'<lpage>'+xe(pv.lpage)+'</lpage>':'');
+  else if(pv.elocation) x+='<elocation-id>'+xe(pv.elocation)+'</elocation-id>';
+  x+='<permissions><copyright-statement>&#169; '+pd.y+' '+xe(M.authors.map(function(a){return a.lastName}).filter(Boolean).join(', ')||'The Authors')+'</copyright-statement>'+
+     '<copyright-year>'+pd.y+'</copyright-year><copyright-holder>The Authors</copyright-holder>'+
+     '<license license-type="open-access" xlink:href="https://creativecommons.org/licenses/by/4.0/">'+
+     '<license-p>This is an open access article distributed under the terms of the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/), which permits unrestricted use, distribution and reproduction in any medium, provided the original work is properly cited.</license-p>'+
+     '</license></permissions>';
+  if(cfg()&&cfg().abstractType!=='none'&&(M.abstractContents.text||'').trim()){
+    x+='<abstract>';
+    parseBlocks(M.abstractContents.text).forEach(function(b){ if(b.t==='p') x+='<p>'+jRuns(b.runs)+'</p>'; });
+    x+='</abstract>';
+  }
+  var kws=(M.sections['Keywords']||'').replace(/\.$/,'').split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean);
+  if(kws.length) x+='<kwd-group kwd-group-type="author">'+kws.map(function(k){return '<kwd>'+xe(k)+'</kwd>'}).join('')+'</kwd-group>';
+  var F=M.fundingDetails;
+  if(F.fundingAgency||F.grantNumber||F.explanation){
+    x+='<funding-group>';
+    if(F.fundingAgency) x+='<award-group><funding-source>'+xe(F.fundingAgency)+'</funding-source>'+
+      (F.grantNumber?'<award-id>'+xe(F.grantNumber)+'</award-id>':'')+'</award-group>';
+    x+='<funding-statement>'+xe([F.fundingAgency,F.grantNumber?'Grant '+F.grantNumber:'',F.explanation].filter(Boolean).join('. '))+'</funding-statement></funding-group>';
+  } else x+='<funding-group><funding-statement>This research received no external funding.</funding-statement></funding-group>';
+  x+='<counts><fig-count count="'+A.figCount+'"/><table-count count="'+A.tabCount+'"/>'+
+     '<ref-count count="'+M.references.length+'"/><word-count count="'+wordCount()+'"/></counts>';
+  x+='</article-meta>\n</front>\n';
+  /* ── body ── */
+  x+='<body>\n';
+  var sn=0;
+  A.secs.forEach(function(s){
+    if(s.name==='Acknowledgments') return;
+    sn++;
+    var st=SEC_TYPE[s.name];
+    x+='<sec id="sec'+sn+'"'+(st?' sec-type="'+st+'"':'')+'><title>'+xe(s.name)+'</title>';
+    /* a subheading opens a nested <sec>; everything after it belongs inside, because
+       JATS does not allow a <p> to follow a nested <sec> in the same parent */
+    var sub=0, open=false;
+    s.blocks.forEach(function(b){
+      if(b.t==='h'){ if(open) x+='</sec>'; sub++; open=true;
+        x+='<sec id="sec'+sn+'-'+sub+'"><title>'+jRuns(b.runs)+'</title>'; return; }
+      if(b.t==='p') x+='<p>'+jRuns(b.runs)+'</p>';
+      else if(b.t==='list') x+='<list list-type="'+(b.ordered?'order':'bullet')+'">'+
+        b.items.map(function(it){return '<list-item><p>'+jRuns(it)+'</p></list-item>'}).join('')+'</list>';
+      else if(b.t==='fig') x+='<fig id="fig'+b.n+'" position="float"><label>Figure '+b.n+'</label>'+
+        '<caption><title>'+xe(b.title)+'</title>'+(b.legend?'<p>'+xe(b.legend)+'</p>':'')+'</caption>'+
+        '<graphic xlink:href="'+xe(figNames[b.n]||(base+'-fig'+b.n+'.png'))+'"/></fig>';
+      else if(b.t==='table'){
+        x+='<table-wrap id="tbl'+b.n+'" position="float"><label>Table '+b.n+'</label>'+
+           '<caption><title>'+xe(b.title)+'</title></caption><table frame="hsides" rules="groups">';
+        var head=b.rows.length&&b.rows[0].every(function(c){return c.head})?b.rows[0]:null;
+        if(head) x+='<thead><tr>'+head.map(function(c){return '<th>'+xe(c.text)+'</th>'}).join('')+'</tr></thead>';
+        x+='<tbody>'+b.rows.slice(head?1:0).map(function(r){
+          return '<tr>'+r.map(function(c){return '<td>'+xe(c.text)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table>'+
+           (b.legend?'<table-wrap-foot><fn><p>'+xe(b.legend)+'</p></fn></table-wrap-foot>':'')+'</table-wrap>';
+      }
+      else if(b.t==='pre') x+='<boxed-text id="box'+b.n+'"><caption><title>'+xe(b.title)+'</title></caption><preformat>'+xe(b.text)+'</preformat></boxed-text>';
+    });
+    if(open) x+='</sec>';
+    x+='</sec>';
+  });
+  x+='\n</body>\n<back>\n';
+  var ack=A.secs.filter(function(s){return s.name==='Acknowledgments'})[0];
+  if(ack&&ack.blocks.length) x+='<ack><title>Acknowledgments</title>'+
+    ack.blocks.map(function(b){return b.t==='p'?'<p>'+jRuns(b.runs)+'</p>':''}).join('')+'</ack>';
+  var E=M.ethics, C=M.conflictDisclosure, fns=[];
+  fns.push('<fn fn-type="COI-statement"><p>'+xe(C.hasConflict?(C.conflictDetails||'The authors declare conflicts of interest.'):'The authors declare no conflict of interest.')+'</p></fn>');
+  var ethTxt=declRows().filter(function(r){return r[0]==='Ethics approval'})[0];
+  if(ethTxt) fns.push('<fn fn-type="other"><label>Ethics approval</label><p>'+xe(ethTxt[1])+'</p></fn>');
+  var contrib=declRows().filter(function(r){return r[0]==='Author contributions'})[0];
+  if(contrib) fns.push('<fn fn-type="con"><label>Author contributions</label><p>'+xe(contrib[1])+'</p></fn>');
+  x+='<fn-group>'+fns.join('')+'</fn-group>';
+  if(M.references.length) x+='<ref-list><title>References</title>'+M.references.map(jatsRef).join('')+'</ref-list>';
+  x+='\n</back>\n</article>\n';
+  return x;
+}
+async function exportJats(){
+  notify('Building the JATS package...','info');
+  var A=articleModel(), base=slug(), names={}, files=[];
+  for(var i=0;i<A.secs.length;i++){
+    var blocks=A.secs[i].blocks;
+    for(var j=0;j<blocks.length;j++){
+      var b=blocks[j];
+      if(b.t==='fig'&&b.src){
+        var png=await toPng(b.src);
+        if(png){ var nm=base+'-fig'+b.n+'.png'; names[b.n]=nm; files.push({name:nm,data:png.bytes}); }
+      }
+    }
+  }
+  var xml=buildJats(names);
+  files.unshift({name:base+'.xml',data:xml});
+  files.push({name:'README.txt',data:
+    'GBMN JATS deposit package\n'+
+    '=========================\n\n'+
+    'File          : '+base+'.xml\n'+
+    'Tag set       : NISO JATS (Z39.96) Journal Publishing DTD v1.3 20210610\n'+
+    'Article type  : '+(JATS_TYPE[M.articleType]||'other')+'\n'+
+    'Figures       : '+A.figCount+'   Tables: '+A.tabCount+'   References: '+M.references.length+'\n\n'+
+    'PubMed Central\n'+
+    '  Deposit the whole package by SFTP. Add the article PDF with the SAME base\n'+
+    '  name ('+base+'.pdf) before sending - PMC requires the XML and PDF base names\n'+
+    '  to match, and figure file names to match the graphic/@xlink:href values above.\n'+
+    '  Replace the PNG figures with the original high-resolution TIFF or EPS files\n'+
+    '  and update the href extensions accordingly.\n'+
+    '  Check the file with the PMC Style Checker before sending.\n\n'+
+    'PubMed (citation deposit)\n'+
+    '  Use the separate PubMed 3.0 XML export; PMC full text and PubMed citations\n'+
+    '  are different schemas.\n\n'+
+    'Scopus / Web of Science\n'+
+    '  Both ingest JATS full-text XML through the delivery channel agreed with the\n'+
+    '  publisher after the title has been accepted. Send this same package.\n'});
+  dl(base+'-jats.zip', zipStore(files));
+  notify('JATS package downloaded.','success');
+}
+
+/* ══ PubMed 3.0 citation XML ═══════════════════════════════════ */
+function buildPubmed(){
+  var pv=M.preview||{}, pd=pubDateParts(), MO=['','01','02','03','04','05','06','07','08','09','10','11','12'];
+  var x='<?xml version="1.0" encoding="UTF-8"?>\n';
+  x+='<!DOCTYPE ArticleSet PUBLIC "-//NLM//DTD PubMed 3.0//EN" "https://dtd.nlm.nih.gov/ncbi/pubmed/in/PubMed.dtd">\n';
+  x+='<ArticleSet>\n<Article>\n';
+  x+='<Journal><PublisherName>'+xe(JOURNAL.publisher)+'</PublisherName>'+
+     '<JournalTitle>'+xe(JOURNAL.title)+'</JournalTitle>'+
+     '<Issn>'+JOURNAL.issnE+'</Issn>'+
+     (pv.vol?'<Volume>'+xe(pv.vol)+'</Volume>':'')+
+     (pv.iss?'<Issue>'+xe(pv.iss)+'</Issue>':'')+
+     '<PubDate PubStatus="epublish"><Year>'+pd.y+'</Year>'+
+       (pd.m?'<Month>'+MO[pd.m]+'</Month>':'')+(pd.m&&pd.d?'<Day>'+(pd.d<10?'0':'')+pd.d+'</Day>':'')+
+     '</PubDate></Journal>\n';
+  x+='<ArticleTitle>'+xe(M.title)+'</ArticleTitle>\n';
+  if(pv.fpage){ x+='<FirstPage>'+xe(pv.fpage)+'</FirstPage>'+(pv.lpage?'<LastPage>'+xe(pv.lpage)+'</LastPage>':'')+'\n'; }
+  else if(pv.elocation) x+='<ELocationID EIdType="pii">'+xe(pv.elocation)+'</ELocationID>\n';
+  if((M.publicationInfo||{}).doi) x+='<ELocationID EIdType="doi">'+xe(M.publicationInfo.doi)+'</ELocationID>\n';
+  x+='<Language>EN</Language>\n<AuthorList>';
+  M.authors.forEach(function(a){
+    x+='<Author><FirstName>'+xe(a.firstName)+'</FirstName>'+
+       (a.middleInitial?'<MiddleName>'+xe(a.middleInitial.replace(/\.$/,''))+'</MiddleName>':'')+
+       '<LastName>'+xe(a.lastName)+'</LastName>';
+    (a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).filter(Boolean).forEach(function(af){
+      x+='<AffiliationInfo><Affiliation>'+xe(af)+'</Affiliation></AffiliationInfo>'; });
+    if(a.orcidId) x+='<AffiliationInfo><Identifier Source="ORCID">https://orcid.org/'+
+      xe(a.orcidId.replace(/^https?:\/\/orcid\.org\//i,''))+'</Identifier></AffiliationInfo>';
+    x+='</Author>';
+  });
+  x+='</AuthorList>\n';
+  x+='<PublicationType>'+xe(PM_TYPE[M.articleType]||'Journal Article')+'</PublicationType>\n';
+  if((M.publicationInfo||{}).doi) x+='<ArticleIdList><ArticleId IdType="doi">'+xe(M.publicationInfo.doi)+'</ArticleId></ArticleIdList>\n';
+  var abs=stripTags(M.abstractContents.text||'');
+  if(abs) x+='<Abstract><AbstractText>'+xe(abs)+'</AbstractText></Abstract>\n';
+  var kws=(M.sections['Keywords']||'').replace(/\.$/,'').split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean);
+  var F=M.fundingDetails, objs='';
+  kws.forEach(function(k){ objs+='<Object Type="keyword"><Param Name="value">'+xe(k)+'</Param></Object>'; });
+  if(F.grantNumber||F.fundingAgency) objs+='<Object Type="grant">'+
+    (F.grantNumber?'<Param Name="id">'+xe(F.grantNumber)+'</Param>':'')+
+    (F.fundingAgency?'<Param Name="grantor">'+xe(F.fundingAgency)+'</Param>':'')+'</Object>';
+  if(objs) x+='<ObjectList>'+objs+'</ObjectList>\n';
+  x+='<CopyrightInformation>&#169; '+pd.y+' The Authors. Open access under CC BY 4.0.</CopyrightInformation>\n';
+  var C=M.conflictDisclosure;
+  x+='<CoiStatement>'+xe(C.hasConflict?(C.conflictDetails||'The authors declare conflicts of interest.'):'The authors declare no conflict of interest.')+'</CoiStatement>\n';
+  if(M.references.length) x+='<ReferenceList>'+M.references.map(function(r){
+    return '<Reference><Citation>'+xe(formatAMAReference(r).replace(/\*/g,''))+'</Citation>'+
+      (r.doi?'<ArticleIdList><ArticleId IdType="doi">'+xe(r.doi)+'</ArticleId></ArticleIdList>':'')+'</Reference>'; }).join('')+'</ReferenceList>\n';
+  x+='</Article>\n</ArticleSet>\n';
+  return x;
+}
+function exportPubmed(){
+  dl(slug()+'-pubmed.xml', new Blob([buildPubmed()],{type:'application/xml;charset=utf-8'}));
+  notify('PubMed citation XML downloaded.','success');
+}
+
+/* ── well-formedness self-check ── */
+function xmlOk(src){
+  try{ var d=new DOMParser().parseFromString(src.replace(/<!DOCTYPE[^>]*>/,''),'application/xml');
+    return !d.querySelector('parsererror'); }catch(e){ return false; }
+}
 
 /* ══ document builders — printed GBMN layout ═══════════════════ */
 function ital(s){ return esc(s).replace(/\*([^*]+)\*/g,'<i>$1</i>'); }
@@ -1674,13 +2279,6 @@ function renderPreview(){
   if($('#sumIssues')) paintIssues($('#sumIssues'));
 }
 $('#pvTgl').addEventListener('click',function(e){ var b=e.target.closest('button[data-pv]'); if(b) setMode(b.dataset.pv); });
-['pvVol','pvIss','pvPeriod'].forEach(function(id){
-  var el=$('#'+id), key=id.replace('pv','').toLowerCase();
-  el.value = (M.preview&&M.preview[key==='period'?'period':key])||'';
-  el.addEventListener('input',function(){ M.preview[key]=el.value; save(); renderPreview(); });
-});
-$('#pvDoi').value=(M.publicationInfo||{}).doi||'';
-$('#pvDoi').addEventListener('input',function(e){ M.publicationInfo.doi=e.target.value; save(); renderPreview(); });
 
 /* ══ exports ═══════════════════════════════════════════════════ */
 function slug(){ var a=M.authors[0]; var base=(a&&a.lastName)?a.lastName:'manuscript';
@@ -1713,6 +2311,9 @@ $('#btnPdf').addEventListener('click',function(){
   if(pvMode!=='print') setMode('print');
   setTimeout(function(){ window.print(); },150); });
 $('#btnHtml').addEventListener('click',exportHtml);
+$('#btnDocx').addEventListener('click',function(){ exportDocx(); });
+$('#btnJats').addEventListener('click',function(){ exportJats(); });
+$('#btnPubmed').addEventListener('click',exportPubmed);
 
 /* ══ boot ══════════════════════════════════════════════════════ */
 function renderAll(){ renderSidebar(); renderStep(); renderPreview(); }

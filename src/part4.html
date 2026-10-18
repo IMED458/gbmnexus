@@ -8,7 +8,8 @@ var $=function(s,r){return (r||document).querySelector(s)};
 var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
 var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')};
 var uid=0, nid=function(p){return (p||'x')+'-'+(++uid)+Date.now().toString(36)};
-var stripTags=function(h){return String(h==null?'':h).replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim()};
+var stripTags=function(h){ var d=document.createElement('div'); d.innerHTML=String(h==null?'':h);
+  return (d.textContent||'').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim(); };
 
 /* ── icons (24x24 stroke) ── */
 var P={

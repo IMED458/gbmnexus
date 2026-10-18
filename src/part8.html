@@ -229,13 +229,6 @@ function renderPreview(){
   if($('#sumIssues')) paintIssues($('#sumIssues'));
 }
 $('#pvTgl').addEventListener('click',function(e){ var b=e.target.closest('button[data-pv]'); if(b) setMode(b.dataset.pv); });
-['pvVol','pvIss','pvPeriod'].forEach(function(id){
-  var el=$('#'+id), key=id.replace('pv','').toLowerCase();
-  el.value = (M.preview&&M.preview[key==='period'?'period':key])||'';
-  el.addEventListener('input',function(){ M.preview[key]=el.value; save(); renderPreview(); });
-});
-$('#pvDoi').value=(M.publicationInfo||{}).doi||'';
-$('#pvDoi').addEventListener('input',function(e){ M.publicationInfo.doi=e.target.value; save(); renderPreview(); });
 
 /* ══ exports ═══════════════════════════════════════════════════ */
 function slug(){ var a=M.authors[0]; var base=(a&&a.lastName)?a.lastName:'manuscript';
@@ -268,6 +261,9 @@ $('#btnPdf').addEventListener('click',function(){
   if(pvMode!=='print') setMode('print');
   setTimeout(function(){ window.print(); },150); });
 $('#btnHtml').addEventListener('click',exportHtml);
+$('#btnDocx').addEventListener('click',function(){ exportDocx(); });
+$('#btnJats').addEventListener('click',function(){ exportJats(); });
+$('#btnPubmed').addEventListener('click',exportPubmed);
 
 /* ══ boot ══════════════════════════════════════════════════════ */
 function renderAll(){ renderSidebar(); renderStep(); renderPreview(); }

@@ -54,9 +54,35 @@ A4 pages:
 Three preview modes: **PDF** (paginated A4), **Title page** (the separate,
 anonymisable title page) and **Web** (how the article looks on the site).
 
-**Exports** — print-to-PDF straight from the browser, a standalone HTML
-version of the article, and a JSON metadata package for the editorial
-office.
+**Exports**
+
+| Format | What it is |
+|---|---|
+| **PDF** | Print-to-PDF straight from the browser, in the paginated A4 journal layout |
+| **Word (.docx)** | Real OOXML — masthead, title, authors with affiliation and ORCID superscripts, abstract, sections, inline figures and tables, declarations, AMA references. Written by a built-in ZIP writer; no library, no server |
+| **HTML** | Standalone article page, styles inlined |
+| **JATS XML package (.zip)** | NISO JATS (Z39.96) Journal Publishing DTD v1.3, plus every figure as a separate file and a deposit README |
+| **PubMed citation XML** | PubMed 3.0 DTD (`ArticleSet`) |
+| **JSON** | Full metadata package for the editorial office |
+
+### Indexing
+
+The JATS package is the full-text format PubMed Central recommends, and the
+same format Scopus and Web of Science ingest from publishers. It carries the
+journal ISSNs and publisher, the DOI, article type and specialty, the running
+head, structured contributors with ORCID iDs and `aff` cross-references, the
+corresponding-author note, publication date, volume, issue and pagination,
+a CC BY 4.0 `permissions` block, the abstract, author keywords, the funding
+group, element counts, sectioned body with `fig` and `table-wrap`, and a
+`ref-list` of `element-citation` entries.
+
+Before depositing to PMC: add the article PDF under the same base name as the
+XML, replace the PNG figures with the original high-resolution TIFF or EPS and
+update the `graphic/@xlink:href` extensions, then run the file through the PMC
+Style Checker.
+
+PubMed citation deposit uses a different schema from PMC full text, which is
+why both files are produced separately.
 
 ## Structure
 
@@ -70,7 +96,9 @@ src/part4.html    icons, article types, manuscript model, steps, sidebar
 src/part5.html    rich-text editor (figures, tables, diagrams)
 src/part6.html    steps 1–9
 src/part7.html    steps 10–17
-src/part8.html    document builders, validation, pagination, exports
+src/part9.html    ZIP writer, HTML block parser, DOCX builder
+src/part10.html   JATS 1.3 and PubMed 3.0 XML builders
+src/part8.html    document builders, validation, pagination, preview, exports
 assets/           GBMN masthead artwork
 ```
 
