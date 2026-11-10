@@ -3,11 +3,18 @@
 function touch(){ save(); renderSidebar(); renderPreview(); }
 function restep(){ save(); renderAll(); }
 function cfg(){ return ARTICLE_TYPES[M.articleType]; }
+/* the heading as printed — an imported manuscript keeps its own wording (e.g. "Background") */
+function secTitle(n){ var t=(M.sectionTitles||{})[n]; return (t&&t.trim())||n; }
 function sectionNames(){ return (cfg()?cfg().requiredSections:[]).filter(function(s){return s!=='Keywords'}); }
 function normalizeKeywords(v){ var k=v.split(/[;,]/).map(function(x){return x.trim()}).filter(Boolean); return k.length? k.join('; ')+'.' : ''; }
 function fileSizeLabel(f){ return f.size<1048576 ? Math.max(1,Math.round(f.size/1024))+' KB' : (f.size/1048576).toFixed(1)+' MB'; }
 function readDataUrl(f){ return new Promise(function(res){ var r=new FileReader(); r.onload=function(){res(String(r.result||''))}; r.readAsDataURL(f); }); }
 function formatAMAReference(ref){
+  /* imported references keep the author's own wording; the journal title is set in italics */
+  if(ref.raw){ var r=ref.raw;
+    if(ref.parsed&&ref.journalOrBook){ var from=ref.title?r.indexOf(ref.title)+ref.title.length:0, k=r.indexOf(ref.journalOrBook,Math.max(0,from));
+      if(k>=0) r=r.slice(0,k)+'*'+ref.journalOrBook+'*'+r.slice(k+ref.journalOrBook.length); }
+    return r; }
   if(!ref.authors||!ref.title||!ref.journalOrBook||!ref.year) return 'Incomplete citation data provided';
   var a=ref.authors.trim(); if(a.slice(-1)!=='.') a+='.';
   var t=ref.title.trim(), vol=ref.volume?String(ref.volume).trim():'', iss=ref.issue?'('+ref.issue+')':'',
@@ -291,8 +298,15 @@ VIEWS['sections']=function(b){
          '<span class="n">Section '+(i+1)+'</span><span class="t">'+esc(s)+'</span>'+
          '<span class="s '+(saved?'ok':'no')+'">'+(saved?'Saved content':'Empty')+'</span></button>'; }).join('')+'</div>'+
    '</div>';
+  var hd=document.createElement('div');
+  hd.innerHTML='<label class="lbl" for="secHead">Heading as printed</label>'+
+    '<input class="inp sm" id="secHead" placeholder="'+esc(activeSection)+'" value="'+esc((M.sectionTitles||{})[activeSection]||'')+'">'+
+    '<p class="note" style="margin-top:4px">Leave empty to print “'+esc(activeSection)+'”. The JATS section type stays the same.</p>';
+  b.appendChild(hd);
+  $('#secHead',hd).addEventListener('input',function(e){ M.sectionTitles=M.sectionTitles||{};
+    M.sectionTitles[activeSection]=e.target.value; touch(); });
   var host=document.createElement('div'); b.appendChild(host);
-  mountRTE(host,{label:activeSection+' *', value:M.sections[activeSection]||'', showWordCount:true,
+  mountRTE(host,{label:secTitle(activeSection)+' *', value:M.sections[activeSection]||'', showWordCount:true,
     placeholder:'Write the full structured '+activeSection.toLowerCase()+' of the study...',
     onChange:function(v){ M.sections[activeSection]=v; touch(); }});
   $$('[data-sec]',b).forEach(function(el){ el.addEventListener('click',function(){ activeSection=el.dataset.sec; renderStep(); }); });

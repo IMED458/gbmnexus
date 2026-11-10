@@ -1,7 +1,10 @@
 
 /* ══ JATS 1.3 (NISO Z39.96) Journal Publishing XML ═════════════ */
 var JOURNAL={ title:'Georgian Biomedical and Medical Nexus', abbrev:'Georgian Biomed Med Nexus',
-  pid:'gbmn', nlmta:'Georgian Biomed Med Nexus', issnP:'2720-7994', issnE:'2720-8796',
+  pid:'gbmn', isoAbbrev:'Georgian Biomed Med Nexus',
+  /* NLM assigns the official title abbreviation (nlm-ta) when the journal is accepted —
+     put it here then; until that, the ISO abbreviation is sent instead */
+  nlmta:'', issnP:'2720-7994', issnE:'2720-8796',
   publisher:'Tbilisi State Medical University', loc:'Tbilisi, Georgia' };
 var JATS_TYPE={'original-research':'research-article','review-articles':'review-article',
   'clinical-cases':'case-report','commentary':'article-commentary','other':'other'};
@@ -11,10 +14,31 @@ var SEC_TYPE={'Introduction':'intro','Background':'intro','Materials and Methods
   'Methods':'methods','Results':'results','Discussion':'discussion','Conclusions':'conclusions',
   'Case Presentation':'cases','Evidence Review':'review','Clinical Implications':'discussion'};
 
+/* cross-reference context: counts known while the article is being written */
+var JX={refs:0,figs:0,tabs:0,links:true};
+function citeXref(txt){
+  /* "1,3–5" → linked citations, when every number is a real reference */
+  var raw=String(txt);
+  if(!JX.links||!/^\s*\d+(\s*[,–\-]\s*\d+)*\s*$/.test(raw)) return null;
+  var nums=raw.match(/\d+/g).map(Number);
+  if(!nums.every(function(n){return n>=1&&n<=JX.refs})) return null;
+  return raw.replace(/\s*-\s*/g,'\u2013')
+            .replace(/\d+/g,function(n){ return '<xref ref-type="bibr" rid="R'+n+'">'+n+'</xref>'; });
+}
+function inlineXrefs(t){
+  if(!JX.links) return t;
+  t=t.replace(/\b(Fig(?:ure)?s?\.?|Tables?)(\s|&#160;|\u00a0)+(\d+)\b/gi,function(all,w,sp,n){
+    var tab=/^tab/i.test(w), max=tab?JX.tabs:JX.figs; n=+n;
+    if(n<1||n>max) return all;
+    return '<xref ref-type="'+(tab?'table':'fig')+'" rid="'+(tab?'tbl':'fig')+n+'">'+all+'</xref>'; });
+  /* bracketed citations: [3], [1, 4-6] */
+  return t.replace(/\[(\d+(?:\s*[,–\-]\s*\d+)*)\]/g,function(all,inner){ var x=citeXref(inner); return x?'['+x+']':all; });
+}
 function jRuns(runs){
   return runs.map(function(r){
     if(r.br) return ' ';
-    var t=xe(r.t);
+    var t=xe(r.t), cx=r.sup?citeXref(r.t):null;
+    if(cx) t=cx; else if(!r.sup&&!r.sub) t=inlineXrefs(t);
     if(r.sup) t='<sup>'+t+'</sup>'; if(r.sub) t='<sub>'+t+'</sub>';
     if(r.b) t='<bold>'+t+'</bold>'; if(r.i) t='<italic>'+t+'</italic>'; if(r.u) t='<underline>'+t+'</underline>';
     return t; }).join('');
@@ -32,8 +56,33 @@ function refPersons(authors){
     return '<string-name>'+xe(p)+'</string-name>';
   }).join('');
 }
+function jatsMixed(r,i,type){
+  /* the author's own reference text, with the parts we recognised tagged in place */
+  var raw=r.raw, s='', pos=0;
+  function tag(val,el,attrs){ if(!val) return; var k=raw.indexOf(val,pos); if(k<0) return;
+    s+=xe(raw.slice(pos,k))+'<'+el+(attrs||'')+'>'+xe(val)+'</'+el+'>'; pos=k+val.length; }
+  if(r.parsed){
+    var names=String(r.authors||'').split(/\s*,\s*/), k0=0;
+    if(r.authors&&raw.indexOf(r.authors)===0){
+      s+='<person-group person-group-type="author">';
+      names.forEach(function(p,ix){ var m=p.match(/^(.+?)\s+([A-Z]{1,4})$/);
+        if(ix) s+=', ';
+        if(/^et al\.?$/.test(p)) s+='<etal/>';
+        else if(m) s+='<string-name><surname>'+xe(m[1])+'</surname> <given-names>'+xe(m[2])+'</given-names></string-name>';
+        else s+='<string-name>'+xe(p)+'</string-name>'; });
+      s+='</person-group>'; pos=r.authors.length; }
+    tag(r.title,'article-title'); tag(r.journalOrBook,'source'); tag(r.year,'year');
+    tag(r.volume,'volume'); if(r.issue) tag(r.issue,'issue');
+    if(r.pages){ var pp=String(r.pages).split(/[-–]/); tag(pp[0],'fpage'); if(pp[1]) tag(pp[1],'lpage'); }
+  }
+  if(r.doi) tag(r.doi,'pub-id',' pub-id-type="doi"');
+  else if(r.url) tag(r.url,'ext-link',' ext-link-type="uri" xlink:href="'+xe(r.url)+'"');
+  s+=xe(raw.slice(pos));
+  return '<ref id="R'+(i+1)+'"><label>'+(i+1)+'</label><mixed-citation publication-type="'+type+'">'+s+'</mixed-citation></ref>';
+}
 function jatsRef(r,i){
   var type = r.type==='book'?'book':(r.type==='web'?'webpage':'journal');
+  if(r.raw) return jatsMixed(r,i,type);
   var s='<ref id="R'+(i+1)+'"><label>'+(i+1)+'</label><element-citation publication-type="'+type+'">';
   s+='<person-group person-group-type="author">'+refPersons(r.authors)+'</person-group>';
   if(r.title) s+='<article-title>'+xe(r.title)+'</article-title>';
@@ -47,9 +96,31 @@ function jatsRef(r,i){
   if(r.url) s+='<ext-link ext-link-type="uri" xlink:href="'+xe(r.url)+'">'+xe(r.url)+'</ext-link>';
   return s+'</element-citation></ref>';
 }
+function jDate(iso,type){
+  var d=iso?new Date(iso+'T00:00:00'):null; if(!d||isNaN(d)) return '';
+  return '<date date-type="'+type+'"><day>'+('0'+d.getDate()).slice(-2)+'</day><month>'+('0'+(d.getMonth()+1)).slice(-2)+'</month><year>'+d.getFullYear()+'</year></date>';
+}
+function jAbstract(html){
+  var blocks=parseBlocks(html).filter(function(b){return b.t==='p'});
+  /* "Background. …", "Methods: …" — a structured abstract becomes labelled <sec>s */
+  var labelled=blocks.length>1&&blocks.every(function(b){ var f=b.runs.filter(function(r){return r.t.trim()})[0];
+    return f&&f.b&&/^[A-Z][A-Za-z ]{2,40}[.:]?\s*$/.test(f.t.trim()); });
+  JX.links=false;
+  var out='<abstract>';
+  if(labelled) blocks.forEach(function(b){
+    var runs=b.runs.slice(), i=0, lab='';
+    while(i<runs.length&&(runs[i].b||!runs[i].t.trim())){ lab+=runs[i].t; i++; }
+    var rest=runs.slice(i);
+    if(rest.length&&/^[.:]/.test(rest[0].t)){ rest[0]=Object.assign({},rest[0],{t:rest[0].t.replace(/^[.:]\s*/,'')}); }
+    out+='<sec><title>'+xe(lab.replace(/[.:]\s*$/,'').trim())+'</title><p>'+jRuns(rest).trim()+'</p></sec>'; });
+  else blocks.forEach(function(b){ out+='<p>'+jRuns(b.runs)+'</p>'; });
+  JX.links=true;
+  return out+'</abstract>';
+}
 function buildJats(figNames){
   var A=articleModel(), affs=affilList(), pv=M.preview||{}, pd=pubDateParts();
   var base=slug(), x='';
+  JX={refs:M.references.length,figs:A.figCount,tabs:A.tabCount,links:true};
   x+='<?xml version="1.0" encoding="UTF-8"?>\n';
   x+='<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.3 20210610//EN" "JATS-journalpublishing1-3.dtd">\n';
   x+='<article xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:mml="http://www.w3.org/1998/Math/MathML" '+
@@ -57,13 +128,15 @@ function buildJats(figNames){
   /* ── front ── */
   x+='<front>\n<journal-meta>';
   x+='<journal-id journal-id-type="publisher-id">'+JOURNAL.pid+'</journal-id>';
-  x+='<journal-id journal-id-type="nlm-ta">'+xe(JOURNAL.nlmta)+'</journal-id>';
+  if(JOURNAL.nlmta) x+='<journal-id journal-id-type="nlm-ta">'+xe(JOURNAL.nlmta)+'</journal-id>';
+  x+='<journal-id journal-id-type="iso-abbrev">'+xe(JOURNAL.isoAbbrev)+'</journal-id>';
   x+='<journal-title-group><journal-title>'+xe(JOURNAL.title)+'</journal-title>'+
-     '<abbrev-journal-title abbrev-type="publisher">'+xe(JOURNAL.abbrev)+'</abbrev-journal-title></journal-title-group>';
+     '<abbrev-journal-title abbrev-type="publisher">'+xe(JOURNAL.isoAbbrev)+'</abbrev-journal-title></journal-title-group>';
   x+='<issn pub-type="ppub">'+JOURNAL.issnP+'</issn><issn pub-type="epub">'+JOURNAL.issnE+'</issn>';
   x+='<publisher><publisher-name>'+xe(JOURNAL.publisher)+'</publisher-name><publisher-loc>'+xe(JOURNAL.loc)+'</publisher-loc></publisher>';
   x+='</journal-meta>\n<article-meta>';
-  if((M.publicationInfo||{}).doi) x+='<article-id pub-id-type="doi">'+xe(M.publicationInfo.doi)+'</article-id>';
+  x+='<article-id pub-id-type="publisher-id">'+xe(base)+'</article-id>';
+  if((M.publicationInfo||{}).doi) x+='<article-id pub-id-type="doi">'+xe(M.publicationInfo.doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i,''))+'</article-id>';
   x+='<article-categories><subj-group subj-group-type="heading"><subject>'+xe(cfg()?cfg().name.replace(/\b\w+/g,function(w){return w[0]+w.slice(1).toLowerCase()}):'Article')+'</subject></subj-group>';
   if(M.specialty) x+='<subj-group subj-group-type="specialty"><subject>'+xe(M.specialty)+'</subject></subj-group>';
   x+='</article-categories>';
@@ -94,21 +167,21 @@ function buildJats(figNames){
     xe([corr.firstName,corr.middleInitial,corr.lastName].filter(Boolean).join(' '))+
     (corr.email?'. <email>'+xe(corr.email)+'</email>':'')+'</corresp></author-notes>';
   x+='<pub-date publication-format="electronic" date-type="pub">'+
-     (pd.d?'<day>'+pd.d+'</day>':'')+(pd.m?'<month>'+pd.m+'</month>':'')+'<year>'+pd.y+'</year></pub-date>';
+     (pd.d?'<day>'+('0'+pd.d).slice(-2)+'</day>':'')+(pd.m?'<month>'+('0'+pd.m).slice(-2)+'</month>':'')+'<year>'+pd.y+'</year></pub-date>';
+  x+='<pub-date publication-format="electronic" date-type="collection"><year>'+(parseInt(pv.year,10)||pd.y)+'</year></pub-date>';
   if(pv.vol) x+='<volume>'+xe(pv.vol)+'</volume>';
   if(pv.iss) x+='<issue>'+xe(pv.iss)+'</issue>';
   if(pv.fpage) x+='<fpage>'+xe(pv.fpage)+'</fpage>'+(pv.lpage?'<lpage>'+xe(pv.lpage)+'</lpage>':'');
   else if(pv.elocation) x+='<elocation-id>'+xe(pv.elocation)+'</elocation-id>';
+  var hist=jDate(pv.received,'received')+jDate(pv.accepted,'accepted');
+  if(hist) x+='<history>'+hist+'</history>';
   x+='<permissions><copyright-statement>&#169; '+pd.y+' '+xe(M.authors.map(function(a){return a.lastName}).filter(Boolean).join(', ')||'The Authors')+'</copyright-statement>'+
      '<copyright-year>'+pd.y+'</copyright-year><copyright-holder>The Authors</copyright-holder>'+
      '<license license-type="open-access" xlink:href="https://creativecommons.org/licenses/by/4.0/">'+
      '<license-p>This is an open access article distributed under the terms of the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/), which permits unrestricted use, distribution and reproduction in any medium, provided the original work is properly cited.</license-p>'+
      '</license></permissions>';
-  if(cfg()&&cfg().abstractType!=='none'&&(M.abstractContents.text||'').trim()){
-    x+='<abstract>';
-    parseBlocks(M.abstractContents.text).forEach(function(b){ if(b.t==='p') x+='<p>'+jRuns(b.runs)+'</p>'; });
-    x+='</abstract>';
-  }
+  x+='<self-uri content-type="pdf" xlink:href="'+xe(base)+'.pdf"/>';
+  if(cfg()&&cfg().abstractType!=='none'&&(M.abstractContents.text||'').trim()) x+=jAbstract(M.abstractContents.text);
   var kws=(M.sections['Keywords']||'').replace(/\.$/,'').split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean);
   if(kws.length) x+='<kwd-group kwd-group-type="author">'+kws.map(function(k){return '<kwd>'+xe(k)+'</kwd>'}).join('')+'</kwd-group>';
   var F=M.fundingDetails;
@@ -128,7 +201,7 @@ function buildJats(figNames){
     if(s.name==='Acknowledgments') return;
     sn++;
     var st=SEC_TYPE[s.name];
-    x+='<sec id="sec'+sn+'"'+(st?' sec-type="'+st+'"':'')+'><title>'+xe(s.name)+'</title>';
+    x+='<sec id="sec'+sn+'"'+(st?' sec-type="'+st+'"':'')+'><title>'+xe(secTitle(s.name))+'</title>';
     /* a subheading opens a nested <sec>; everything after it belongs inside, because
        JATS does not allow a <p> to follow a nested <sec> in the same parent */
     var sub=0, open=false;
@@ -140,14 +213,16 @@ function buildJats(figNames){
         b.items.map(function(it){return '<list-item><p>'+jRuns(it)+'</p></list-item>'}).join('')+'</list>';
       else if(b.t==='fig') x+='<fig id="fig'+b.n+'" position="float"><label>Figure '+b.n+'</label>'+
         '<caption><title>'+xe(b.title)+'</title>'+(b.legend?'<p>'+xe(b.legend)+'</p>':'')+'</caption>'+
-        '<graphic xlink:href="'+xe(figNames[b.n]||(base+'-fig'+b.n+'.png'))+'"/></fig>';
+        (b.src?'<graphic xlink:href="'+xe(figNames[b.n]||(base+'-fig'+b.n+'.png'))+'"/>':'')+'</fig>';
       else if(b.t==='table'){
         x+='<table-wrap id="tbl'+b.n+'" position="float"><label>Table '+b.n+'</label>'+
            '<caption><title>'+xe(b.title)+'</title></caption><table frame="hsides" rules="groups">';
         var head=b.rows.length&&b.rows[0].every(function(c){return c.head})?b.rows[0]:null;
-        if(head) x+='<thead><tr>'+head.map(function(c){return '<th>'+xe(c.text)+'</th>'}).join('')+'</tr></thead>';
+        var cell=function(c,tg){ return '<'+tg+(c.span>1?' colspan="'+c.span+'"':'')+(c.rspan>1?' rowspan="'+c.rspan+'"':'')+'>'+
+          (c.runs?jRuns(c.runs).trim():xe(c.text))+'</'+tg+'>'; };
+        if(head) x+='<thead><tr>'+head.map(function(c){return cell(c,'th')}).join('')+'</tr></thead>';
         x+='<tbody>'+b.rows.slice(head?1:0).map(function(r){
-          return '<tr>'+r.map(function(c){return '<td>'+xe(c.text)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table>'+
+          return '<tr>'+r.map(function(c){return cell(c,'td')}).join('')+'</tr>'}).join('')+'</tbody></table>'+
            (b.legend?'<table-wrap-foot><fn><p>'+xe(b.legend)+'</p></fn></table-wrap-foot>':'')+'</table-wrap>';
       }
       else if(b.t==='pre') x+='<boxed-text id="box'+b.n+'"><caption><title>'+xe(b.title)+'</title></caption><preformat>'+xe(b.text)+'</preformat></boxed-text>';
@@ -157,11 +232,11 @@ function buildJats(figNames){
   });
   x+='\n</body>\n<back>\n';
   var ack=A.secs.filter(function(s){return s.name==='Acknowledgments'})[0];
-  if(ack&&ack.blocks.length) x+='<ack><title>Acknowledgments</title>'+
+  if(ack&&ack.blocks.length) x+='<ack><title>'+xe(secTitle('Acknowledgments'))+'</title>'+
     ack.blocks.map(function(b){return b.t==='p'?'<p>'+jRuns(b.runs)+'</p>':''}).join('')+'</ack>';
   var E=M.ethics, C=M.conflictDisclosure, fns=[];
   fns.push('<fn fn-type="COI-statement"><p>'+xe(C.hasConflict?(C.conflictDetails||'The authors declare conflicts of interest.'):'The authors declare no conflict of interest.')+'</p></fn>');
-  var ethTxt=declRows().filter(function(r){return r[0]==='Ethics approval'})[0];
+  var ethTxt=declRows().filter(function(r){return r[0]==='Ethical compliance'})[0];
   if(ethTxt) fns.push('<fn fn-type="other"><label>Ethics approval</label><p>'+xe(ethTxt[1])+'</p></fn>');
   var contrib=declRows().filter(function(r){return r[0]==='Author contributions'})[0];
   if(contrib) fns.push('<fn fn-type="con"><label>Author contributions</label><p>'+xe(contrib[1])+'</p></fn>');
@@ -170,7 +245,51 @@ function buildJats(figNames){
   x+='\n</back>\n</article>\n';
   return x;
 }
-async function exportJats(){
+/* PMC readiness — what the Style Checker and the PMC technical evaluation look at */
+function pmcChecks(){
+  var out=[], pv=M.preview||{}, A=articleModel();
+  function c(ok,txt,lvl){ out.push({ok:!!ok,txt:txt,lvl:lvl||'err'}); }
+  c(M.title,'Article title');
+  c(M.authors.length,'At least one author');
+  c(M.authors.length&&M.authors.every(function(a){return a.orcidId}),'ORCID iD for every author','warn');
+  c(M.authors.some(function(a){return a.isCorresponding&&a.email}),'Corresponding author with e-mail','warn');
+  c(affilList().length,'Author affiliations');
+  c((M.publicationInfo||{}).doi,'DOI (Crossref, 10.52340/…)');
+  c(pv.date,'Publication date (day, month, year)');
+  c(pv.vol&&pv.iss,'Volume and issue');
+  c(pv.fpage||pv.elocation,'First page or e-location ID');
+  c(pv.received&&pv.accepted,'Received and accepted dates','warn');
+  c(!(cfg()&&cfg().abstractType!=='none')||stripTags(M.abstractContents.text||''),'Abstract');
+  c((M.sections['Keywords']||'').trim(),'Keywords','warn');
+  c(M.references.length,'Reference list');
+  var noImg=0; A.secs.forEach(function(s){ s.blocks.forEach(function(b){ if(b.t==='fig'&&!b.src) noImg++; }); });
+  c(!noImg,noImg?noImg+' figure(s) without an image':'Every figure has its image');
+  c(xmlOk(buildJats({})),'XML is well-formed');
+  return out;
+}
+function exportJats(){
+  var checks=pmcChecks(), bad=checks.filter(function(c){return !c.ok&&c.lvl==='err'}).length;
+  $('#modalRoot').innerHTML='<div class="modal"><div class="sheet" style="max-width:600px">'+
+    '<div class="mh"><div><h3>JATS XML package for PMC / OJS</h3><p>Article XML + PDF + figures, named the way PubMed Central expects.</p></div><button class="x" data-c>&times;</button></div>'+
+    '<div class="mb">'+
+      '<div><label class="lbl">Final article PDF (recommended)</label>'+
+        '<input type="file" id="jPdf" accept="application/pdf,.pdf" style="font-size:12px">'+
+        '<p class="note" style="margin-top:4px">PMC needs the PDF with the same base name as the XML — it is renamed to <b style="font-family:var(--mono)">'+esc(slug())+'.pdf</b> automatically. Print the PDF from the proof first (PDF button).</p></div>'+
+      '<div class="box"><b style="font-size:12px">Pre-flight check</b><ul style="list-style:none;margin:6px 0 0;padding:0;font-size:12px;line-height:1.8">'+
+        checks.map(function(c){ return '<li style="color:'+(c.ok?'#15803d':(c.lvl==='err'?'#b91c1c':'#b45309'))+'">'+(c.ok?'✓':(c.lvl==='err'?'✗':'!'))+' '+esc(c.txt)+'</li>'; }).join('')+
+      '</ul>'+(bad?'<p class="note" style="margin-top:6px;color:#b91c1c">Items marked ✗ will be rejected by PMC. You can still download the package to look at it.</p>':'')+'</div>'+
+    '</div>'+
+    '<div class="mf"><button class="btn" data-c>Cancel</button><button class="btn t" id="jGo">Download package (.zip)</button></div>'+
+  '</div></div>';
+  $$('#modalRoot [data-c]').forEach(function(b){ b.onclick=function(){ $('#modalRoot').innerHTML=''; }; });
+  $('#jGo').onclick=async function(){
+    var f=$('#jPdf').files[0], pdf=null;
+    if(f) pdf=new Uint8Array(await f.arrayBuffer());
+    $('#modalRoot').innerHTML='';
+    buildJatsPackage(pdf);
+  };
+}
+async function buildJatsPackage(pdfBytes){
   notify('Building the JATS package...','info');
   var A=articleModel(), base=slug(), names={}, files=[];
   for(var i=0;i<A.secs.length;i++){
@@ -185,6 +304,7 @@ async function exportJats(){
   }
   var xml=buildJats(names);
   files.unshift({name:base+'.xml',data:xml});
+  if(pdfBytes) files.splice(1,0,{name:base+'.pdf',data:pdfBytes});
   files.push({name:'README.txt',data:
     'GBMN JATS deposit package\n'+
     '=========================\n\n'+
@@ -192,10 +312,14 @@ async function exportJats(){
     'Tag set       : NISO JATS (Z39.96) Journal Publishing DTD v1.3 20210610\n'+
     'Article type  : '+(JATS_TYPE[M.articleType]||'other')+'\n'+
     'Figures       : '+A.figCount+'   Tables: '+A.tabCount+'   References: '+M.references.length+'\n\n'+
+    'PDF           : '+(pdfBytes?base+'.pdf (included)':'NOT included - add '+base+'.pdf before depositing')+'\n\n'+
+    'OJS\n'+
+    '  Production > Galleys: upload '+base+'.pdf as galley "PDF", the HTML export as\n'+
+    '  galley "HTML" (figures are embedded), and '+base+'.xml as galley "JATS XML".\n\n'+
     'PubMed Central\n'+
-    '  Deposit the whole package by SFTP. Add the article PDF with the SAME base\n'+
-    '  name ('+base+'.pdf) before sending - PMC requires the XML and PDF base names\n'+
-    '  to match, and figure file names to match the graphic/@xlink:href values above.\n'+
+    '  Deposit the whole package by FTP once PMC has accepted the journal. The XML and\n'+
+    '  PDF base names must match, and figure file names must match the\n'+
+    '  graphic/@xlink:href values in the XML.\n'+
     '  Replace the PNG figures with the original high-resolution TIFF or EPS files\n'+
     '  and update the href extensions accordingly.\n'+
     '  Check the file with the PMC Style Checker before sending.\n\n'+

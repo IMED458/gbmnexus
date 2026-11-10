@@ -210,6 +210,16 @@ p{margin:0}
 .scroller.webmode{width:100%;transform:none !important;padding:0;display:block}
 #webFrame{display:block;width:100%;height:calc(100vh - 42px);border:0;background:#fff}
 @media screen and (max-width:1040px){#webFrame{height:150vh}}
+.actbox{display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:12px}
+.actbox .btn{font-size:11px;padding:7px 9px}
+.imp-sum{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.imp-sum div{border:1px solid var(--s200);border-radius:8px;padding:8px 10px;background:var(--s50)}
+.imp-sum b{display:block;font-size:17px;color:var(--teal-d)}
+.imp-sum span{font-size:10.5px;color:var(--s500);text-transform:uppercase;letter-spacing:.05em}
+.imp-warn{font-size:11.5px;line-height:1.6;color:var(--amber700);padding-left:18px;margin:0}
+.imp-t{font-size:13px;font-weight:600;color:var(--s800);line-height:1.4}
+.drop{border:2px dashed var(--s300);border-radius:10px;padding:26px;text-align:center;color:var(--s500);font-size:12.5px;cursor:pointer}
+.drop.on{border-color:var(--teal);background:var(--teal-50);color:var(--teal-d)}
 .rolebox{border:1px solid var(--s200);border-radius:10px;padding:10px;margin-bottom:12px;background:var(--s50)}
 .rolebox label{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--s400);font-weight:700;margin-bottom:4px}
 .rolebox select{width:100%;border:1px solid var(--s300);border-radius:6px;padding:5px 7px;font-size:11.5px;background:#fff}
@@ -240,6 +250,8 @@ p{margin:0}
 .pauth{font-size:12pt;color:#686868;text-align:center;line-height:1.35;margin:6.4mm 0 0}
 .pauth sup{font-size:8pt;font-weight:700;color:#006F68;vertical-align:super}
 .pauth a{color:#006F68;text-decoration:none}
+.pauth .au{white-space:nowrap}
+.pauth a.orcid img{width:9.5pt;height:9.5pt;vertical-align:-1.2pt;margin-left:2.5pt;display:inline-block}
 .pabs-h{font-size:11pt;font-weight:700;color:#B9353A;letter-spacing:.01em;margin:5.3mm 0 .9mm}
 .pabs{font-size:10pt;line-height:1.22;text-align:justify;hyphens:auto}
 .pabs p{margin:0}
@@ -325,6 +337,11 @@ p{margin:0}
       <img id="brandLogo" alt="GBMN">
       <div><b>Georgian Biomedical and Medical Nexus</b><span>Manuscript submission</span></div>
     </div>
+    <div class="actbox">
+      <button type="button" class="btn t" id="btnImport">Import Word / PDF</button>
+      <button type="button" class="btn rd" id="btnNew">New article</button>
+      <input type="file" id="importFile" accept=".docx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+    </div>
     <div class="rolebox">
       <label for="roleSel">Signed in as</label>
       <select id="roleSel">
@@ -390,6 +407,8 @@ p{margin:0}
 "use strict";
 var LOGO = "data:image/webp;base64,UklGRuAmAABXRUJQVlA4INQmAACwkACdASowAocAPj0ci0QiIaESaTYwIAPEpu4W0Q090f67trvoen/Lf2wrf/lfxVxOvGeS7zb/yfXD/xf2A94H6l9gL9Nv1z9cb15f2P7ZvgB+zv7fe7X/vv1d9zf9W/zP7H/6r5AP5n/uv//7V/qefuV7AH88/1P//9dv2T/63/0PS1////29wD//+230r/Tn+wfkB4Df2j+tftP+3/sD+MfL/2P+zfsH/Xf/X74P8L43/OP6v/g+g/8S+tH3H+0/sx/e/2q+V/874M/J3+3/Iz8gPsF/GP49/cv7n+yf9s/b/j0Ni8wX2V+i/4f/E/tz/kP3A9jT+29FvsJ/k/zS+gH+S/zr/J/2z9v/8j///fE8Ez0f9jPgC/l39s/3/+H/dT/efS5/J/9T/S/vD/3Pbv+b/4P/pf5n8i/sJ/k39W/1n+J/dj/Mf///2+Qb0a/23N6ZGIaZGIaZGIaZGIaZGIaZGIaZGHiImy5+/BcQOo+tjH+gtUTKTrPYh8mU0a3qWhKI5xt4gRKok2u6LdwOOS8oQnPxlZxDD0awsP726HLKnkVYq6VYq3IIXETRw3EIMCHL7Wfy8SarXw5nHIzxGmM7I6XiMfB1X283VLnRx63r8E7MgyApAcV+g5/WFDMQ+kTbkbAZ6eu1OCUNAmHIhG4ljy23BPZ+EyeWlD2H5/pSAoSeU4PbkPzOLMbm0O2HsRLuJVF4rqPsdEjCHwbquqUzITqUursP7GWquXNiQJSDpGk3b1vheBY2q9QKxRC2Fc7ATwINOKHlzJGbedaJpelksi7SjxjxIPvvP/NBoJbYTeZz31+YVSyrdV7UBSq6VFg9/P7Pz/L6YQJfKY86yvREMYBmVtkEKP5YbPE1YJcJUkYmKspwNi8t0biCEZL53pb2ujIMnJkaFfdqvDSCdRIr8ZbYS0ypCgNq92af0HM08hx53o9tGxjgXb9BO16ZnzmWaAcNrPuugXgTuABGM81cyLEw7bbbW/hJ/ro86nYLJTYvgG4IIBA59hw6H4LMzBuqe2eau6ILgjNgG8reawbyG2CdMjY3hQvCuhCOXY3LvUMYFAo4WaVH8WGM0xstuH/B48+d5ry6+FT/UYl60lFEt00YrqJs7ZwI5tcH/oLOqR+IA+uRNBqNTaAZD3rVrww1lEJ0sLq3o7NuLvSQ3X+gHdMzpV6+/PTIOh+3QZQvlN1YPISIyri/dS1fQ/iMZAZfQ0paMv87YOPqUDVSTgWoEbVZ7wsrdHV27pSzFMaByLdyg09+vWZQrlnARmkUGAMO86c9AmblCoPvyzehgTy2P11DQmDnlp1HzjyW5ACNEgOn9y7KGABOBILtPgxmfb5c/Xg2mj5X9TpTLy2IpPgLjTcQJMTIFsh3+8JXnZ1Tf+N+j1fFGTCdBgnlRnUK54zGgaWi9zQBD2Z+/9xGUzpDmNLR7nvMggMupvQhynrqRYyWgByhEghe5Py1DrYKJWjxuop48TCALslbZkYhjD1gp3e876Vhh7ItttY7zWYfFXxOUwbuacSwoha5ddij6hAHvwrfirpVirpToAD+/4ZWAAAAABa1U8mb1gH325R9WszhvdbvtXpQiN7Ls5rNEbQ/YHgQ6MTfl/+mu8bhPbJHqS7umYpNqrKqeBJMvrsEHvJFA0eXaAIkk192G67Va2PHByjotecf/bzx62CLzVb+Sar7t1qaSTvJYIyGGYeHGtti1LdwYykbqpDJTgr1XEb3ssHlSOXohMC2VxuuDcPzQ1eLRUGdv6GlECkP9eHfR//AOvInd9lKyBaSQLiXIdN0+bg2zpvYjnsX/5bgWLAdmC0RwxpY6LYKl7NCRIfI2wHbC7Rovo39zRgLb5Xi5Ub+K8bv9MkFu/bdNQRsvx0/Z1cKc0N65AgCU/mJiCvgo/b7eKzf/Bp4WGgf/JaxxooilUYdMy553jv5jIFWKcro/TfYdjwVySnmBM5yf8lfCZk1MdOrexyxjIpHjhP5RK51HMVPPwvujpO1fTVQ7thapnATS5/trk4pMyL7+Phelq4akt2j8Ro7K1XMXrJCLrBDkKUcn5AGnadk+7bMqFg4j4rUSsr/g+GcY9AMcIgzGQdiko16aYB9l0683iyI3aQIka4eg/eYUKLt4M1poBhZybTgwcTY7mCQPHS9iEVXCk0m1JMKUDwBmIJC4IBLshUxvEC0BD/7mg16fsw+Hyb1Q69//K+1z9EyU4HEo2jJlrXm481QAXngftfAdZwR5c7Kog/igsjpXlxGxzyzyAHmcpP2TQZ3lrweYu8FsmmELBmgTuc52iSyL/fEHLF7LdnDiGAK/kpQkcjZtaUxPug/nckI87MuKxVKwwhLdbw/5a0NbkuKpF5I2LQjXSVTnuB4uwBkZPFNLyG0hVYCeTc1xupdlWwuWB1WuGW68xNS0cb5Nrqvo1E8Kj/diifXdDHTrWcwHFZNmWoG6l9pk2njxuo/R0WOTSZ3RyUnpHkjIHqMfGjfezqJAtUp5CyK8V/CgB//6G0Ak+PxvCO/0y1PfRjfgbMGkEj9he26Rj4DJFq9ef/sjCUjC3P3ow+sasBzKNuuNHbTjetFCt+wu17O+GjT2x7rbC3PQ4O/hEc2F563PrvX2+XqdJRe25KtXkno20qwJAErcCTYF4IEARF+0P08XIGBv9OHhRxJa7C6xCMuwd/JKqP12i4e3G/gx6GcmDqQ4Rfz5lDS3/Db2JOyn9mIgT/j5kcuKG8R/lEOAbrERSrbc1tufN8cCwLqu8EchgsfRo0+FbL/N8BQihfvkswRMpsp/00DxWBu3PUUy2xYV+8yf2fNAMwOchoFMJDmCvz9NLVjz6Sr9+JYaCY7sQ8CfEanw7X4P5G1PaIY0JVI7ZwSIDq1C7LkNmXg/SV2lcXQ9cGiddsR1152pp1mJNBd+OcclOFz/oKuA2gjb33guwcT2HoJnj3i4kqWLI/bhMFhRkNCozp2YvXC9/jpD/90nl952+9h+V06PdoTn0Q5QG+EPUqSJM7tEEk1DfZhdlxORasqsJ71US4ZwEbSnd1Z4hFpYTOsawdG+To2WrNIipKejWCp8Vp6B4ekPLjNtaXTTko92fxaDvm7b3xDnp6ZpKEjTTGPYmvMucTF6dKQnp078eql0qRyKAD95j0mHPaOolBJvRxT+oGzYUeuHcwGJktd7cACY/fPThXsuQ26l18MrRjneIeTjjoXOurDeESJ4tkJJQBx8gfRblcjGiqxzvHZK3h9UdylNaX0F0CZw5vVSUg+KtQ4q/h7mug/yN/tizWEqJz3Y+RnSSbd+kAE/TN/YNmBDeBduu4eeiuTCvk6T6xxRvsgrM0q0gRSZMWFxQnGpuIrariAwrwhgUTXQqjdGeMRfhq1T0R3wNnzDpYkZWgMtqrN93w3d8V+0YHGAjo2EPgN7xpdKeruqE0RMAQofme/0lG1qcechuJc5jokhi9yYp3Lrj4NrUoHyTeJMTOfnoFgn9ATQGzV1i9p7aaDgDWxUAt0BFTqkfvo2HM78gMv+0sgEyKmxPlhF3LtrJbTmUQ8bhegiATZgaRsDPtO5pREpieJBxnUGFrvh4Iy5nMA41IHIc8cN0RxjbjKoH5hGdQgWS/JvRR1uz4xSs4l7c8gRnAnnFW7pLrGuU5Jd91OcvVm+5Sf9wUCGrEMFDXWi10JeU82U7EoJPw28OFi/zAKJf1KZ4MMVd3IlajQvErtFlpn/YvUUPNeWlZLUiLx5+EbcAOHanmZ6dXzS2L15ZkE5ivbIAemKwmake478c1iJ1RzFPf1ILiyvPTP7Wgq6BlzBllrCooKEEVPR+BvMRtE2ZV5wGnL7RVOwJ9JUHFzU2lH3icsustcgsMuHgft743wJwtVyZOUeaKspsfjQINgT/7V2dD2u45ThXeX9rdtWVrbOwncSbXHWplNc3/HDZhQhIKADuPxOvXqEHgmDbyQq9HSJoCq87+VoZKCjTc84u5FpA/aHzS8/5qU/4LadEvrHhY37EHfW0VB75UQr0pYjpcJlh8SLMNinCw+yXZzeilf7pBUfzvlXuYUNpPVmUwjxwYPc0RKPiQ+Msh4nPSRopytw5296wQqHew4cAalsJGYgcDG9P8iOhWvUobGvK197s5h5IWDHGGX7NEP8NBTgLCkofBSifHAmFWrpNAhvCsGUJKue3LLH1Yia0/FTu7AIv8oMxygfebASgv4Sf4tcYMBHmUd4vrxiqgtspPvwlIAotPhmyuke1t5laR9ULQ+EdAY3spT3DFflbo7hAAmtFm1aD+nu480siskoQk60lbwNWcuO9d3phMwKihiqBPU7bg8xEMYSdutyUlCzOe+U67xqjEUWUKfLnUi59HRnGaNyJOnxhdFRv/3J0P17iqQG93NG0oF6Lj6VFGNyOEkKUHgfbwNIaLN8iTBlDfgyTBjJAhcea92m+J/lcewNB/39/AhZNq7LjGTGyPD9yRpa0GQDBRdN7FrbizL/v8h+Sesv3rm1j2ZZvCoSgbvSbgzHJnqeragegt82hOl8g2UX2uhjkaLbV3iJDHHJ7qWBZrYZFcYYMxyRXhLl/YouUp1VNYFmzu65AQLLcLIZaYIPPw+iamlxeBKS15ZeOr3FUVssv9FEQ3srHL5UkvIZv4byHKIqRNVvZMAJy0LKl91DQwyIg3aMG4OYmExgeCRRha85z17ly3yrhdJMI5c2XsicyGo070XY5HPKHC2+V00yijuTigPlFGrOhPGNkUIliW77F8DsGVg/4AjB1sw2LXJjf491DYWNYXV3cWJ0cW3U+mo7iIsH/k/eLat9XLUYbCCiV0v53S47yb6dqiZcg0F4TKCs5eoHHERb68fY0wGzy/BQxLcyQyNpJ5LbwNMcXntH/vkZq9SLKrD9NW2m/8vcH/EG0RHTwuM2sja9Uirt2AaxTHnKvRar9W6pyFL5sBOvRzfHHQ+wAF20HXXdTZLUMPIK606npOjYJArCKnEA8qInMng+9JZ69qbB//5a7ahU5QdnAdTDqqhNamVK7cKMZ1RoDKmgfqAhclZmpRITHcR1s5lvW0xyk00mbf3jWGcflPn/EjNAoCGCY8Lq5hout/gvheuxsVGqjmJZw5vP+Yz+2EGUkbb+jVd3Nspk1Lb88nHAETu30z15nKEWKvFXasG4EK+PwKHwNTX/8NDBKjlNiIDw8m3w+JR6J0la/lM/oe3ggO4e3Ip4xbTRveL2f7pVESetvuyAxrV3lubvr1odi8j+Sgqrt5yFZhsMnl3LNxBfAoDyaCOd4XeAQwSvZ/ngZSXGPrt9os0gRROPOxKmCb3WepKrdwF+13q0/XprjO5hGOd4Wx/RU/0GfI7wLd+Su5cuAjpfhf+A5MRR1FPODJaIzXsCxtEeP8b6hlK75JO+B+G0XLJi7rKBNMKbtUos29/e+MFK/YWh2aBCbSfQrSXV9/CdpWr7u7Jmb5tC4T0aUQZ/gmD5BFU60sjzRavrQ7JWByPG36+wwmjk7ekrqxa8rCQEfCAje60Qkz9R9Z3AZI35IaCEGhF6g1GgRUvap+oK7oq0nlg9OAFHOQWM0HUh8b0cyKOC2rQ0RHtzoWhreqW5TNkZtScHpNGIfgPgZu5YTR1/KvebTd+6jEzibkfyq4VY9PfxcRbXEp+EG11wll3A2ClAaLjEa2c4RxcmUVPMBcdDD43yl5+GEDRcJ030MHjhETzaDXXUBNVXbBxKTlzAB+xGZqh08mNigre/InJ9VpJdWeEcbXwG3lmYVYf6LkSClbrsAo9aBblvdQndtxis0gd/kFWSJRT0qOQLIp6aL+B88Un3BeVYBU1vltj8WrEv1GbQxNx/OlXvWBKW1+darNt52jshtx34P9m+6UFbu9RONWkyglRxgHBxxIXHjR3HLANASSa1fwYKYJKkSNr8O3wNi3YGf+xwd8jz6YSGeTFhUMN88fn4NAbS7a0utqQsmhwzcD8NsqHbetwBRrd0I7vA3hQX9Si/t4akFLUloelIvCIy9kfKIoMB8BypS1flYOX22ONmV1YSdOnv2ItoSKY5U7Gp8/nmhQY3j+FBe3p9daQPltKd8+ASpYUwgXmGn3Sppdq77nKYW8zNkudUcxU845BTlDcZIl/mdCoB8XQuPEsOzPx4OTobhpfTHxFoQl1mwL8z6ENmpD8hbyNr4cXc7z0f65r/mVDK/2kjB0wYJxpxNzR6pxLsGGdc3kB8IJaRlWDdZJr21VkEJRaPjgtMG95bZFJTZ3W1disjjrJ+uzYpPfTI262OUFYmkb9iVfXmfYnre0G6HHL09t/wRDt7pL0xm+3PhpLLNgdpNcoqaQyYe83yhvK2aJlkMxBd6pHigmHPanUstpV5js7M+ckJdDN3HuZ+tgVZtukQ7oiOwV9/Gst2Orfq5gC3f5Gbd7v1fZMgtxJz7AIw974HsnuVrKRLkKAzH9texiH0Typ17P0S0k0/1Jhi3ME0cHTahDZU33R+zr4ElfmxmR09oUjuTkSuVb+ou9Obv/FLAfpG2iAeJTBnHS+IXld2Tg/dkFx3iehsiqvhHrPN/FbCcejuguk+FG1ZSyTNtIdmbJEHp/DqMFKEOuhKaodZeXL18h9HZXs8gJ5Wv/yi8yrrMkxIvcwuGt799LBjs1SNFvJQtOkRy1G+jUevQKM1nRwBkuNZU1JqbvXXIY5bCo0sP1/nfywLYWbnI6IPYZGgCC4au6Xqg0fFR+YrRUGQ6PYUBZ6CQB1eYxa8SeDocQlJrYtsUu2Z47R/Ms15d4YkMUu66Sizx4gmQNAzhr9v0I8I/JLfNbOAmtv0U+6mp7P1z6xmD8gOW5sQPJMqXKeV629LlSKYgPpcgkbGKaw3Ovt52zW4qqL/Fwhcjpxa1YlkbwtbG/gf4PVMs6P7ob1BBlFnhCkIolI/FM4sTR/OxBuIsnptiSx/vwBsQupA5791iVwSo+G4s4PlBJ0x4ZFW/4MIn5cILS5kNT2t3dfZFSzgYLM35uKDU3po0qzXySgRPK9DnR1kwKAUtFDUIa8MOtlT1tyk0awIJljdvq4W+EkLgiR5jcqRMInea1O31qy35j1zaqWUUyugDNEJSiHuYS6hw50+xVRMaUfiQQZuJob0JJ99hTwUvgQKDjoWC6EYEuauP8V9yJTrRrTb3w0QsR4UL3YF7f/1tZ7yi044x0pP9fAvkpG90JHVATTZ5tUhWlw2/v8RU8eXr27Wbz7aLER/AfvytZZ7g7VTR0JW83nz0w5f39DCcbFEWCmqQVOx/tyqbrMkIH/F4DacURompMTZlZI2j0tD9e4lMjCvo6KLytqAczA/GqTg5AOg5hn/Vlaom0rYUjy3bO5xXc4Ffv9h05tjrtoyTiXaSBpB1+Iz1Qq+lWTWZJcXpVK4Q6CRyNSl/hMAZGNIGNmapOPu1KVnpfeG4kRsJH49MVCDKzPvcOFIKQPMpY9ah+DEGCGaKG9huDaJ5Rdau/nwFHIrzMNNZ1pD8/nF0h8i1oza/YWBhBvSg8yTeWRraDOeqgQ19QXpOtKHJpZqI+eG+QUS7WMxVAv4V/eD61O91OrYUVzRCmlUcyLtuVcmqsifvKaUce/gPB84nbct9qw0ogPPnR3wgL5+d7hG4tImL6FgXnqkb7Pz4tm91XOvhFcW4GElFqsByE5+Qt+NA6b2OdkZLjySuhycJqE09GSULe5SDsyqPY8E4DiK45Rf0hZICtbGCGmisCONVOFpA4XNh8O8iVmnf/hv/vKkYZ3zjcXNlHBx0FPGa2cG+T9hoNWzi5J9aD5bf+8qAdylyzGICF5uBOzr+pgWFrXxfpSwkuuSI1mXnnubgAdVWoBChWmFiR1ht3CRr0P7bcEXDvmMgiTBCRw4S8Pg0rHdmNiO/5lUj/m6kqdXcjpVqAnRsOq1ZI/rkyvA6cZf31ZJjNpLAcsbMQ0C+Xiaqw8MTJOId964FhdlD+tAMsXpgQUtyiPzitayu3qlEEPwYGi85tqFd3pPnvUHVtMT8SOHB4ckXiBQRlQK9jNkWEaj/cP2CZyJkHwxBW6zn3WhFl560Zlwt4a+Ctd/0r0WFv1zJRrFVhciH4mgAzPrEzn2hhrBdJ000mKwXbvV1JmYDWDbUDmd/SX/dxonAeR7RudqFx3Zz1/1GKITLWQmpGFGF2/zhi4DOKE05O+nGu2FgNVyFwqoG5HKJdsRNzlzGu5jPec71FW2xK/IJPVC1ThCrpIrNuOBF/4x9rDO0f25i5xnrTZhdOi0ml0LU4E4p1BQDviYRhFUGMuJeh/Je/t16j8J5jQLLRj4yH2TKPYJnuOQTrd5+Uco3yG+S7YaQiDwbGfmbIOR59btV/uxfBYxHY41YiohQMye1P2LEvaDZLZCqWtsUVMgfoQjeB8+GAD5q/BmO3YlpVF6hT6+2trxuvdGM1Dr+OSvKs75Yk8W5H5RVqteugtWHObSmsCAitg7jwVfb9fpku01NXdLglypFk7HBdO3B01tQnuAV4YBscT/q6yXOClhZFWU+mhLlhf7mp2mgMZYELhQGzABay0sepltNJPR7W7Dnrhhzub/T2rQMX4RqFDIO0amy42Eu3XR1I+fjpqPM4A0mIe/CDbX6kzCbBPoStZvl9+BVsApJ4Cs7kPsfs8tdCSaHybfb8czuTaZPeATDX7srCF2onuCeckWx/gpG5b/q16iNRIEAvJvcceYSn8/ApgnQMlq69ae656VEE3N38nawPGBEwlBTYKxxE002Ya65oo9Nioz4YpaZCymXLHinm5FmgPh5kXH8BojC/bmuf2H5jfOS3e2EiB61AZohqIrvTnYyiSFnHZDSolSEp+1GtwOEx206mu6IaXbuP4hBLjmL1XVwZ7Lf4af79xrC6/XuBp1KiGja4BjjO/ZKdaVmFrG5Jf9SWNm3qTYP+0espYFEcI50xzlVvr6HW4Iav+XLEBKzC7ix1Zp9sCT0K4YYmVbfXYA+3uV4PdGyxOVAmaXnenk5TocBlaXZ7kkL/Jhvm+T7P7bL0WecHrkAzIj7Nsa2Gy/Y/opTiWcs3ykBFA/9OL9fBJ9vqKmDTjSxzbI+jk2irfL0FcBDXrqDz8vkqlnUj0CiJWC85dU05JuZq6KES35tIdH1G4HYTKSX2fHSKBeryjnou6vKPniOlLdkayg9MVOXXCqowFfUAWjidCa9jcd+BTVRSj93rABwE5ogIKPbdb2rmewbPWkFS4QYozWZWjc931CtBg2zkaTqjDZeRx9kgoVTUz7eAiAsrvNRY7iyvSRPxwEvztv7B2CH7I1//cB3IM+rXcbTYvutyU6ptkUuLvvsLE5BxpcSbuWrpySYK9u8K5wD9bLsInPxgjPhh1r6OD1FFE49ujhp0KS/NvEPSkVGmkRGnQjEoeUALAUM/8aNYqOG0QswAUGz7N+cIP6GDb3vpyNwjyMGcY7fKK+pzdCNxBicWZaN2tRQutMSvH9SF99V9JujpVMxidkRmEg91fi/IEWRSdOHtc7qopOmmWCf2gwhYk5SnNaR1sD3RshIfO0/GDuj348o/Sz0hmgBFjKiM9gTOdsWsUaJJgBP2V+M280lP/nlgDqmbFTW+hbpjTlVrOF2vhBSOUlNM3ca5Qj+rnHuUtzyyEGQK9fuz8fHUrbz+GY59TIuQdENYnCUlLsbDrBAXH3cDd4n2ZCDkrX9im9a9/6pU1G6ezu9PjwkAb3V1f3+IDSGho/RKLcHdRgyiqck7LjFv0h5vQrG19ghiidlFFvlMZlKZmEv22sg91PUARH8mx024GdSc5/qhvpztpC4T25C4D80/htK9gFOZShi8aiRlyiltXFsSgPh0XT+Q81V/FA1a9A3ProyYii0tJBxcjiKsazjzilF6vWi1tXkifLMrJRxLrW5Em3n9HFuUYUziLHp6kwel+vIOFe4iCDNzdfTUP9TnZoXxAih8O6BxwSVlOsk8AY+oBluxZhE4k8Mp2FO4pzU3fJFlHZEqhzNQnmKCFSSCROU5C1Zo1byisLqls3+yI/9UV9hIS8wpmvfGkcuej2Xe0NzcD+rkQP+a4PMPycjFAuUVP65nIEcMf+wevXTUmmB1zPxIUgD000AjDE9hHoi2KND3jN8Tr0i0SKmNSOpsDDBl+ogH1bZOhk54sp1rIx2TTYhvljiYM6uB87jnFGfAi9nFb/3o9zDxZcGxJt1Yfa5UYswWYdSkYMorrE7pvrw60eKpcGC+cFWwSO/B5xgOV+2Rn6IFK5oOyNLi+0Q1qYIoWHt11DDx4Yym1UWh2mNCMSYCRxfqhH/oEwPMmwouorZbpiVuSfLm0jTMT4TLPqex2ep/7J/5r9W+yjmYbvkffnoOkMB0dKH9W4aD0aB8TdRRu/GlP8Am16bm7P5TpH/MRK6MXL+DjFLYPzWsEP/UGdJW1g4J4odYZobcsD8WwLsHYU4WU90qGlgoo6reMqCw94TWLb5alVP8+9yGNa/nBe+YCPQSCVRs5ZX0HrfFjLMohIlzy2BWjILhsVo0bnW3G8Vvc8rb7+3b6RsqdgdnVbqPmVvuJBH1rUnwuA8vYFS5ZRYISbU1IXGzXWNY30qs4IwflJSfvba2CqYZ9R5ehvspeLlr1hOu+uoTOsedtMdzuYjkXaru+cul7f8A97NesYezWmXtNoWZNU1jJELSAmTUUDcjlgrLWwM25cc9Axl1CpDlfPNE8gWqBg663pwtsUjz1EmUkqwwVTVwZIm1DwLTG7TfN3vKCAMkS4aGdL9aOq3iKrL8ec/EZM2EriLiWAZPl6wMiA/hfmIcy8vnzgOPTv47Byjdw1DV8ayApArgqDWm81G5mi19KGUgRLGCGC2CY8WVM/y8+sA9Npt9orvpMjKzeOIiZHyFdO/BO+FQchfTpDbv+CBkZL83BoAOHaZHHNCuVpFeg35OgY4S1gribhfsBJINs8avpDyfG4CTkL+PsnvwkkhsHPRuP/XdjCzI4shtDNK2jmUyB63PO3dp1eI/LjdrJ2MPnutqgP2ZZiUT3mSPrBSQhGye+kegwUHXX5PH2PIlKiJdPRBj3H+AwWrFpn6BIfijmsf8x9ZeJdhkQ3d9QF5zmowFvTHmrf6FSWj+jct7mTBS/K+71ZXYZCKy7QiDAs37w8+R6CqF/ZTJ/CFP9mI72ipuU/OlYWw1fNgVlmI9eMPFiHoTd3QS4sLhpV/YC2Gb38TraTSGWWvnXtR3eYdzspD4T1TkKgVrAAtpqn7BaAWTq83HNLup9LhVfScjOqIq92ED3AvD4Nf2o6k0e5UgvWQlXlZN6eKEwhtiug4OrdqtHE3dcazVMSapMv490YY1JG8lOsKDKq4L6475Z4qdIsC0PJkHr0+90bdqBsxsUmfikmdhZKs5JU4Ib95WCHBub44VtVZKeDJyN0RZdJJhN/woDRwNkL/YkzHV7JTfiOPkeN+7oWT1XTdLRHzgoR4iVBHNQp0LxbYwXVkZf0yL4WxR2QtbM0mONW5puFYcB01BTYA5/Z78vToN9JTx86t+L4FRwgLvgTC1EB3KCRZVi7C0+ekHiCWZFH/4d9T/yEOtdJt7Gy7SfInIDOjB1eCxeUa64J2Tiq7kS/QUL77gPHAG+stqiqpRi9/ZgfAC6luNhmT9ua511sd6omhEVw2vKKpBpxUGjHf1yNx4pxGJuXm0lEDUN68cH+Fu5n+/8BzuJNNmunpRDnIvlZnbcMLASULWbZl122hIBUXRtgFWG1KAfL/3ASNl8TDl7P4K48f4/3cqlQfO7R4beLeb2IW1Dxgj1X1vtuRLpWBVwem+RVeTQe6zZWVMf4jVsLw/brrkuNu1tY24251DYxEoXMhpI+UEUp7axoUXwemLXUDjN+3ndSY4NBjybuYxZlY9ftvf6+eMoluWgNfy8W0M+nRsSnJH7uj2QM8CbzaJBP0LvYPeHeRECLkIxGBMNB0uhYvjNS1qo1MhicUT0ClU/+AB37KVHvQlzV4XL/zeJKtRmpncfAIYVjtXGog3nyJAtP1+2UJJbFoOxmrSopAUUD2cYSJDXpOlvEnAnifCS/gqXa3YoLTsfC+j8F4Ld2ynKCRzTRFtv2JwWIB11QkhLLsfuDlDu3DK41rfgYYfRWwA4ctxFSk0m86w36d7hpHUT5bAFYYgSUoOQk4tR9aLmro8xXff/p846B3ieE0SPc/lUlaiJ0bkoVSsiN7NIJrLkxiNgSY9h/hRp/I1rdgxNdirO52XqGVz/tpH0g4fot1VPm8yUxRCYA9TfdsJN0AUb5Q+KavgdTFdmaSkQlmKwzO/No7ncOWMM3e0o5/jNtgY222PxOzn29s47dBLnFJzptVP6zRHKtuTM4ncS62p0sIYc7uYrCrqhYtfXIndC/IVOsOAzchENyQCa50qa/6fqflOSOPWzG4DQpAcwAHu4vlktLi06mQQZ9kiTe4Bje+QpF/7PAnfxxmL/zLC7yzE5jP9qPr5OZtkUC8Pt6n9xZpMDu1MN66/+tM9USik1ArZldh/LfPvyU+ljFumUsc38EwnBBO/MWz3z95EmKsjQdjAnvKZuMFEDkkeYbw4/2WcA+B/4wJKSaTitPct6phxAdLq2vbcD9OZJGidbl4L6VvOeeHhB1re9Axt3Fesvh37Fd3k0ciB1T/PiGJ6RIYMZ+tg1ndb5bI4hUja8+vrtI+3LDoGpROAAAAAAAAAAAAWcoq0attKbOEwJLvB69ttuqaxERhSbzBDKup8K51ez6152dp7Xz5llpW3Ml64uiwJhQ2MU8THV0RaWsYcgBcXP1a5z4ZYXXSmhRG13F1fasN6LZNw7sgQyQGY4+SBGil6BTqj9Jk8cn76qfkiZ0fwpOrl/5J4jzpVCT9oYg0cMWZTXwTCFYK31AILIi+qn9ISHprWYJCAzSv6bDg5CtbL8yWEdbcjII8L21BSFamCM7vYluUt6fcX3dtxZDYMoHcWzEgvkAQbU2y0kRd7LOLMsEYqjmGXsaKV3IVnBRs97XQrDgsSfT+/eqAmfa8/H7FmPvmdjXOyQx9+sD+Gdclxe3AFkTFSbAKBIbrQQhdscn4wJdx5ozL+vYdWlwj6vZbroacxzAy5bwJpuvbPGp7KwcXOgEaIrV7rLM1mF5wH1s099p7bePYXM6xCLpBwz4aRI4RTyZ9IL2PXEI0f16OOUbTtlW4EOQ6WAciIfbWqKjERvq38rRzAwE5hdshi8JPTKz3auJDlihFuMYYmZy1jeeOoSEXN8PbDIo5lChvhQ0oql0Lj60UjbiQbdAXetFdsgU2fZPDEmyPE0j0v3pDEqRbhXyLjbuLalqwOgAAAA";
 document.getElementById('brandLogo').src = LOGO;
+/* official ORCID iD mark (green circle, white iD) */
+var ORCID_ICON = "data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path fill="#A6CE39" d="M256 128c0 70.7-57.3 128-128 128S0 198.7 0 128 57.3 0 128 0s128 57.3 128 128z"/><path fill="#FFF" d="M86.3 186.2H70.9V79.1h15.4v107.1zM108.9 79.1h41.6c39.6 0 57 28.3 57 53.6 0 27.5-21.5 53.6-56.8 53.6h-41.8V79.1zm15.4 93.3h24.5c34.9 0 42.9-26.5 42.9-39.7 0-21.5-13.7-39.7-43.7-39.7h-23.7v79.4zM88.7 56.8c0 5.5-4.5 10.1-10.1 10.1s-10.1-4.6-10.1-10.1c0-5.6 4.5-10.1 10.1-10.1s10.1 4.6 10.1 10.1z"/></svg>');
 
 var $=function(s,r){return (r||document).querySelector(s)};
 var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
@@ -479,12 +498,12 @@ function blankManuscript(){
     id:'GBMN-'+new Date().getFullYear()+'-'+Math.random().toString(36).slice(2,10).toUpperCase(),
     status:'Draft', role:'author', editLog:[], title:'', runningTitle:'', specialty:'', articleType:'original-research',
     publicationInfo:{doi:'',volumeIssue:''}, checklistAgreed:false, checklistAgreedAt:'',
-    authors:[], abstractContents:{text:''}, sections:{}, figuresAndTables:[], references:[],
+    authors:[], abstractContents:{text:''}, sections:{}, sectionTitles:{}, figuresAndTables:[], references:[],
     supplementaryFiles:[], editorFiles:[],
     ethics:{humanSubjectsApproved:'yes',irbApprovalNumber:'',irbInstitution:'',informedConsentObtained:'yes',ethicsStatementFileName:'',ethicsStatementUploadedUrl:''},
     conflictDisclosure:{hasConflict:false,conflictDetails:'',signedCoiFormName:'',signedCoiFormUrl:''},
     fundingDetails:{fundingAgency:'',grantNumber:'',explanation:''},
-    preview:{vol:'',iss:'',period:'',year:String(new Date().getFullYear())},
+    preview:{vol:'',iss:'',period:'',year:String(new Date().getFullYear()),received:'',accepted:''},
     createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
   };
 }
@@ -937,11 +956,18 @@ function mountRTE(host,o){
 function touch(){ save(); renderSidebar(); renderPreview(); }
 function restep(){ save(); renderAll(); }
 function cfg(){ return ARTICLE_TYPES[M.articleType]; }
+/* the heading as printed — an imported manuscript keeps its own wording (e.g. "Background") */
+function secTitle(n){ var t=(M.sectionTitles||{})[n]; return (t&&t.trim())||n; }
 function sectionNames(){ return (cfg()?cfg().requiredSections:[]).filter(function(s){return s!=='Keywords'}); }
 function normalizeKeywords(v){ var k=v.split(/[;,]/).map(function(x){return x.trim()}).filter(Boolean); return k.length? k.join('; ')+'.' : ''; }
 function fileSizeLabel(f){ return f.size<1048576 ? Math.max(1,Math.round(f.size/1024))+' KB' : (f.size/1048576).toFixed(1)+' MB'; }
 function readDataUrl(f){ return new Promise(function(res){ var r=new FileReader(); r.onload=function(){res(String(r.result||''))}; r.readAsDataURL(f); }); }
 function formatAMAReference(ref){
+  /* imported references keep the author's own wording; the journal title is set in italics */
+  if(ref.raw){ var r=ref.raw;
+    if(ref.parsed&&ref.journalOrBook){ var from=ref.title?r.indexOf(ref.title)+ref.title.length:0, k=r.indexOf(ref.journalOrBook,Math.max(0,from));
+      if(k>=0) r=r.slice(0,k)+'*'+ref.journalOrBook+'*'+r.slice(k+ref.journalOrBook.length); }
+    return r; }
   if(!ref.authors||!ref.title||!ref.journalOrBook||!ref.year) return 'Incomplete citation data provided';
   var a=ref.authors.trim(); if(a.slice(-1)!=='.') a+='.';
   var t=ref.title.trim(), vol=ref.volume?String(ref.volume).trim():'', iss=ref.issue?'('+ref.issue+')':'',
@@ -1225,8 +1251,15 @@ VIEWS['sections']=function(b){
          '<span class="n">Section '+(i+1)+'</span><span class="t">'+esc(s)+'</span>'+
          '<span class="s '+(saved?'ok':'no')+'">'+(saved?'Saved content':'Empty')+'</span></button>'; }).join('')+'</div>'+
    '</div>';
+  var hd=document.createElement('div');
+  hd.innerHTML='<label class="lbl" for="secHead">Heading as printed</label>'+
+    '<input class="inp sm" id="secHead" placeholder="'+esc(activeSection)+'" value="'+esc((M.sectionTitles||{})[activeSection]||'')+'">'+
+    '<p class="note" style="margin-top:4px">Leave empty to print “'+esc(activeSection)+'”. The JATS section type stays the same.</p>';
+  b.appendChild(hd);
+  $('#secHead',hd).addEventListener('input',function(e){ M.sectionTitles=M.sectionTitles||{};
+    M.sectionTitles[activeSection]=e.target.value; touch(); });
   var host=document.createElement('div'); b.appendChild(host);
-  mountRTE(host,{label:activeSection+' *', value:M.sections[activeSection]||'', showWordCount:true,
+  mountRTE(host,{label:secTitle(activeSection)+' *', value:M.sections[activeSection]||'', showWordCount:true,
     placeholder:'Write the full structured '+activeSection.toLowerCase()+' of the study...',
     onChange:function(v){ M.sections[activeSection]=v; touch(); }});
   $$('[data-sec]',b).forEach(function(el){ el.addEventListener('click',function(){ activeSection=el.dataset.sec; renderStep(); }); });
@@ -1237,7 +1270,7 @@ VIEWS['references']=function(b){
   var lib = M.references.length===0
     ? '<p class="ital">No citations cataloged yet.</p>'
     : '<ol class="reflist">'+M.references.map(function(r,i){
-        return '<li><span>'+esc(formatAMAReference(r))+'</span>'+
+        return '<li><span>'+esc(formatAMAReference(r).replace(/\*/g,''))+'</span>'+
           '<button class="lk" data-rup="'+i+'"'+(i===0?' disabled':'')+'>[Up]</button>'+
           '<button class="lk" data-rdn="'+i+'"'+(i===M.references.length-1?' disabled':'')+'>[Down]</button>'+
           '<button class="lk rd" data-rdel="'+esc(r.id)+'">[Delete]</button></li>'; }).join('')+'</ol>';
@@ -1457,6 +1490,11 @@ VIEWS['preview']=function(b){
        fld('pvYear','Year',pv.year,'2026')+fld('pvPeriod','Issue period',pv.period,'JUL–SEP 2026')+
      '</div>'+
      '<div class="g4">'+
+       '<div><label class="lbl">Received</label><input class="inp sm" type="date" id="pvRec" value="'+esc(pv.received||'')+'"></div>'+
+       '<div><label class="lbl">Accepted</label><input class="inp sm" type="date" id="pvAcc" value="'+esc(pv.accepted||'')+'"></div>'+
+       '<div class="span2"><label class="lbl">PDF URL on OJS (for Google Scholar)</label><input class="inp sm mono" id="pvPdfUrl" value="'+esc(pv.pdfUrl||'')+'" placeholder="https://gbmn.org/index.php/gbmn/article/download/…"></div>'+
+     '</div>'+
+     '<div class="g4">'+
        '<div><label class="lbl">Publication date</label><input class="inp sm" type="date" id="pvDate" value="'+esc(pv.date||'')+'"></div>'+
        fld('pvFpage','First page',pv.fpage,'23')+fld('pvLpage','Last page',pv.lpage,'31')+
        fld('pvEloc','E-location ID',pv.elocation,'e0423')+
@@ -1479,14 +1517,14 @@ VIEWS['preview']=function(b){
        '<button type="button" class="btn" id="pvJson">Metadata (JSON)</button>'+
      '</div>'+
      '<ul style="margin:8px 0 0;padding-left:18px;font-size:11px;line-height:1.65;color:var(--s600)">'+
-       '<li><b>JATS XML package</b> — NISO JATS (Z39.96) Journal Publishing DTD v1.3, plus every figure as a separate file. This is the full-text format PubMed Central recommends, and the same file Scopus and Web of Science ingest. Add the article PDF under the same base name before depositing, and swap the PNG figures for the original high-resolution TIFF or EPS.</li>'+
+       '<li><b>JATS XML package</b> — PMC-ready: NISO JATS 1.3 article XML, the article PDF under the same base name (you attach it when exporting), every figure as a separate file, linked citations and figure/table cross-references, structured abstract, article history, and a self-check report. Upload the XML as the "JATS XML" galley in OJS and send the whole package to PMC.</li>'+
        '<li><b>PubMed citation XML</b> — PubMed 3.0 DTD (<span style="font-family:var(--mono);font-size:10px">ArticleSet</span>). A citation-only deposit; a different schema from the PMC full text, so both are produced separately.</li>'+
      '</ul></div>'+
    '<div class="box" id="pvIssues"></div>';
   function bind(id,key){ var el=$('#'+id); if(!el)return;
     el.addEventListener('input',function(){ M.preview[key]=el.value; save(); renderPreview(); }); }
   bind('pvVol','vol'); bind('pvIss','iss'); bind('pvYear','year'); bind('pvPeriod','period');
-  bind('pvDate','date'); bind('pvFpage','fpage'); bind('pvLpage','lpage'); bind('pvEloc','elocation');
+  bind('pvDate','date'); bind('pvRec','received'); bind('pvAcc','accepted'); bind('pvPdfUrl','pdfUrl'); bind('pvFpage','fpage'); bind('pvLpage','lpage'); bind('pvEloc','elocation');
   $('#pvDoi').addEventListener('input',function(e){ M.publicationInfo.doi=e.target.value; save(); renderPreview(); });
   $('#pvPdf').addEventListener('click',function(){ setMode('print'); setTimeout(function(){window.print()},150); });
   $('#pvDocx').addEventListener('click',function(){ exportDocx(); });
@@ -1604,7 +1642,8 @@ function parseBlocks(html){
       } else if(el.classList.contains('gbmn-inline-media-table')){
         var tb=el.querySelector('table'), rows=[];
         if(tb) Array.prototype.forEach.call(tb.querySelectorAll('tr'),function(tr){
-          rows.push(Array.prototype.map.call(tr.children,function(c){return {text:c.textContent.trim(),head:c.tagName==='TH'}}));
+          rows.push(Array.prototype.map.call(tr.children,function(c){return {text:c.textContent.trim(),head:c.tagName==='TH',
+            runs:runsOf(c,{}),span:+(c.getAttribute('colspan')||1),rspan:+(c.getAttribute('rowspan')||1)}}));
         });
         out.push({t:'table',title:p.title,legend:p.legend,layout:p.layout,rows:rows});
       } else {
@@ -1720,6 +1759,7 @@ function domRuns(node,base){
       if(t) out.push({t:t,b:base.b,i:base.i,u:base.u,sup:base.sup,sub:base.sub,sz:base.sz,color:base.color}); return; }
     if(n.nodeType!==1) return;
     if(n.tagName==='BR'){ out.push({br:true}); return; }
+    if(n.classList&&n.classList.contains('orcid')){ out.push({t:'\u2009iD',b:true,sz:15,color:'A6CE39'}); return; }
     var f=Object.assign({},base);
     if(/^(B|STRONG)$/.test(n.tagName)) f.b=true;
     if(/^(I|EM)$/.test(n.tagName)) f.i=true;
@@ -1866,7 +1906,10 @@ async function exportDocx(){
 
 /* ══ JATS 1.3 (NISO Z39.96) Journal Publishing XML ═════════════ */
 var JOURNAL={ title:'Georgian Biomedical and Medical Nexus', abbrev:'Georgian Biomed Med Nexus',
-  pid:'gbmn', nlmta:'Georgian Biomed Med Nexus', issnP:'2720-7994', issnE:'2720-8796',
+  pid:'gbmn', isoAbbrev:'Georgian Biomed Med Nexus',
+  /* NLM assigns the official title abbreviation (nlm-ta) when the journal is accepted —
+     put it here then; until that, the ISO abbreviation is sent instead */
+  nlmta:'', issnP:'2720-7994', issnE:'2720-8796',
   publisher:'Tbilisi State Medical University', loc:'Tbilisi, Georgia' };
 var JATS_TYPE={'original-research':'research-article','review-articles':'review-article',
   'clinical-cases':'case-report','commentary':'article-commentary','other':'other'};
@@ -1876,10 +1919,31 @@ var SEC_TYPE={'Introduction':'intro','Background':'intro','Materials and Methods
   'Methods':'methods','Results':'results','Discussion':'discussion','Conclusions':'conclusions',
   'Case Presentation':'cases','Evidence Review':'review','Clinical Implications':'discussion'};
 
+/* cross-reference context: counts known while the article is being written */
+var JX={refs:0,figs:0,tabs:0,links:true};
+function citeXref(txt){
+  /* "1,3–5" → linked citations, when every number is a real reference */
+  var raw=String(txt);
+  if(!JX.links||!/^\s*\d+(\s*[,–\-]\s*\d+)*\s*$/.test(raw)) return null;
+  var nums=raw.match(/\d+/g).map(Number);
+  if(!nums.every(function(n){return n>=1&&n<=JX.refs})) return null;
+  return raw.replace(/\s*-\s*/g,'\u2013')
+            .replace(/\d+/g,function(n){ return '<xref ref-type="bibr" rid="R'+n+'">'+n+'</xref>'; });
+}
+function inlineXrefs(t){
+  if(!JX.links) return t;
+  t=t.replace(/\b(Fig(?:ure)?s?\.?|Tables?)(\s|&#160;|\u00a0)+(\d+)\b/gi,function(all,w,sp,n){
+    var tab=/^tab/i.test(w), max=tab?JX.tabs:JX.figs; n=+n;
+    if(n<1||n>max) return all;
+    return '<xref ref-type="'+(tab?'table':'fig')+'" rid="'+(tab?'tbl':'fig')+n+'">'+all+'</xref>'; });
+  /* bracketed citations: [3], [1, 4-6] */
+  return t.replace(/\[(\d+(?:\s*[,–\-]\s*\d+)*)\]/g,function(all,inner){ var x=citeXref(inner); return x?'['+x+']':all; });
+}
 function jRuns(runs){
   return runs.map(function(r){
     if(r.br) return ' ';
-    var t=xe(r.t);
+    var t=xe(r.t), cx=r.sup?citeXref(r.t):null;
+    if(cx) t=cx; else if(!r.sup&&!r.sub) t=inlineXrefs(t);
     if(r.sup) t='<sup>'+t+'</sup>'; if(r.sub) t='<sub>'+t+'</sub>';
     if(r.b) t='<bold>'+t+'</bold>'; if(r.i) t='<italic>'+t+'</italic>'; if(r.u) t='<underline>'+t+'</underline>';
     return t; }).join('');
@@ -1897,8 +1961,33 @@ function refPersons(authors){
     return '<string-name>'+xe(p)+'</string-name>';
   }).join('');
 }
+function jatsMixed(r,i,type){
+  /* the author's own reference text, with the parts we recognised tagged in place */
+  var raw=r.raw, s='', pos=0;
+  function tag(val,el,attrs){ if(!val) return; var k=raw.indexOf(val,pos); if(k<0) return;
+    s+=xe(raw.slice(pos,k))+'<'+el+(attrs||'')+'>'+xe(val)+'</'+el+'>'; pos=k+val.length; }
+  if(r.parsed){
+    var names=String(r.authors||'').split(/\s*,\s*/), k0=0;
+    if(r.authors&&raw.indexOf(r.authors)===0){
+      s+='<person-group person-group-type="author">';
+      names.forEach(function(p,ix){ var m=p.match(/^(.+?)\s+([A-Z]{1,4})$/);
+        if(ix) s+=', ';
+        if(/^et al\.?$/.test(p)) s+='<etal/>';
+        else if(m) s+='<string-name><surname>'+xe(m[1])+'</surname> <given-names>'+xe(m[2])+'</given-names></string-name>';
+        else s+='<string-name>'+xe(p)+'</string-name>'; });
+      s+='</person-group>'; pos=r.authors.length; }
+    tag(r.title,'article-title'); tag(r.journalOrBook,'source'); tag(r.year,'year');
+    tag(r.volume,'volume'); if(r.issue) tag(r.issue,'issue');
+    if(r.pages){ var pp=String(r.pages).split(/[-–]/); tag(pp[0],'fpage'); if(pp[1]) tag(pp[1],'lpage'); }
+  }
+  if(r.doi) tag(r.doi,'pub-id',' pub-id-type="doi"');
+  else if(r.url) tag(r.url,'ext-link',' ext-link-type="uri" xlink:href="'+xe(r.url)+'"');
+  s+=xe(raw.slice(pos));
+  return '<ref id="R'+(i+1)+'"><label>'+(i+1)+'</label><mixed-citation publication-type="'+type+'">'+s+'</mixed-citation></ref>';
+}
 function jatsRef(r,i){
   var type = r.type==='book'?'book':(r.type==='web'?'webpage':'journal');
+  if(r.raw) return jatsMixed(r,i,type);
   var s='<ref id="R'+(i+1)+'"><label>'+(i+1)+'</label><element-citation publication-type="'+type+'">';
   s+='<person-group person-group-type="author">'+refPersons(r.authors)+'</person-group>';
   if(r.title) s+='<article-title>'+xe(r.title)+'</article-title>';
@@ -1912,9 +2001,31 @@ function jatsRef(r,i){
   if(r.url) s+='<ext-link ext-link-type="uri" xlink:href="'+xe(r.url)+'">'+xe(r.url)+'</ext-link>';
   return s+'</element-citation></ref>';
 }
+function jDate(iso,type){
+  var d=iso?new Date(iso+'T00:00:00'):null; if(!d||isNaN(d)) return '';
+  return '<date date-type="'+type+'"><day>'+('0'+d.getDate()).slice(-2)+'</day><month>'+('0'+(d.getMonth()+1)).slice(-2)+'</month><year>'+d.getFullYear()+'</year></date>';
+}
+function jAbstract(html){
+  var blocks=parseBlocks(html).filter(function(b){return b.t==='p'});
+  /* "Background. …", "Methods: …" — a structured abstract becomes labelled <sec>s */
+  var labelled=blocks.length>1&&blocks.every(function(b){ var f=b.runs.filter(function(r){return r.t.trim()})[0];
+    return f&&f.b&&/^[A-Z][A-Za-z ]{2,40}[.:]?\s*$/.test(f.t.trim()); });
+  JX.links=false;
+  var out='<abstract>';
+  if(labelled) blocks.forEach(function(b){
+    var runs=b.runs.slice(), i=0, lab='';
+    while(i<runs.length&&(runs[i].b||!runs[i].t.trim())){ lab+=runs[i].t; i++; }
+    var rest=runs.slice(i);
+    if(rest.length&&/^[.:]/.test(rest[0].t)){ rest[0]=Object.assign({},rest[0],{t:rest[0].t.replace(/^[.:]\s*/,'')}); }
+    out+='<sec><title>'+xe(lab.replace(/[.:]\s*$/,'').trim())+'</title><p>'+jRuns(rest).trim()+'</p></sec>'; });
+  else blocks.forEach(function(b){ out+='<p>'+jRuns(b.runs)+'</p>'; });
+  JX.links=true;
+  return out+'</abstract>';
+}
 function buildJats(figNames){
   var A=articleModel(), affs=affilList(), pv=M.preview||{}, pd=pubDateParts();
   var base=slug(), x='';
+  JX={refs:M.references.length,figs:A.figCount,tabs:A.tabCount,links:true};
   x+='<?xml version="1.0" encoding="UTF-8"?>\n';
   x+='<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.3 20210610//EN" "JATS-journalpublishing1-3.dtd">\n';
   x+='<article xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:mml="http://www.w3.org/1998/Math/MathML" '+
@@ -1922,13 +2033,15 @@ function buildJats(figNames){
   /* ── front ── */
   x+='<front>\n<journal-meta>';
   x+='<journal-id journal-id-type="publisher-id">'+JOURNAL.pid+'</journal-id>';
-  x+='<journal-id journal-id-type="nlm-ta">'+xe(JOURNAL.nlmta)+'</journal-id>';
+  if(JOURNAL.nlmta) x+='<journal-id journal-id-type="nlm-ta">'+xe(JOURNAL.nlmta)+'</journal-id>';
+  x+='<journal-id journal-id-type="iso-abbrev">'+xe(JOURNAL.isoAbbrev)+'</journal-id>';
   x+='<journal-title-group><journal-title>'+xe(JOURNAL.title)+'</journal-title>'+
-     '<abbrev-journal-title abbrev-type="publisher">'+xe(JOURNAL.abbrev)+'</abbrev-journal-title></journal-title-group>';
+     '<abbrev-journal-title abbrev-type="publisher">'+xe(JOURNAL.isoAbbrev)+'</abbrev-journal-title></journal-title-group>';
   x+='<issn pub-type="ppub">'+JOURNAL.issnP+'</issn><issn pub-type="epub">'+JOURNAL.issnE+'</issn>';
   x+='<publisher><publisher-name>'+xe(JOURNAL.publisher)+'</publisher-name><publisher-loc>'+xe(JOURNAL.loc)+'</publisher-loc></publisher>';
   x+='</journal-meta>\n<article-meta>';
-  if((M.publicationInfo||{}).doi) x+='<article-id pub-id-type="doi">'+xe(M.publicationInfo.doi)+'</article-id>';
+  x+='<article-id pub-id-type="publisher-id">'+xe(base)+'</article-id>';
+  if((M.publicationInfo||{}).doi) x+='<article-id pub-id-type="doi">'+xe(M.publicationInfo.doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i,''))+'</article-id>';
   x+='<article-categories><subj-group subj-group-type="heading"><subject>'+xe(cfg()?cfg().name.replace(/\b\w+/g,function(w){return w[0]+w.slice(1).toLowerCase()}):'Article')+'</subject></subj-group>';
   if(M.specialty) x+='<subj-group subj-group-type="specialty"><subject>'+xe(M.specialty)+'</subject></subj-group>';
   x+='</article-categories>';
@@ -1959,21 +2072,21 @@ function buildJats(figNames){
     xe([corr.firstName,corr.middleInitial,corr.lastName].filter(Boolean).join(' '))+
     (corr.email?'. <email>'+xe(corr.email)+'</email>':'')+'</corresp></author-notes>';
   x+='<pub-date publication-format="electronic" date-type="pub">'+
-     (pd.d?'<day>'+pd.d+'</day>':'')+(pd.m?'<month>'+pd.m+'</month>':'')+'<year>'+pd.y+'</year></pub-date>';
+     (pd.d?'<day>'+('0'+pd.d).slice(-2)+'</day>':'')+(pd.m?'<month>'+('0'+pd.m).slice(-2)+'</month>':'')+'<year>'+pd.y+'</year></pub-date>';
+  x+='<pub-date publication-format="electronic" date-type="collection"><year>'+(parseInt(pv.year,10)||pd.y)+'</year></pub-date>';
   if(pv.vol) x+='<volume>'+xe(pv.vol)+'</volume>';
   if(pv.iss) x+='<issue>'+xe(pv.iss)+'</issue>';
   if(pv.fpage) x+='<fpage>'+xe(pv.fpage)+'</fpage>'+(pv.lpage?'<lpage>'+xe(pv.lpage)+'</lpage>':'');
   else if(pv.elocation) x+='<elocation-id>'+xe(pv.elocation)+'</elocation-id>';
+  var hist=jDate(pv.received,'received')+jDate(pv.accepted,'accepted');
+  if(hist) x+='<history>'+hist+'</history>';
   x+='<permissions><copyright-statement>&#169; '+pd.y+' '+xe(M.authors.map(function(a){return a.lastName}).filter(Boolean).join(', ')||'The Authors')+'</copyright-statement>'+
      '<copyright-year>'+pd.y+'</copyright-year><copyright-holder>The Authors</copyright-holder>'+
      '<license license-type="open-access" xlink:href="https://creativecommons.org/licenses/by/4.0/">'+
      '<license-p>This is an open access article distributed under the terms of the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/), which permits unrestricted use, distribution and reproduction in any medium, provided the original work is properly cited.</license-p>'+
      '</license></permissions>';
-  if(cfg()&&cfg().abstractType!=='none'&&(M.abstractContents.text||'').trim()){
-    x+='<abstract>';
-    parseBlocks(M.abstractContents.text).forEach(function(b){ if(b.t==='p') x+='<p>'+jRuns(b.runs)+'</p>'; });
-    x+='</abstract>';
-  }
+  x+='<self-uri content-type="pdf" xlink:href="'+xe(base)+'.pdf"/>';
+  if(cfg()&&cfg().abstractType!=='none'&&(M.abstractContents.text||'').trim()) x+=jAbstract(M.abstractContents.text);
   var kws=(M.sections['Keywords']||'').replace(/\.$/,'').split(/[;,]/).map(function(k){return k.trim()}).filter(Boolean);
   if(kws.length) x+='<kwd-group kwd-group-type="author">'+kws.map(function(k){return '<kwd>'+xe(k)+'</kwd>'}).join('')+'</kwd-group>';
   var F=M.fundingDetails;
@@ -1993,7 +2106,7 @@ function buildJats(figNames){
     if(s.name==='Acknowledgments') return;
     sn++;
     var st=SEC_TYPE[s.name];
-    x+='<sec id="sec'+sn+'"'+(st?' sec-type="'+st+'"':'')+'><title>'+xe(s.name)+'</title>';
+    x+='<sec id="sec'+sn+'"'+(st?' sec-type="'+st+'"':'')+'><title>'+xe(secTitle(s.name))+'</title>';
     /* a subheading opens a nested <sec>; everything after it belongs inside, because
        JATS does not allow a <p> to follow a nested <sec> in the same parent */
     var sub=0, open=false;
@@ -2005,14 +2118,16 @@ function buildJats(figNames){
         b.items.map(function(it){return '<list-item><p>'+jRuns(it)+'</p></list-item>'}).join('')+'</list>';
       else if(b.t==='fig') x+='<fig id="fig'+b.n+'" position="float"><label>Figure '+b.n+'</label>'+
         '<caption><title>'+xe(b.title)+'</title>'+(b.legend?'<p>'+xe(b.legend)+'</p>':'')+'</caption>'+
-        '<graphic xlink:href="'+xe(figNames[b.n]||(base+'-fig'+b.n+'.png'))+'"/></fig>';
+        (b.src?'<graphic xlink:href="'+xe(figNames[b.n]||(base+'-fig'+b.n+'.png'))+'"/>':'')+'</fig>';
       else if(b.t==='table'){
         x+='<table-wrap id="tbl'+b.n+'" position="float"><label>Table '+b.n+'</label>'+
            '<caption><title>'+xe(b.title)+'</title></caption><table frame="hsides" rules="groups">';
         var head=b.rows.length&&b.rows[0].every(function(c){return c.head})?b.rows[0]:null;
-        if(head) x+='<thead><tr>'+head.map(function(c){return '<th>'+xe(c.text)+'</th>'}).join('')+'</tr></thead>';
+        var cell=function(c,tg){ return '<'+tg+(c.span>1?' colspan="'+c.span+'"':'')+(c.rspan>1?' rowspan="'+c.rspan+'"':'')+'>'+
+          (c.runs?jRuns(c.runs).trim():xe(c.text))+'</'+tg+'>'; };
+        if(head) x+='<thead><tr>'+head.map(function(c){return cell(c,'th')}).join('')+'</tr></thead>';
         x+='<tbody>'+b.rows.slice(head?1:0).map(function(r){
-          return '<tr>'+r.map(function(c){return '<td>'+xe(c.text)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table>'+
+          return '<tr>'+r.map(function(c){return cell(c,'td')}).join('')+'</tr>'}).join('')+'</tbody></table>'+
            (b.legend?'<table-wrap-foot><fn><p>'+xe(b.legend)+'</p></fn></table-wrap-foot>':'')+'</table-wrap>';
       }
       else if(b.t==='pre') x+='<boxed-text id="box'+b.n+'"><caption><title>'+xe(b.title)+'</title></caption><preformat>'+xe(b.text)+'</preformat></boxed-text>';
@@ -2022,11 +2137,11 @@ function buildJats(figNames){
   });
   x+='\n</body>\n<back>\n';
   var ack=A.secs.filter(function(s){return s.name==='Acknowledgments'})[0];
-  if(ack&&ack.blocks.length) x+='<ack><title>Acknowledgments</title>'+
+  if(ack&&ack.blocks.length) x+='<ack><title>'+xe(secTitle('Acknowledgments'))+'</title>'+
     ack.blocks.map(function(b){return b.t==='p'?'<p>'+jRuns(b.runs)+'</p>':''}).join('')+'</ack>';
   var E=M.ethics, C=M.conflictDisclosure, fns=[];
   fns.push('<fn fn-type="COI-statement"><p>'+xe(C.hasConflict?(C.conflictDetails||'The authors declare conflicts of interest.'):'The authors declare no conflict of interest.')+'</p></fn>');
-  var ethTxt=declRows().filter(function(r){return r[0]==='Ethics approval'})[0];
+  var ethTxt=declRows().filter(function(r){return r[0]==='Ethical compliance'})[0];
   if(ethTxt) fns.push('<fn fn-type="other"><label>Ethics approval</label><p>'+xe(ethTxt[1])+'</p></fn>');
   var contrib=declRows().filter(function(r){return r[0]==='Author contributions'})[0];
   if(contrib) fns.push('<fn fn-type="con"><label>Author contributions</label><p>'+xe(contrib[1])+'</p></fn>');
@@ -2035,7 +2150,51 @@ function buildJats(figNames){
   x+='\n</back>\n</article>\n';
   return x;
 }
-async function exportJats(){
+/* PMC readiness — what the Style Checker and the PMC technical evaluation look at */
+function pmcChecks(){
+  var out=[], pv=M.preview||{}, A=articleModel();
+  function c(ok,txt,lvl){ out.push({ok:!!ok,txt:txt,lvl:lvl||'err'}); }
+  c(M.title,'Article title');
+  c(M.authors.length,'At least one author');
+  c(M.authors.length&&M.authors.every(function(a){return a.orcidId}),'ORCID iD for every author','warn');
+  c(M.authors.some(function(a){return a.isCorresponding&&a.email}),'Corresponding author with e-mail','warn');
+  c(affilList().length,'Author affiliations');
+  c((M.publicationInfo||{}).doi,'DOI (Crossref, 10.52340/…)');
+  c(pv.date,'Publication date (day, month, year)');
+  c(pv.vol&&pv.iss,'Volume and issue');
+  c(pv.fpage||pv.elocation,'First page or e-location ID');
+  c(pv.received&&pv.accepted,'Received and accepted dates','warn');
+  c(!(cfg()&&cfg().abstractType!=='none')||stripTags(M.abstractContents.text||''),'Abstract');
+  c((M.sections['Keywords']||'').trim(),'Keywords','warn');
+  c(M.references.length,'Reference list');
+  var noImg=0; A.secs.forEach(function(s){ s.blocks.forEach(function(b){ if(b.t==='fig'&&!b.src) noImg++; }); });
+  c(!noImg,noImg?noImg+' figure(s) without an image':'Every figure has its image');
+  c(xmlOk(buildJats({})),'XML is well-formed');
+  return out;
+}
+function exportJats(){
+  var checks=pmcChecks(), bad=checks.filter(function(c){return !c.ok&&c.lvl==='err'}).length;
+  $('#modalRoot').innerHTML='<div class="modal"><div class="sheet" style="max-width:600px">'+
+    '<div class="mh"><div><h3>JATS XML package for PMC / OJS</h3><p>Article XML + PDF + figures, named the way PubMed Central expects.</p></div><button class="x" data-c>&times;</button></div>'+
+    '<div class="mb">'+
+      '<div><label class="lbl">Final article PDF (recommended)</label>'+
+        '<input type="file" id="jPdf" accept="application/pdf,.pdf" style="font-size:12px">'+
+        '<p class="note" style="margin-top:4px">PMC needs the PDF with the same base name as the XML — it is renamed to <b style="font-family:var(--mono)">'+esc(slug())+'.pdf</b> automatically. Print the PDF from the proof first (PDF button).</p></div>'+
+      '<div class="box"><b style="font-size:12px">Pre-flight check</b><ul style="list-style:none;margin:6px 0 0;padding:0;font-size:12px;line-height:1.8">'+
+        checks.map(function(c){ return '<li style="color:'+(c.ok?'#15803d':(c.lvl==='err'?'#b91c1c':'#b45309'))+'">'+(c.ok?'✓':(c.lvl==='err'?'✗':'!'))+' '+esc(c.txt)+'</li>'; }).join('')+
+      '</ul>'+(bad?'<p class="note" style="margin-top:6px;color:#b91c1c">Items marked ✗ will be rejected by PMC. You can still download the package to look at it.</p>':'')+'</div>'+
+    '</div>'+
+    '<div class="mf"><button class="btn" data-c>Cancel</button><button class="btn t" id="jGo">Download package (.zip)</button></div>'+
+  '</div></div>';
+  $$('#modalRoot [data-c]').forEach(function(b){ b.onclick=function(){ $('#modalRoot').innerHTML=''; }; });
+  $('#jGo').onclick=async function(){
+    var f=$('#jPdf').files[0], pdf=null;
+    if(f) pdf=new Uint8Array(await f.arrayBuffer());
+    $('#modalRoot').innerHTML='';
+    buildJatsPackage(pdf);
+  };
+}
+async function buildJatsPackage(pdfBytes){
   notify('Building the JATS package...','info');
   var A=articleModel(), base=slug(), names={}, files=[];
   for(var i=0;i<A.secs.length;i++){
@@ -2050,6 +2209,7 @@ async function exportJats(){
   }
   var xml=buildJats(names);
   files.unshift({name:base+'.xml',data:xml});
+  if(pdfBytes) files.splice(1,0,{name:base+'.pdf',data:pdfBytes});
   files.push({name:'README.txt',data:
     'GBMN JATS deposit package\n'+
     '=========================\n\n'+
@@ -2057,10 +2217,14 @@ async function exportJats(){
     'Tag set       : NISO JATS (Z39.96) Journal Publishing DTD v1.3 20210610\n'+
     'Article type  : '+(JATS_TYPE[M.articleType]||'other')+'\n'+
     'Figures       : '+A.figCount+'   Tables: '+A.tabCount+'   References: '+M.references.length+'\n\n'+
+    'PDF           : '+(pdfBytes?base+'.pdf (included)':'NOT included - add '+base+'.pdf before depositing')+'\n\n'+
+    'OJS\n'+
+    '  Production > Galleys: upload '+base+'.pdf as galley "PDF", the HTML export as\n'+
+    '  galley "HTML" (figures are embedded), and '+base+'.xml as galley "JATS XML".\n\n'+
     'PubMed Central\n'+
-    '  Deposit the whole package by SFTP. Add the article PDF with the SAME base\n'+
-    '  name ('+base+'.pdf) before sending - PMC requires the XML and PDF base names\n'+
-    '  to match, and figure file names to match the graphic/@xlink:href values above.\n'+
+    '  Deposit the whole package by FTP once PMC has accepted the journal. The XML and\n'+
+    '  PDF base names must match, and figure file names must match the\n'+
+    '  graphic/@xlink:href values in the XML.\n'+
     '  Replace the PNG figures with the original high-resolution TIFF or EPS files\n'+
     '  and update the href extensions accordingly.\n'+
     '  Check the file with the PMC Style Checker before sending.\n\n'+
@@ -2150,7 +2314,7 @@ function webCss(){ return [
 ':root[data-theme="dark"]{--canvas:#0e0f10;--canvas-soft:#17191a;--ink:#f2f2f0;--ink-soft:#e6e6e3;--body:#a8aaa8;',
 '  --hair:#2a2d2e;--accent:#4fbfb2;--accent-deep:#7ad6c9;--red:#e8767a;--logo-bg:#fff;--logo-pad:5px 9px}',
 'html{-webkit-text-size-adjust:100%}',
-'body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--serif);font-size:19px;line-height:1.47;',
+'body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.6;',
 '  text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}',
 '.wrap{width:var(--wide);margin:0 auto;padding:0 16px}',
 '.rule{border:0;border-top:1px solid var(--hair);margin:0}',
@@ -2167,30 +2331,33 @@ function webCss(){ return [
 '.mast .doi:hover{background:var(--accent);color:var(--canvas)}',
 '@media(max-width:600px){.mast .doi{display:none}}',
 /* hero */
-'.hero{padding:56px 0 0}',
-'@media(max-width:700px){.hero{padding:34px 0 0}}',
-'.kick{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:11px;font-weight:700;',
-'  letter-spacing:.15em;text-transform:uppercase;color:var(--red);margin:0 0 22px}',
-'.kick:before{content:"";width:34px;height:3px;background:var(--accent);flex:0 0 34px}',
+'.hero{padding:44px 0 0;text-align:center}',
+'@media(max-width:700px){.hero{padding:28px 0 0}}',
+'.kick{display:flex;align-items:center;justify-content:center;gap:12px;font-family:var(--mono);font-size:10.5px;font-weight:700;',
+'  letter-spacing:.15em;text-transform:uppercase;color:var(--red);margin:0 0 18px}',
+'.kick:before,.kick:after{content:"";width:28px;height:2px;background:var(--accent);flex:0 0 28px}',
 '.kick em{font-style:normal;color:var(--body)}',
 '.kick .dot{color:var(--hair)}',
-'@media(max-width:620px){.kick{display:block;margin-bottom:18px}.kick:before{display:block;margin-bottom:10px}',
-'  .kick .dot{display:none}.kick em{display:block;margin-top:5px}}',
-'h1.title{font-family:var(--serif);font-size:clamp(33px,4.4vw,58px);line-height:1.035;letter-spacing:-.021em;',
-'  font-weight:700;margin:0;color:var(--ink);text-wrap:balance;max-width:19em}',
-'.deck{font-family:var(--serif);font-size:clamp(18px,1.6vw,21px);line-height:1.42;color:var(--body);',
-'  margin:22px 0 0;max-width:46em;font-style:italic}',
-'.byline{font-family:var(--sans);font-size:15.5px;line-height:1.65;margin:30px 0 0;color:var(--ink);',
-'  max-width:56em;font-weight:500}',
-'.byline sup{font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.02em}',
+'@media(max-width:620px){.kick{flex-wrap:wrap;gap:6px 10px;margin-bottom:14px}.kick:before,.kick:after{display:none}',
+'  .kick .dot{display:none}.kick em{flex-basis:100%}}',
+'h1.title{font-family:var(--serif);font-size:clamp(25px,3vw,38px);line-height:1.18;letter-spacing:-.012em;',
+'  font-weight:700;margin:0 auto;color:var(--ink);text-wrap:balance;max-width:24em}',
+'.deck{font-family:var(--serif);font-size:clamp(15.5px,1.3vw,17px);line-height:1.45;color:var(--body);',
+'  margin:14px auto 0;max-width:42em;font-style:italic}',
+'.byline{font-family:var(--sans);font-size:14.5px;line-height:1.75;margin:22px auto 0;color:var(--ink);',
+'  max-width:52em;font-weight:500}',
+'.byline .au{white-space:nowrap}',
+'.byline sup{font-size:9.5px;color:var(--accent);font-weight:700;letter-spacing:.02em;margin-left:1px}',
 '.byline a{color:inherit;text-decoration:none}',
-'.byline a:hover{color:var(--accent)}',
+'.byline a.orcid{display:inline-block;margin-left:3px;vertical-align:-2px;line-height:0}',
+'.byline a.orcid img{width:15px;height:15px;display:block;transition:transform .15s}',
+'.byline a.orcid:hover img{transform:scale(1.15)}',
 /* meta strip */
 '.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 28px;',
-'  border-top:1px solid var(--ink-soft);margin:34px 0 0;padding-top:2px}',
+'  border-top:1px solid var(--ink-soft);margin:30px 0 0;padding-top:2px;text-align:left}',
 '.meta div{padding:16px 0 18px;border-top:1px solid transparent}',
 '.meta dt{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--body);margin:0 0 8px}',
-'.meta dd{margin:0;font-family:var(--sans);font-size:13.5px;line-height:1.55;color:var(--ink-soft)}',
+'.meta dd{margin:0;font-family:var(--sans);font-size:12.5px;line-height:1.55;color:var(--ink-soft)}',
 '.meta dd + dd{margin-top:3px}',
 '.meta dd a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 30%,transparent)}',
 '.meta dd a:hover{border-bottom-color:var(--accent)}',
@@ -2199,28 +2366,29 @@ function webCss(){ return [
 '  color:var(--accent);background:var(--canvas-soft);padding:3px 7px;border-radius:2px}',
 '.herorule{border:0;border-top:1px solid var(--hair);margin:0}',
 /* layout */
-'.cols{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:56px;align-items:start;padding:44px 0 0}',
+'.cols{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:52px;align-items:start;padding:38px 0 0}',
 '@media(max-width:980px){.cols{grid-template-columns:1fr;gap:0}}',
 '.main{min-width:0;max-width:860px}',
 '.main > p,.main > h2.sec,.main > h3,.main > ul,.main > ol,.main > .abs,.main > .decl{max-width:var(--m)}',
-'aside.rail{position:sticky;top:76px;font-family:var(--sans);font-size:13px;border-left:1px solid var(--hair);padding-left:18px}',
+'aside.rail{position:sticky;top:76px;font-family:var(--sans);font-size:12.5px;border-left:1px solid var(--hair);padding-left:18px}',
 '@media(max-width:980px){aside.rail{position:static;border-left:0;padding:0;margin:0 0 28px;border-top:1px solid var(--hair);padding-top:18px}}',
 'aside.rail b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--body);margin-bottom:10px}',
 'aside.rail a{display:block;color:var(--ink-soft);text-decoration:none;padding:4px 0;border-bottom:1px solid transparent;line-height:1.35}',
 'aside.rail a:hover{color:var(--accent)}',
 /* abstract */
-'.abs{background:var(--canvas-soft);border-left:3px solid var(--accent);padding:24px 26px;margin:0 0 40px}',
+'.abs{background:var(--canvas-soft);border-left:3px solid var(--accent);padding:20px 24px;margin:0 0 36px}',
 '.abs h2{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 12px}',
-'.main .abs p{margin:0 0 11px;font-size:17px;line-height:1.55}',
+'.main .abs p{margin:0 0 10px;font-size:15px;line-height:1.6}',
 '.main .abs p:last-child{margin-bottom:0}',
 '.abs b{color:var(--ink)}',
-'.kw{font-family:var(--sans);font-size:13.5px;color:var(--body);margin-top:14px;padding-top:12px;border-top:1px solid var(--hair)}',
+'.kw{font-family:var(--sans);font-size:12.5px;color:var(--body);margin-top:14px;padding-top:12px;border-top:1px solid var(--hair)}',
 '.kw span{color:var(--ink-soft)}',
 /* body */
-'.main h2.sec{font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;',
-'  color:var(--red);margin:48px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--hair);scroll-margin-top:80px}',
-'.main h3{font-family:var(--serif);font-size:22px;line-height:1.25;margin:30px 0 8px;color:var(--ink)}',
-'.main p{margin:0 0 20px}',
+'.main h2.sec{font-family:var(--sans);font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;',
+'  color:var(--red);margin:42px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--hair);scroll-margin-top:80px}',
+'.main h3{font-family:var(--serif);font-size:18.5px;line-height:1.3;margin:28px 0 8px;color:var(--ink)}',
+'.main p{margin:0 0 16px}',
+'.main sup{font-size:.68em;line-height:0}',
 '.main ul,.main ol{margin:0 0 20px;padding-left:24px}',
 '.main li{margin:0 0 6px}',
 '.main a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent)}',
@@ -2229,23 +2397,24 @@ function webCss(){ return [
 'figure{max-width:var(--m)}',
 'figure.wide{max-width:100%}',
 'figure img{display:block;max-width:100%;width:auto;height:auto;margin:0 auto;background:var(--canvas-soft)}',
-'figure figcaption{font-family:var(--sans);font-size:13px;line-height:1.5;color:var(--body);margin-top:10px;padding-top:10px;border-top:1px solid var(--hair)}',
+'figure figcaption{font-family:var(--sans);font-size:12.5px;line-height:1.5;color:var(--body);margin-top:10px;padding-top:10px;border-top:1px solid var(--hair)}',
 'figure figcaption b{color:var(--ink-soft);font-weight:700}',
 'figure pre{margin:0;padding:16px;background:var(--canvas-soft);font-family:var(--mono);font-size:13px;overflow:auto;white-space:pre-wrap}',
 '.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}',
-'table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:13.5px}',
-'th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--hair);vertical-align:top}',
+'.main p.tnote{font-family:var(--sans);font-size:11.5px;line-height:1.5;color:var(--body);margin:8px 0 0;max-width:none}',
+'table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:12.5px}',
+'th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--hair);vertical-align:top}',
 'thead th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--body);border-bottom:1.5px solid var(--ink-soft)}',
 'tbody tr:last-child td{border-bottom:1px solid var(--ink-soft)}',
 /* declarations + refs */
-'.decl dl{display:grid;grid-template-columns:150px minmax(0,1fr);gap:0 18px;font-family:var(--sans);font-size:14px;margin:0}',
+'.decl dl{display:grid;grid-template-columns:150px minmax(0,1fr);gap:0 18px;font-family:var(--sans);font-size:13px;margin:0}',
 '@media(max-width:620px){.decl dl{grid-template-columns:1fr;gap:0}}',
 '.decl dt{font-weight:700;color:var(--accent);padding:10px 0;border-top:1px solid var(--hair)}',
 '.decl dd{margin:0;padding:10px 0;color:var(--ink-soft);border-top:1px solid var(--hair);line-height:1.55}',
 '@media(max-width:620px){.decl dd{border-top:0;padding-top:0}}',
-'ol.refs{list-style:none;counter-reset:r;padding:0;margin:0;font-family:var(--sans);font-size:14px;line-height:1.55}',
-'ol.refs li{counter-increment:r;position:relative;padding:12px 0 12px 42px;border-top:1px solid var(--hair);color:var(--ink-soft)}',
-'ol.refs li:before{content:counter(r);position:absolute;left:0;top:12px;font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700}',
+'ol.refs{list-style:none;counter-reset:r;padding:0;margin:0;font-family:var(--sans);font-size:13px;line-height:1.55}',
+'ol.refs li{counter-increment:r;position:relative;padding:10px 0 10px 38px;word-break:break-word;border-top:1px solid var(--hair);color:var(--ink-soft)}',
+'ol.refs li:before{content:counter(r);position:absolute;left:0;top:10px;font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700}',
 'ol.refs li:last-child{border-bottom:1px solid var(--hair)}',
 'ol.refs i{font-style:italic}',
 /* colophon */
@@ -2254,7 +2423,7 @@ function webCss(){ return [
 'footer.colo b{display:block;font-size:13.5px;opacity:1;margin-bottom:8px;letter-spacing:.02em}',
 'footer.colo a{color:inherit}',
 '@media print{.mast{position:static}aside.rail{display:none}.cols{display:block}.main{max-width:none}',
-'  figure.wide{width:auto;margin-left:0}body{font-size:11pt}footer.colo{background:none;color:#000}}'
+'  figure.wide{width:auto;margin-left:0}body{font-size:10.5pt}footer.colo{background:none;color:#000}}'
 ].join('\n'); }
 
 function webBlocks(name){
@@ -2276,7 +2445,8 @@ function webBlocks(name){
       } else if(el.classList.contains('gbmn-inline-media-table')){
         WEBN.tab++; var tb=el.querySelector('table');
         out+='<figure'+wide+'><figcaption style="margin:0 0 10px;padding:0 0 10px;border-top:0;border-bottom:1px solid var(--hair)"><b>Table '+WEBN.tab+'.</b> '+
-          esc(title)+(legend?' '+esc(legend):'')+'</figcaption><div class="tablewrap">'+(tb?tb.outerHTML.replace(/ class="[^"]*"/g,''):'')+'</div></figure>';
+          esc(title)+'</figcaption><div class="tablewrap">'+(tb?tb.outerHTML.replace(/ class="[^"]*"/g,''):'')+'</div>'+
+          (legend?'<p class="tnote">'+esc(legend)+'</p>':'')+'</figure>';
       } else {
         WEBN.fig++; var pre=el.querySelector('pre');
         out+='<figure'+wide+'><pre>'+esc(pre?pre.textContent:el.textContent)+'</pre>'+
@@ -2298,9 +2468,10 @@ function webArticleHtml(){
   var doi=((M.publicationInfo||{}).doi||'').replace(/^https?:\/\/(dx\.)?doi\.org\//i,'');
   var names=sectionNames().filter(function(s){return s!=='Acknowledgments'&&(M.sections[s]||'').trim()});
   var kw=(M.sections['Keywords']||'').replace(/\.$/,'').trim();
-  var dateTxt = pv.date ? new Date(pv.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : (pv.year||'');
+  function fmtD(v){ var d=v?new Date(v+'T00:00:00'):null; return d&&!isNaN(d)?d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}):''; }
+  var dateTxt = fmtD(pv.date) || (pv.year||'');
 
-  var toc=names.map(function(s,i){return '<a href="#s'+i+'">'+esc(s)+'</a>'}).join('')+
+  var toc=names.map(function(s,i){return '<a href="#s'+i+'">'+esc(secTitle(s))+'</a>'}).join('')+
     (M.references.length?'<a href="#refs">References</a>':'');
 
   var h='<header class="mast"><div class="in"><img src="'+LOGO+'" alt="Georgian Biomedical and Medical Nexus">'+
@@ -2320,7 +2491,9 @@ function webArticleHtml(){
         return '<dd><sup>'+(i+1)+'</sup>'+esc(a)+'</dd>'}).join('')+'</div>':'')+
       (corr?'<div><dt>Corresponding author</dt><dd>'+esc([corr.firstName,corr.middleInitial,corr.lastName].filter(Boolean).join(' '))+'</dd>'+
         (corr.email?'<dd><a href="mailto:'+esc(corr.email)+'">'+esc(corr.email)+'</a></dd>':'')+'</div>':'')+
-      '<div><dt>Published</dt>'+(dateTxt?'<dd>'+esc(dateTxt)+'</dd>':'<dd>In press</dd>')+
+      '<div><dt>Article history</dt>'+(fmtD(pv.received)?'<dd>Received '+esc(fmtD(pv.received))+'</dd>':'')+
+        (fmtD(pv.accepted)?'<dd>Accepted '+esc(fmtD(pv.accepted))+'</dd>':'')+
+        (dateTxt?'<dd>Published '+esc(dateTxt)+'</dd>':'<dd>In press</dd>')+
         (pages?'<dd>'+esc(pages)+'</dd>':'')+'</div>'+
       '<div><dt>License</dt><dd><a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></dd>'+
         '<dd><span class="tag">Open access</span></dd></div>'+
@@ -2332,8 +2505,8 @@ function webArticleHtml(){
       (kw?'<div class="kw">Keywords — <span>'+esc(kw)+'</span></div>':'')+'</div>';
   } else if(kw){ h+='<div class="abs"><div class="kw" style="border:0;margin:0;padding:0">Keywords — <span>'+esc(kw)+'</span></div></div>'; }
 
-  names.forEach(function(s,i){ h+='<h2 class="sec" id="s'+i+'">'+esc(s)+'</h2>'+webBlocks(s); });
-  if((M.sections['Acknowledgments']||'').trim()) h+='<h2 class="sec" id="ack">Acknowledgments</h2>'+webBlocks('Acknowledgments');
+  names.forEach(function(s,i){ h+='<h2 class="sec" id="s'+i+'">'+esc(secTitle(s))+'</h2>'+webBlocks(s); });
+  if((M.sections['Acknowledgments']||'').trim()) h+='<h2 class="sec" id="ack">'+esc(secTitle('Acknowledgments'))+'</h2>'+webBlocks('Acknowledgments');
 
   var rows=declRows();
   if(rows.length) h+='<h2 class="sec" id="decl">Declarations</h2><div class="decl"><dl>'+
@@ -2359,9 +2532,796 @@ function webDocument(){
     '<meta name="citation_title" content="'+esc(M.title)+'">'+
     M.authors.map(function(a){return '<meta name="citation_author" content="'+esc(a.lastName+', '+a.firstName)+'">'}).join('')+
     (((M.publicationInfo||{}).doi)?'<meta name="citation_doi" content="'+esc(M.publicationInfo.doi)+'">':'')+
+    webScholarMeta()+
     '<style>'+webCss()+'</style></head><body>'+webArticleHtml()+'</body></html>';
 }
+function webScholarMeta(){
+  var pv=M.preview||{}, t='';
+  function m(n,v){ if(v) t+='<meta name="'+n+'" content="'+esc(v)+'">'; }
+  m('citation_publisher','Tbilisi State Medical University');
+  m('citation_issn','2720-8796'); m('citation_issn','2720-7994');
+  m('citation_publication_date', pv.date?pv.date.replace(/-/g,'/'):pv.year);
+  m('citation_volume',pv.vol); m('citation_issue',pv.iss);
+  m('citation_firstpage',pv.fpage); m('citation_lastpage',pv.lpage);
+  m('citation_language','en');
+  m('citation_keywords',(M.sections['Keywords']||'').replace(/\.$/,''));
+  m('citation_pdf_url',pv.pdfUrl);
+  m('citation_abstract',stripTags(M.abstractContents.text||''));
+  m('dc.rights','CC BY 4.0');
+  return t;
+}
 function exportHtml(){ dl(slug()+'.html', new Blob([webDocument()],{type:'text/html;charset=utf-8'})); }
+/* ══ import a finished manuscript from Word (.docx) or PDF ═════════
+   Reads the file in the browser, turns it into an ordered list of
+   paragraphs and tables, then maps that onto the manuscript model:
+   masthead → article type → title → authors (affiliation numbers,
+   ORCID links, corresponding *) → affiliations → history dates →
+   abstract → keywords → DOI → body sections (sub-headings, figures,
+   tables, captions, legends) → back matter → AMA references.        */
+
+/* ── ZIP reader (stored + deflate, via DecompressionStream) ── */
+function unzipIndex(buf){
+  var u8=new Uint8Array(buf), dv=new DataView(buf), e=-1;
+  for(var i=u8.length-22;i>=Math.max(0,u8.length-65558);i--){ if(dv.getUint32(i,true)===0x06054b50){ e=i; break; } }
+  if(e<0) throw new Error('This is not a .docx file.');
+  var n=dv.getUint16(e+10,true), off=dv.getUint32(e+16,true), out={}, td=new TextDecoder();
+  for(var k=0;k<n;k++){
+    if(dv.getUint32(off,true)!==0x02014b50) break;
+    var method=dv.getUint16(off+10,true), csize=dv.getUint32(off+20,true);
+    var nl=dv.getUint16(off+28,true), xl=dv.getUint16(off+30,true), cl=dv.getUint16(off+32,true), lho=dv.getUint32(off+42,true);
+    var name=td.decode(u8.subarray(off+46,off+46+nl));
+    var lnl=dv.getUint16(lho+26,true), lxl=dv.getUint16(lho+28,true), st=lho+30+lnl+lxl;
+    out[name]={method:method,data:u8.subarray(st,st+csize)};
+    off+=46+nl+xl+cl;
+  }
+  return out;
+}
+async function unzipRead(z,name,asText){
+  var en=z[name]; if(!en) return null;
+  var bytes=en.data;
+  if(en.method===8){
+    if(typeof DecompressionStream==='undefined') throw new Error('This browser cannot read .docx files — use a current Chrome, Edge, Safari or Firefox.');
+    var s=new Blob([en.data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    bytes=new Uint8Array(await new Response(s).arrayBuffer());
+  }
+  return asText? new TextDecoder().decode(bytes) : bytes;
+}
+function bytesToDataUrl(bytes,mime){
+  var s='', CH=0x8000;
+  for(var i=0;i<bytes.length;i+=CH) s+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));
+  return 'data:'+mime+';base64,'+btoa(s);
+}
+
+/* ── tiny XML helpers (namespace-agnostic) ── */
+function xkids(el,name){ var o=[]; if(!el) return o; for(var c=el.firstElementChild;c;c=c.nextElementSibling) if(!name||c.localName===name) o.push(c); return o; }
+function xkid(el,name){ return xkids(el,name)[0]||null; }
+function xval(el,attr){ if(!el) return null; var v=el.getAttribute('w:'+(attr||'val')); return v==null?el.getAttribute(attr||'val'):v; }
+function xon(el){ if(!el) return null; var v=xval(el); return !(v==='0'||v==='false'||v==='none'); }
+
+/* ── .docx → blocks ── */
+async function docxBlocks(buf){
+  var z=unzipIndex(buf);
+  var docXml=await unzipRead(z,'word/document.xml',true);
+  if(!docXml) throw new Error('word/document.xml is missing — is this a Word file?');
+  var P=new DOMParser();
+  var doc=P.parseFromString(docXml,'application/xml');
+  var relXml=await unzipRead(z,'word/_rels/document.xml.rels',true)||'';
+  var rels={}; xkids(P.parseFromString(relXml||'<r/>','application/xml').documentElement,'Relationship').forEach(function(r){
+    rels[r.getAttribute('Id')]={target:r.getAttribute('Target'),type:r.getAttribute('Type')||'',ext:r.getAttribute('TargetMode')==='External'}; });
+  /* styles: bold / size / heading level, resolved through basedOn */
+  var styles={}, defSz=22;
+  var stXml=await unzipRead(z,'word/styles.xml',true);
+  if(stXml){
+    var sd=P.parseFromString(stXml,'application/xml').documentElement;
+    var dd=xkid(xkid(xkid(sd,'docDefaults'),'rPrDefault'),'rPr'); var dsz=xkid(dd,'sz'); if(dsz) defSz=+xval(dsz)||22;
+    xkids(sd,'style').forEach(function(s){ var rp=xkid(s,'rPr'), nm=xval(xkid(s,'name'))||'';
+      styles[xval(s,'styleId')]={b:xon(xkid(rp,'b')),i:xon(xkid(rp,'i')),sz:xkid(rp,'sz')?+xval(xkid(rp,'sz')):null,
+        caps:xon(xkid(rp,'caps')),name:nm,basedOn:xval(xkid(s,'basedOn'))}; });
+  }
+  function sprop(id,key,depth){ var s=styles[id]; if(!s||(depth||0)>8) return null;
+    return s[key]!=null? s[key] : sprop(s.basedOn,key,(depth||0)+1); }
+  /* numbering: bullet vs ordered */
+  var numFmt={};
+  var nXml=await unzipRead(z,'word/numbering.xml',true);
+  if(nXml){ var nd=P.parseFromString(nXml,'application/xml').documentElement, absFmt={};
+    xkids(nd,'abstractNum').forEach(function(a){ var l0=xkids(a,'lvl')[0]; absFmt[xval(a,'abstractNumId')]=xval(xkid(l0,'numFmt'))||'decimal'; });
+    xkids(nd,'num').forEach(function(n){ numFmt[xval(n,'numId')]=absFmt[xval(xkid(n,'abstractNumId'))]; }); }
+  /* images, decoded lazily and cached */
+  var imgCache={};
+  async function image(rid){
+    var r=rels[rid]; if(!r||r.ext) return null;
+    if(imgCache[rid]!==undefined) return imgCache[rid];
+    var path=('word/'+r.target).replace(/word\/\.\.\//,'').replace(/^word\/\//,'word/').replace(/^word\/\/?word\//,'word/');
+    if(r.target.charAt(0)==='/') path=r.target.slice(1);
+    var bytes=await unzipRead(z,path,false); if(!bytes){ imgCache[rid]=null; return null; }
+    var ext=(path.split('.').pop()||'').toLowerCase();
+    var mime={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',bmp:'image/bmp',svg:'image/svg+xml',webp:'image/webp',tif:'image/tiff',tiff:'image/tiff'}[ext];
+    if(!mime||/tiff|emf|wmf/.test(mime+ext)){ imgCache[rid]=null; return null; }
+    imgCache[rid]=bytesToDataUrl(bytes,mime); return imgCache[rid];
+  }
+
+  async function paraBlock(p){
+    var pPr=xkid(p,'pPr'), pst=xval(xkid(pPr,'pStyle'))||'';
+    var stName=(sprop(pst,'name')||'').toLowerCase();
+    var pB=sprop(pst,'b'), pI=sprop(pst,'i'), pSz=sprop(pst,'sz'), pCaps=sprop(pst,'caps');
+    var prSz=xkid(xkid(pPr,'rPr'),'sz');
+    var numPr=xkid(pPr,'numPr'), numId=numPr?xval(xkid(numPr,'numId')):null;
+    var blk={kind:'p',runs:[],imgs:[],frame:!!xkid(pPr,'framePr'),numbered:!!(numId&&numId!=='0'),
+      ordered:numId?(numFmt[numId]||'decimal')!=='bullet':false,align:xval(xkid(pPr,'jc'))||'',
+      hlevel:/^heading\s*(\d)/.test(stName)?+RegExp.$1:(stName==='title'?0:null),style:stName};
+    var fieldHref=null;
+    async function walk(node,href){
+      for(var c=node.firstElementChild;c;c=c.nextElementSibling){
+        var ln=c.localName;
+        if(ln==='pPr'||ln==='rPr'||ln==='del'||ln==='moveFrom') continue;
+        if(ln==='hyperlink'){ var rid=c.getAttribute('r:id'), r=rels[rid];
+          await walk(c, r&&r.ext ? r.target : (href||null)); continue; }
+        if(ln==='r'){ await run(c,href||fieldHref); continue; }
+        if(ln==='fldSimple'){ var ins=c.getAttribute('w:instr')||''; var hm=ins.match(/HYPERLINK\s+"([^"]+)"/);
+          await walk(c, hm?hm[1]:href); continue; }
+        await walk(c,href);   /* ins, smartTag, sdt, sdtContent, customXml … */
+      }
+    }
+    async function run(r,href){
+      var rp=xkid(r,'rPr'), rst=xval(xkid(rp,'rStyle'));
+      function pick(tag,key){ var e=xkid(rp,tag); if(e) return xon(e); var v=sprop(rst,key); if(v!=null) return v; return key==='b'?pB:(key==='i'?pI:(key==='caps'?pCaps:null)); }
+      var va=xval(xkid(rp,'vertAlign'))||'';
+      var szE=xkid(rp,'sz'), sz=szE?+xval(szE):(sprop(rst,'sz')||pSz||(prSz?+xval(prSz):null)||defSz);
+      var fmt={b:!!pick('b','b'),i:!!pick('i','i'),u:!!(xkid(rp,'u')&&xval(xkid(rp,'u'))!=='none'),caps:!!pick('caps','caps'),
+        sup:va==='superscript',sub:va==='subscript',sz:sz,href:href||null};
+      for(var c=r.firstElementChild;c;c=c.nextElementSibling){
+        var ln=c.localName;
+        if(ln==='t') blk.runs.push(Object.assign({t:c.textContent},fmt));
+        else if(ln==='tab') blk.runs.push(Object.assign({t:' '},fmt));
+        else if(ln==='noBreakHyphen') blk.runs.push(Object.assign({t:'-'},fmt));
+        else if(ln==='sym'){ var ch=parseInt(c.getAttribute('w:char')||'0',16); if(ch) blk.runs.push(Object.assign({t:String.fromCharCode(ch>0xF000?ch-0xF000:ch)},fmt)); }
+        else if(ln==='br'||ln==='cr'){ if((c.getAttribute('w:type')||'')!=='page') blk.runs.push({br:true}); }
+        else if(ln==='fldChar'){ var ft=c.getAttribute('w:fldCharType'); if(ft==='end') fieldHref=null; }
+        else if(ln==='instrText'){ var m=(c.textContent||'').match(/HYPERLINK\s+"([^"]+)"/); if(m) fieldHref=m[1]; }
+        else if(ln==='drawing'||ln==='pict'||ln==='object'){
+          var all=c.getElementsByTagName('*');
+          for(var k=0;k<all.length;k++){ var e=all[k];
+            var rid=(e.localName==='blip'&&e.getAttribute('r:embed'))||(e.localName==='imagedata'&&e.getAttribute('r:id'));
+            if(rid){ var u=await image(rid); if(u&&blk.imgs.indexOf(u)<0) blk.imgs.push(u); } }
+        }
+      }
+    }
+    await walk(p,null);
+    return blk;
+  }
+  /* split a paragraph at manual line breaks — "DISCUSSION<br>In this study…" */
+  function splitBr(b){
+    if(!b.runs.some(function(r){return r.br})) return [b];
+    var out=[], cur=Object.assign({},b,{runs:[]});
+    b.runs.forEach(function(r){ if(r.br){ out.push(cur); cur=Object.assign({},b,{runs:[],imgs:[]}); } else cur.runs.push(r); });
+    out.push(cur);
+    return out.filter(function(x){ return x.imgs.length||x.runs.some(function(r){return (r.t||'').trim()}); });
+  }
+  async function tableBlock(tbl,into){
+    var rows=xkids(tbl,'tr');
+    /* single-row tables are layout boxes in journal templates — read them as plain flow */
+    if(rows.length<=1){
+      for(var i=0;i<rows.length;i++){ var cells=xkids(rows[i],'tc');
+        for(var j=0;j<cells.length;j++) await body(cells[j],into); }
+      return; }
+    var out={kind:'table',rows:[]}, grid=[];
+    for(var r=0;r<rows.length;r++){
+      var row=[], cs=xkids(rows[r],'tc');
+      var hdr=xon(xkid(xkid(rows[r],'trPr'),'tblHeader'));
+      for(var c=0;c<cs.length;c++){
+        var tcPr=xkid(cs[c],'tcPr'), vm=xkid(tcPr,'vMerge'), span=+(xval(xkid(tcPr,'gridSpan'))||1);
+        var paras=[]; for(var q=xkid(cs[c],'p'),ps=xkids(cs[c],'p'),k=0;k<ps.length;k++) paras.push(await paraBlock(ps[k]));
+        var html=paras.map(function(pb){return runsToHtml(pb.runs)}).filter(Boolean).join('<br>');
+        var bold=paras.length&&paras.every(function(pb){ var t=pb.runs.filter(function(x){return (x.t||'').trim()}); return !t.length||t.every(function(x){return x.b}); });
+        var cont=vm&&xval(vm)!=='restart';
+        row.push({html:cont?'':html,text:cont?'':stripTags(html),head:!!hdr,bold:bold,span:span});
+      }
+      out.rows.push(row);
+    }
+    into.push(out);
+  }
+  async function body(el,into){
+    for(var c=el.firstElementChild;c;c=c.nextElementSibling){
+      if(c.localName==='p'){ splitBr(await paraBlock(c)).forEach(function(b){ into.push(b); }); }
+      else if(c.localName==='tbl') await tableBlock(c,into);
+      else if(c.localName==='sdt'){ await body(xkid(c,'sdtContent')||c,into); }
+    }
+  }
+  var blocks=[];
+  await body(xkid(doc.documentElement,'body'),blocks);
+  return blocks;
+}
+
+/* ── runs → clean inline HTML ── */
+function runsToHtml(runs){
+  var out='', open=null;
+  function key(r){ return [r.b?1:0,r.i?1:0,r.u?1:0,r.sup?1:0,r.sub?1:0].join(''); }
+  function wrap(t,r){
+    if(r.sup) t='<sup>'+t+'</sup>'; if(r.sub) t='<sub>'+t+'</sub>';
+    if(r.u&&!r.href) t='<u>'+t+'</u>'; if(r.i) t='<i>'+t+'</i>'; if(r.b) t='<b>'+t+'</b>';
+    if(r.href&&/^https?:/i.test(r.href)&&!/orcid\.org/i.test(r.href)) t='<a href="'+esc(r.href)+'">'+t+'</a>';
+    return t; }
+  var buf='', last=null;
+  (runs||[]).forEach(function(r){ if(r.br||r.t==null) return;
+    var t=esc(r.t.replace(/\u00a0/g,' ')), k=key(r)+'|'+(r.href||'');
+    if(last!==null&&k!==last){ out+=wrap(buf,open); buf=''; }
+    buf+=t; open=r; last=k; });
+  if(buf) out+=wrap(buf,open);
+  return out.replace(/\s{2,}/g,' ').replace(/<(b|i|u)>(\s*)<\/\1>/g,'$2').trim();
+}
+function blockText(b){ return (b.runs||[]).map(function(r){return r.br?' ':(r.t||'')}).join('').replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim(); }
+
+/* ── PDF → blocks (pdf.js, fetched from cdnjs the first time a PDF is read) ── */
+var PDFJS_V='3.11.174';
+function loadPdfJs(){
+  if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  return new Promise(function(res,rej){
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/'+PDFJS_V+'/pdf.min.js';
+    s.onload=function(){ window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/'+PDFJS_V+'/pdf.worker.min.js'; res(window.pdfjsLib); };
+    s.onerror=function(){ rej(new Error('The PDF reader could not be loaded — reading a PDF needs an internet connection.')); };
+    document.head.appendChild(s);
+  });
+}
+async function pdfBlocks(buf){
+  var lib=await loadPdfJs();
+  var pdf=await lib.getDocument({data:new Uint8Array(buf)}).promise;
+  var lines=[], links=[];
+  for(var pn=1;pn<=pdf.numPages;pn++){
+    var page=await pdf.getPage(pn), vp=page.getViewport({scale:1});
+    try{ await page.getOperatorList(); }catch(e){}
+    var tc=await page.getTextContent();
+    try{ (await page.getAnnotations()).forEach(function(a){ var u=a.url||a.unsafeUrl; if(u) links.push({page:pn,url:u,x:a.rect[0],y:a.rect[1]}); }); }catch(e){}
+    var fontInfo={};
+    function fi(fn){ if(fontInfo[fn]) return fontInfo[fn]; var nm='';
+      try{ var f=page.commonObjs.get(fn); nm=(f&&(f.name||f.loadedName))||''; }catch(e){}
+      var fam=((tc.styles||{})[fn]||{}).fontFamily||'';
+      return (fontInfo[fn]={b:/bold|black|heavy|semibold|demi/i.test(nm+' '+fam),i:/italic|oblique/i.test(nm)}); }
+    var cur=null;
+    tc.items.forEach(function(it){
+      if(it.str==null) return;
+      var sz=Math.hypot(it.transform[2],it.transform[3])||it.height||10, x=it.transform[4], y=it.transform[5];
+      if(!it.str.trim()&&!cur) return;
+      var f=fi(it.fontName);
+      if(cur){
+        var dy=y-cur.y;
+        var sameLine=Math.abs(dy)<cur.size*0.45 && x>=cur.right-cur.size*0.6 && x-cur.right<cur.size*6;
+        var raised=dy>0&&dy<cur.size*0.75&&sz<cur.size*0.82&&x>=cur.right-2&&x-cur.right<cur.size*2;
+        if(sameLine||raised){
+          var gap=x-cur.right, last=cur.runs[cur.runs.length-1];
+          if(gap>sz*0.18&&last&&!/\s$/.test(last.t)&&!/^\s/.test(it.str)) cur.runs.push({t:' ',b:last.b,i:last.i});
+          cur.runs.push({t:it.str,b:f.b,i:f.i,sup:raised||(sz<cur.size*0.82&&dy>sz*0.15),sz:sz,x:x,gapBefore:gap});
+          cur.right=Math.max(cur.right,x+(it.width||0)); return;
+        }
+        lines.push(cur); cur=null;
+      }
+      if(!it.str.trim()) return;
+      cur={page:pn,x:x,y:y,size:sz,right:x+(it.width||0),runs:[{t:it.str,b:f.b,i:f.i,sz:sz,x:x,gapBefore:0}],pw:vp.width,ph:vp.height};
+    });
+    if(cur) lines.push(cur);
+  }
+  lines.forEach(function(l){ l.text=blockText(l); });
+  /* running heads and feet repeat on every page — drop them */
+  var seen={};
+  lines.forEach(function(l){ var k=l.text.replace(/\d+/g,'#').toLowerCase()+'@'+Math.round(l.y/6); (seen[k]=seen[k]||{})[l.page]=1; });
+  lines=lines.filter(function(l){
+    var k=l.text.replace(/\d+/g,'#').toLowerCase()+'@'+Math.round(l.y/6);
+    if(Object.keys(seen[k]).length>=2&&pdf.numPages>1) return false;
+    if(/^(ISSN \(Online\)|Downloaded from gbmn|Copyright ©|Georgian Biomedical and Medical Nexus \(Former)/i.test(l.text)) return false;
+    return !/^\d{1,3}$/.test(l.text);
+  });
+  /* column right edges per page, for "short last line" paragraph ends */
+  var colR={};
+  lines.forEach(function(l){ var c=l.page+':'+(l.x<l.pw*0.45?'L':'R'); colR[c]=Math.max(colR[c]||0,l.right); });
+  function cells(l){ var o=[[]]; l.runs.forEach(function(r,i){ if(i&&r.gapBefore>l.size*1.6) o.push([]); o[o.length-1].push(r); });
+    return o.map(function(rs){ return blockText({runs:rs}); }).filter(Boolean); }
+  function allBold(l){ var t=l.runs.filter(function(r){return r.t.trim()&&!r.sup}); return t.length&&t.every(function(r){return r.b}); }
+  var blocks=[], cur=null, tableMode=null;
+  function flush(){ if(cur){ blocks.push(cur); cur=null; } }
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i], prev=lines[i-1];
+    /* table region after a "TABLE n." caption: rows of cells until prose resumes */
+    if(tableMode){
+      var cs=cells(l), nl=lines[i+1];
+      var isProse=function(x){ return x&&cells(x).length===1&&x.text.length>75&&!allBold(x); };
+      var prose=isProse(l)&&isProse(nl);
+      var stop=prose||/^(FIGURE|FIG\.|TABLE)\s*\d/i.test(l.text)||isHeadingText(l.text,allBold(l))||/^(Abbreviations?|Notes?|Explanations?|Source)\s*[:.]/i.test(l.text);
+      if(!stop){ tableMode.rows.push(cs.map(function(t){return {text:t,html:esc(t),bold:allBold(l)}})); continue; }
+      if(tableMode.rows.length) blocks.push(tableMode); tableMode=null;
+    }
+    var col=l.page+':'+(l.x<l.pw*0.45?'L':'R');
+    var newPara=!cur;
+    if(cur&&!newPara){
+      var pl=prev, gap=pl.page===l.page?(pl.y-l.y):0;
+      var sizeJump=Math.abs(l.size-cur.size)>0.9;
+      var boldJump=allBold(l)!==cur.bold;
+      var ended=/[.!?:]["'”’)\]]?$/.test(pl.text)&&(pl.right<(colR[pl.page+':'+(pl.x<pl.pw*0.45?'L':'R')]||0)-l.size*1.5);
+      var bigGap=gap>Math.max(pl.size,l.size)*1.75;
+      var indent=l.x>cur.left+l.size*0.9&&l.page===pl.page&&Math.abs(gap)<l.size*2&&col===cur.col;
+      newPara=sizeJump||boldJump||ended||bigGap||indent||isHeadingText(pl.text,cur.bold)||/^(FIGURE|FIG\.|TABLE)\s*\d+\s*[.:|]/i.test(l.text)||/^(FIGURE|TABLE)\s*\d/.test(l.text)||/^(Abbreviations?|Explanations?|Notes?|Keywords?|DOI)\s*[:.]/i.test(l.text);
+      /* a line that starts in lower case continues the sentence — across columns and pages too */
+      if(/^[a-z]/.test(l.text)&&!/[.!?:]$/.test(pl.text)&&!isHeadingText(pl.text,cur.bold)&&!sizeJump) newPara=false;
+    }
+    if(newPara){ flush(); cur={kind:'p',runs:[],imgs:[],size:l.size,bold:allBold(l),left:l.x,col:col,page:l.page,y:l.y,pdf:true}; }
+    else { var lr=cur.runs[cur.runs.length-1];
+      if(lr&&/-$/.test(lr.t)&&/^[a-z]/.test(l.text)) {} else cur.runs.push({t:' '}); }
+    l.runs.forEach(function(r){ cur.runs.push({t:r.t,b:r.b,i:r.i,sup:!!r.sup,sz:r.sz*2}); });
+    cur.left=Math.min(cur.left,l.x); cur.col=col;
+    if(/^TABLE\s*(\d+|[IVX]+)\s*[.:]/i.test(l.text)){ flush(); tableMode={kind:'table',rows:[],pdf:true}; }
+  }
+  flush(); if(tableMode&&tableMode.rows.length) blocks.push(tableMode);
+  blocks.forEach(function(b){ if(b.kind==='p'){ b.runs.forEach(function(r){ if(r.sz==null) r.sz=b.size*2; }); } });
+  blocks.orcidLinks=links.filter(function(a){return /orcid\.org/i.test(a.url)}).sort(function(a,b){return a.page-b.page||b.y-a.y||a.x-b.x}).map(function(a){return a.url});
+  blocks.pdfDoiLinks=links.filter(function(a){return /doi\.org\/10\./i.test(a.url)}).map(function(a){return a.url});
+  return blocks;
+}
+
+/* ── heuristics shared by both readers ── */
+var TYPE_RX=/^(original\s+(article|research|paper)|research\s+article|review(\s+article)?|systematic\s+review|meta-analysis|narrative\s+review|case\s+report|clinical\s+case(s)?|case\s+series|brief\s+report|short\s+communication|commentary|editorial|perspective|letter(\s+to\s+the\s+editor)?|special\s+report|opinion)$/i;
+function isHeadingText(t,bold){
+  t=(t||'').trim();
+  if(t.length<3||t.length>70) return false;
+  if(/^(FIGURE|FIG\.|TABLE|DOI|KEYWORDS?)\b/i.test(t)) return false;
+  if(/[.,;]$/.test(t)&&!/^[A-Z][A-Z ]+\.$/.test(t)) return false;
+  var letters=t.replace(/[^A-Za-zА-яა-ჰ]/g,'');
+  if(letters.length>=3&&t===t.toUpperCase()&&/[A-Z]/.test(t)) return true;
+  return !!(bold&&SECTION_KEY(t));
+}
+function SECTION_KEY(t){
+  var s=String(t||'').toLowerCase().replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim();
+  var map=[
+    [/^(introduction|background|introduction and background|background and objectives?|rationale)$/,'intro'],
+    [/^(materials? and methods?|methods?|methodology|patients and methods|subjects and methods|study design and methods|experimental|experimental section|research methods)$/,'methods'],
+    [/^(results?|findings|results and discussion)$/,'results'],
+    [/^(discussion|general discussion)$/,'discussion'],
+    [/^(conclusions?|concluding remarks|summary and conclusions?|conclusion and recommendations)$/,'conclusions'],
+    [/^(case (presentation|report|description|history|summary)s?|case)$/,'case'],
+    [/^(clinical reasoning|differential diagnosis)$/,'reasoning'],
+    [/^(evidence review|literature review|review of (the )?literature|review|systematic review|main body|review and discussion)$/,'evidence'],
+    [/^(clinical implications?|implications for practice)$/,'implications'],
+    [/^(notes? on patient consent|patient consent|consent)$/,'consent'],
+    [/^(acknowledge?ments?)$/,'ack'],
+    [/^(references?|bibliography|literature( cited)?|works cited)$/,'refs'],
+    [/^(conflicts? of interests?|competing interests?|declaration of (competing )?interests?|disclosures?)$/,'coi'],
+    [/^(funding|funding information|financial support|sources? of funding)$/,'funding'],
+    [/^(ethics|ethical (approval|considerations|statement|compliance)|ethics (approval|statement)|ethics approval and consent to participate|informed consent)$/,'ethics'],
+    [/^(declarations?|statements? and declarations?)$/,'decl'],
+    [/^(author(s'?)? contributions?|contributions?)$/,'contrib'],
+    [/^(corresponding author|correspondence)$/,'corr'],
+    [/^(author affiliations?|affiliations?)$/,'affil'],
+    [/^(abstract|summary)$/,'abstract'],
+    [/^(commentary|report|analysis)$/,'body']
+  ];
+  for(var i=0;i<map.length;i++) if(map[i][0].test(s)) return map[i][1];
+  return null;
+}
+function titleCase(t){
+  var small=/^(a|an|and|as|at|but|by|for|in|of|on|or|the|to|vs|via|with)$/i;
+  return String(t).toLowerCase().split(' ').map(function(w,i){ return (i&&small.test(w))?w:w.charAt(0).toUpperCase()+w.slice(1); }).join(' ');
+}
+function toIsoDate(s){
+  s=String(s||'').trim(); var m=s.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+  if(m) return m[1]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[3]).slice(-2);
+  m=s.match(/(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})/);
+  if(m) return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+  var d=new Date(s.replace(/(\d)(st|nd|rd|th)\b/,'$1'));
+  if(!isNaN(d)) return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  return '';
+}
+var DEGREE_RX=/^(MD|PhD|MSc|MS|MA|MPH|MBA|DSc|BSc|BS|BA|RN|DDS|DMD|PharmD|MBBS|FRCP|FACS|FACP|DrPH|ScD|MBChB)(\s*,?\s*(MD|PhD|MSc|MS|MA|MPH|MBA|DSc|BSc|BS|BA|RN|DDS|DMD|PharmD|MBBS|FRCP|FACS|FACP|DrPH|ScD|MBChB))*$/;
+
+/* "Murtazashvili M, Jokhadze M, et al. Title. Journal. 2024;12(3):45-56. doi:…" → reference object */
+function parseRefText(text){
+  var raw=String(text||'').replace(/\s+/g,' ').trim().replace(/^\[?\(?\d{1,3}[\].)]\s+/,'').replace(/^\d{1,3}\.\s*/,'');
+  var r={id:nid('ref'),raw:raw,type:'journal',authors:'',title:'',journalOrBook:'',year:'',volume:'',issue:'',pages:'',doi:'',url:''};
+  var dm=raw.match(/doi\.org\/(10\.\d{4,9}\/\S+?)[.,;]?(?=\s|$)/i)||raw.match(/\bdoi\s*[:.]?\s*(10\.\d{4,9}\/\S+?)[.,;]?(?=\s|$)/i)||raw.match(/\b(10\.\d{4,9}\/\S+?)[.,;]?(?=\s|$)/);
+  if(dm) r.doi=dm[1];
+  var um=raw.match(/https?:\/\/\S+[^\s.,;)]/); if(um&&!/doi\.org/i.test(um[0])) r.url=um[0];
+  var s=raw.replace(/\bet al\./g,'et al\u00a7.');
+  var jm=s.match(/\.\s*(\d{4})(?:\s+[A-Z][a-z]{2,8}\.?(?:\s+\d{1,2})?)?\s*;\s*([^(:;\s]*)\s*(?:\(([^)]+)\))?\s*(?::\s*([eE]?[\dA-Za-z]+(?:[–\-][eE]?[\dA-Za-z]+)?))?/);
+  if(jm){
+    var head=s.slice(0,jm.index).trim();
+    var parts=head.split(/\.\s+(?=\S)/);
+    if(parts.length>=3){
+      r.authors=parts[0].replace(/\u00a7/g,'.'); r.journalOrBook=parts[parts.length-1].replace(/\u00a7/g,'.');
+      r.title=parts.slice(1,-1).join('. ').replace(/\u00a7/g,'.');
+      r.year=jm[1]; r.volume=jm[2]||''; r.issue=jm[3]||''; r.pages=jm[4]||''; r.parsed=true;
+      return r;
+    }
+  }
+  var segs=s.split(/\.\s+(?=\S)/).map(function(x){return x.replace(/\u00a7/g,'.')});
+  r.authors=segs[0]||''; r.title=segs[1]||''; r.journalOrBook=(segs[2]||'').replace(/^(In:|Available at:?)\s*/i,'');
+  var ym=raw.match(/\b(19|20)\d{2}\b/); r.year=ym?ym[0]:'';
+  r.type=r.url&&!r.doi?'web':(/\b(ed\.|edition|press|publishers?|guide|handbook|law of|report)\b/i.test(raw)?'book':'journal');
+  return r;
+}
+
+/* ── blocks → manuscript ── */
+function manuscriptFromBlocks(blocks,srcName){
+  var m=blankManuscript(), warn=[], info={figures:0,tables:0,orcid:0};
+  m.role=M.role; m.checklistAgreed=false;
+  var orcidQueue=(blocks.orcidLinks||[]).slice();
+  blocks=blocks.slice();
+  /* drop caps sit in their own framed paragraph: glue them back on */
+  for(var i=0;i<blocks.length-1;i++){
+    var b=blocks[i];
+    if(b.kind==='p'&&b.frame&&blockText(b).length<=3&&blocks[i+1].kind==='p'){
+      var nx=blocks[i+1], first=nx.runs.filter(function(r){return r.t})[0], lead=blockText(b);
+      if(first){ var fr=Object.assign({},first,{t:lead,b:first.b,sup:false}); nx.runs.unshift(fr); }
+      blocks.splice(i,1); i--; }
+  }
+  blocks=blocks.filter(function(b){ return b.kind!=='p'||(b.imgs&&b.imgs.length)||blockText(b); });
+  if(blocks.some(function(b){return b.pdf})){
+    var bodyRef=Math.min.apply(null,blocks.filter(function(b){return b.kind==='p'&&blockText(b).length>200}).map(function(b){return b.size||99}).concat([99]));
+    for(var di=0;di<blocks.length;di++){ var db=blocks[di];
+      if(db.kind==='p'&&/^[A-Z]$/.test(blockText(db))&&db.size>bodyRef*1.6){
+        var pickIx=-1;
+        for(var dj=Math.max(0,di-12);dj<Math.min(blocks.length,di+12);dj++){ var tb=blocks[dj];
+          if(dj===di||tb.kind!=='p'||!/^[a-z]/.test(blockText(tb))) continue;
+          var pv0=blocks[dj-1], afterHead=pv0&&pv0.kind==='p'&&isHeadingText(blockText(pv0),true);
+          if(afterHead){ pickIx=dj; break; } if(pickIx<0&&dj>di) pickIx=dj; }
+        if(pickIx>=0){ blocks[pickIx].runs.unshift({t:blockText(db),b:false}); blocks.splice(di,1); di--; } } }
+  }
+  blocks.forEach(function(b){ if(b.kind==='p'){ b.text=blockText(b);
+    var t=b.runs.filter(function(r){return (r.t||'').trim()&&!r.sup});
+    b.allBold=!!t.length&&t.every(function(r){return r.b});
+    b.size=Math.max.apply(null,[0].concat(b.runs.filter(function(r){return (r.t||'').trim()}).map(function(r){return r.sz||0})));
+    b.hasSup=b.runs.some(function(r){return r.sup&&(r.t||'').trim()});
+    b.orcids=b.runs.filter(function(r){return r.href&&/orcid\.org/i.test(r.href)}).map(function(r){return r.href});
+  }});
+  /* body text size = the most common paragraph size */
+  var hist={}; blocks.forEach(function(b){ if(b.kind==='p'&&b.text.length>200){ var k=Math.round(b.size); hist[k]=(hist[k]||0)+b.text.length; } });
+  var bodySz=+Object.keys(hist).sort(function(a,b){return hist[b]-hist[a]})[0]||22;
+
+  /* 1. find where the article body starts: first main heading after an abstract/title */
+  var absIdx=-1, bodyIdx=-1;
+  for(i=0;i<blocks.length;i++){ var bb=blocks[i]; if(bb.kind!=='p') continue;
+    var k=SECTION_KEY(bb.text.replace(/[:.]$/,''));
+    if(absIdx<0&&k==='abstract'&&bb.text.length<20){ absIdx=i; continue; }
+    if(k&&k!=='abstract'&&(isHeadingText(bb.text,bb.allBold)||bb.hlevel===1)&&(k!=='body'||i>absIdx)){
+      if(i>2){ bodyIdx=i; break; } }
+  }
+  if(bodyIdx<0){ bodyIdx=blocks.length; warn.push('No section headings (Introduction, Methods, …) were recognised — the whole text was placed in the first section.'); }
+  var front=blocks.slice(0,bodyIdx), used={};
+
+  /* 2. front matter: masthead, type, history, DOI, keywords, running title */
+  var PERIOD_RX=/((?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\.?\s*[-–—]\s*(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\.?\s*\d{4})/i;
+  front.forEach(function(b,ix){ if(b.kind!=='p') return; var t=b.text;
+    if(t.length<40&&PERIOD_RX.test(t)&&!/received|accepted|published/i.test(t)){ m.preview.period=t.match(PERIOD_RX)[1].toUpperCase().replace(/\s*[-—–]\s*/,'–'); used[ix]=1; return; }
+    var vm=t.match(/\bVOL(?:UME)?\.?\s*(\d+)/i), im=t.match(/\b(?:ISSUE|NO\.?|NUMBER)\s*(\d+)/i);
+    if(vm&&t.length<120){ m.preview.vol=vm[1]; if(im) m.preview.iss=im[1];
+      var pm=t.match(/((?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\.?\s*[-–—]\s*(?:JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)[A-Z]*\.?\s*\d{4})/i);
+      if(pm) m.preview.period=pm[1].toUpperCase().replace(/\s*[-—]\s*/,'–');
+      var ym=t.match(/\b(20\d{2})\b/); if(ym) m.preview.year=ym[1];
+      used[ix]=1; return; }
+    if(TYPE_RX.test(t.replace(/[.:]$/,''))){ var tt=t.toLowerCase();
+      m.articleType=/review|meta/.test(tt)?'review-articles':(/case/.test(tt)?'clinical-cases':(/comment|editorial|perspective|letter|opinion/.test(tt)?'commentary':(/special report/.test(tt)?'other':'original-research')));
+      used[ix]=1; return; }
+    if(/\b(received|accepted|published|revised)\b\s*[:.]?\s*\S/i.test(t)&&t.length<220){
+      var rx=function(w){ var mm=t.match(new RegExp(w+'\\s*[:.]?\\s*([^·;|•]+?)(?=\\s*(?:[·;|•]|received|revised|accepted|published|online|$))','i')); return mm?toIsoDate(mm[1]):''; };
+      m.preview.received=rx('received')||m.preview.received; m.preview.accepted=rx('accepted')||m.preview.accepted;
+      var pd=rx('published(?: online)?'); if(pd){ m.preview.date=pd; m.preview.year=pd.slice(0,4); }
+      used[ix]=1; return; }
+    var dm=t.match(/^DOI\s*[:.]?\s*(?:https?:\/\/(?:dx\.)?doi\.org\/)?(10\.\S+?)\.?$/i)||(t.length<90&&t.match(/(?:doi\.org\/|doi[:.]?\s*)(10\.\d{4,9}\/\S+?)\.?$/i));
+    if(dm){ m.publicationInfo.doi=decodeURIComponent(dm[1]); used[ix]=1; return; }
+    var km=t.match(/^key\s*-?\s*words?\s*[:.—–-]\s*(.+)$/i);
+    if(km){ m.sections['Keywords']=normalizeKeywords(km[1].replace(/\.$/,'')); used[ix]=1; return; }
+    var rm=t.match(/^running\s+(?:title|head)\s*[:.]\s*(.+)$/i);
+    if(rm){ m.runningTitle=rm[1].replace(/\.$/,'').slice(0,50); used[ix]=1; return; }
+    var sm=t.match(/^(?:specialty|subject|section)\s*[:.]\s*(.+)$/i);
+    if(sm){ m.specialty=sm[1].replace(/\.$/,''); used[ix]=1; return; }
+  });
+
+  /* 3. title = the largest type before the abstract */
+  var limit=absIdx>0?absIdx:front.length, tIdx=-1, best=0;
+  for(i=0;i<limit;i++){ var fb=front[i]; if(fb.kind!=='p'||used[i]||fb.frame||fb.text.length<12||/@/.test(fb.text)) continue;
+    var score=(fb.hlevel===0?1000:0)+fb.size;
+    if(score>best+0.5){ best=score; tIdx=i; } }
+  if(tIdx>=0){ m.title=front[tIdx].text.replace(/\s+/g,' ').trim(); used[tIdx]=1; }
+  else warn.push('The title could not be identified.');
+
+  /* 4. authors = first paragraph after the title with names separated by commas */
+  var aIdx=-1;
+  for(i=tIdx+1;i<limit;i++){ var ab=front[i]; if(ab.kind!=='p'||used[i]) continue;
+    if(ab.hasSup||ab.orcids.length||(/,/.test(ab.text)&&ab.text.length<700&&!/\.\s/.test(ab.text.replace(/\b[A-Z]\./g,'')))){ aIdx=i; break; } }
+  var affNums={};
+  if(aIdx>=0){
+    used[aIdx]=1;
+    var authors=[], curA=null;
+    function newA(){ curA={name:'',nums:[],corr:false,orcid:'',deg:''}; authors.push(curA); }
+    newA();
+    front[aIdx].runs.forEach(function(r){ if(r.br||!r.t) return;
+      var isOrcid=r.href&&/orcid\.org/i.test(r.href);
+      if(isOrcid){ curA.orcid=r.href; return; }
+      if(r.sup){ var s=r.t;
+        (s.match(/\d+/g)||[]).forEach(function(n){ curA.nums.push(+n); });
+        if(/[*✉†]/.test(s)) curA.corr=true;
+        if(/[a-z]/i.test(s.replace(/\bi?d\b/ig,''))&&!/^\s*[a-z](,\s*[a-z])*\s*$/i.test(s)){} /* letters as markers are ignored */
+        return; }
+      var parts=r.t.split(/\s*,\s*|\s+and\s+|\s*&\s*|\s*;\s*/);
+      parts.forEach(function(pt,pi){
+        if(pi>0&&curA.name.trim()) newA();
+        var c=pt.replace(/\b(ID|iD)\b/g,' ');
+        var dn=c.match(/(\d+(?:\s*,\s*\d+)*)\s*$/); if(dn&&/[A-Za-z]/.test(c)){ dn[1].split(/\s*,\s*/).forEach(function(n){curA.nums.push(+n)}); c=c.slice(0,dn.index); }
+        if(/[*✉]/.test(c)){ curA.corr=true; c=c.replace(/[*✉†]/g,''); }
+        if(pi>0&&DEGREE_RX.test(c.trim())&&authors.length>1&&!curA.name.trim()){ authors.pop(); curA=authors[authors.length-1]; curA.deg+=(curA.deg?', ':'')+c.trim(); return; }
+        curA.name+=c;
+      });
+    });
+    authors=authors.filter(function(a){ return a.name.replace(/[^A-Za-zÀ-ɏА-яა-ჰ]/g,'').length>1; });
+    /* PDF: ORCID links come as page annotations, in reading order */
+    if(orcidQueue.length===authors.length) authors.forEach(function(a,ix2){ if(!a.orcid) a.orcid=orcidQueue[ix2]; });
+    else if(orcidQueue.length) warn.push(orcidQueue.length+' ORCID links were found for '+authors.length+' authors — check the ORCID iDs in the Authors step.');
+    m.authors=authors.map(function(a){
+      var nm=a.name.replace(/\s+/g,' ').trim().replace(/^[,\s]+|[,\s]+$/g,'');
+      var tk=nm.split(' ');
+      var first=tk.length>1?tk[0]:'', last=tk.length>1?tk[tk.length-1]:tk[0], mid=tk.slice(1,-1).join(' ');
+      var oc=String(a.orcid||'').replace(/^https?:\/\/(www\.)?orcid\.org\//i,'').replace(/\/$/,'');
+      if(oc) info.orcid++;
+      return {id:nid('auth'),firstName:first,middleInitial:mid||undefined,lastName:last,email:'',phone:'',orcidId:oc,
+        specialty:'',country:'',city:'',institution:'',department:'',affiliation:'',affiliations:[],academicTitle:a.deg,
+        contributionRole:'',contributionTags:[],isCorresponding:a.corr,_nums:a.nums};
+    });
+  } else warn.push('The author line could not be identified — add the authors in step 5.');
+
+  /* 5. affiliations: numbered lines between the authors and the abstract */
+  var affs={}, affOrder=[];
+  for(i=(aIdx>=0?aIdx:tIdx)+1;i<limit;i++){ var fb2=front[i]; if(fb2.kind!=='p'||used[i]) continue;
+    var at=fb2.text, firstRun=fb2.runs.filter(function(r){return (r.t||'').trim()})[0]||{};
+    var am=at.match(/^(\d{1,2}|[a-z])\s*[.)]?\s*(\S.+)$/);
+    if(am&&(firstRun.sup||/^\d{1,2}\s*[A-Z]/.test(at)||/^[a-z]\s+[A-Z]/.test(at))){
+      var key=/\d/.test(am[1])?+am[1]:am[1]; affs[key]=am[2].replace(/\.$/,'').trim(); affOrder.push(key); used[i]=1; continue; }
+    if(/@/.test(at)){ var em=at.match(/[\w.+-]+@[\w-]+\.[\w.-]+/); if(em){ m._email=em[0].replace(/\.$/,''); used[i]=1; } continue; }
+    if(!affOrder.length&&m.authors.length&&/(universit|institut|hospital|department|faculty|clinic|center|centre|school|college|laborator)/i.test(at)&&at.length<300){
+      affs[1]=at.replace(/\.$/,''); affOrder.push(1); used[i]=1; }
+  }
+  m.authors.forEach(function(a){
+    var list=(a._nums.length?a._nums:(affOrder.length===1?[affOrder[0]]:[])).map(function(n){return affs[n]}).filter(Boolean);
+    a.affiliations=list; a.affiliation=list[0]||'';
+    var bits=(list[0]||'').split(/\s*,\s*/);
+    if(bits.length>=3){ a.country=bits[bits.length-1]; a.city=bits[bits.length-2]; a.institution=bits[bits.length-3]; a.department=bits.slice(0,-3).join(', '); }
+    delete a._nums; });
+  if(m.authors.length&&!m.authors.some(function(a){return a.isCorresponding})) m.authors[0].isCorresponding=false;
+
+  /* 6. abstract */
+  var absParts=[];
+  if(absIdx>=0){
+    for(i=absIdx+1;i<front.length;i++){ var xb=front[i]; if(xb.kind!=='p'||used[i]) continue;
+      if(/^key\s*-?\s*words?/i.test(xb.text)||/^DOI\b/i.test(xb.text)) break;
+      absParts.push('<p>'+runsToHtml(xb.runs)+'</p>'); used[i]=1; }
+  } else {
+    /* no "ABSTRACT" heading: the longest unused paragraph block before the body */
+    var cand=[]; for(i=0;i<limit;i++){ var cb=front[i]; if(cb.kind==='p'&&!used[i]&&cb.text.length>300) cand.push(i); }
+    cand.forEach(function(ix3){ absParts.push('<p>'+runsToHtml(front[ix3].runs)+'</p>'); used[ix3]=1; });
+  }
+  m.abstractContents={text:absParts.join('')};
+  if(!absParts.length) warn.push('No abstract was found.');
+
+  /* 7. body + back matter */
+  var names=(ARTICLE_TYPES[m.articleType]||ARTICLE_TYPES['original-research']).requiredSections.filter(function(s){return s!=='Keywords'});
+  var KEY2SEC={intro:['Introduction','Background'],methods:['Materials and Methods','Methods','Report'],results:['Results','Evidence Review','Analysis'],
+    discussion:['Discussion'],conclusions:['Conclusions'],case:['Case Presentation'],reasoning:['Clinical Reasoning'],evidence:['Evidence Review'],
+    implications:['Clinical Implications'],consent:['Notes on Patient Consent'],ack:['Acknowledgments'],body:['Commentary','Report']};
+  /* infer the type from the headings when the masthead did not say */
+  var heads=blocks.slice(bodyIdx).filter(function(b){return b.kind==='p'&&isHeadingText(b.text,b.allBold)}).map(function(b){return SECTION_KEY(b.text)});
+  if(heads.indexOf('evidence')>=0&&m.articleType==='original-research'){ m.articleType='review-articles'; names=ARTICLE_TYPES['review-articles'].requiredSections.filter(function(s){return s!=='Keywords'}); }
+  if(heads.indexOf('case')>=0&&m.articleType!=='clinical-cases'){ m.articleType='clinical-cases'; names=ARTICLE_TYPES['clinical-cases'].requiredSections.filter(function(s){return s!=='Keywords'}); }
+  var html={}, cur=null, mode='sec', pendingImgs=[], lastTable=null, figN=0, tabN=0, refs=[], back={coi:[],funding:[],ethics:[],contrib:[],corr:[],decl:[]};
+  var listBuf=null, refTexts=[];
+  function secFor(key,label){
+    var opts=KEY2SEC[key]||[], hit=opts.filter(function(o){return names.indexOf(o)>=0})[0];
+    if(!hit) return null;
+    var pretty=titleCase(label.replace(/[:.]$/,'').trim());
+    if(pretty.toLowerCase()!==hit.toLowerCase()) m.sectionTitles[hit]=pretty;
+    return hit; }
+  function push(h){ if(!cur) cur=names[0]; if(listBuf&&h.indexOf('<li>')!==0){ html[cur]=(html[cur]||'')+'</'+listBuf+'>'; listBuf=null; } html[cur]=(html[cur]||'')+h; }
+  function figHtml(src,title,legend){ figN++; info.figures++;
+    return '<figure class="gbmn-inline-media gbmn-inline-media-figure gbmn-media-two-column" data-layout="two-column" contenteditable="false" draggable="true" data-media-id="'+nid('md')+'">'+
+      '<figcaption><strong>'+esc(title)+'</strong>'+(legend?' — '+esc(legend):'')+'</figcaption>'+
+      (src?'<img src="'+src+'" alt="'+esc(title)+'">':'')+'</figure>'; }
+  function tableHtml(tb,title,legend,id){
+    var rows=tb.rows, head=rows.length>1&&rows[0].every(function(c){return c.head||c.bold})?1:0;
+    var wide=rows.reduce(function(n,r){return Math.max(n,r.reduce(function(k,c){return k+(c.span||1)},0))},0)>4;
+    var body=rows.map(function(r,ri){ return '<tr>'+r.map(function(c){ var tg=ri<head?'th':'td';
+      return '<'+tg+((c.span||1)>1?' colspan="'+c.span+'"':'')+'>'+(c.html||esc(c.text||''))+'</'+tg+'>'; }).join('')+'</tr>'; }).join('');
+    var lay=wide?'one-column':'two-column';
+    return '<figure class="gbmn-inline-media gbmn-inline-media-table gbmn-media-'+lay+'" data-layout="'+lay+'" contenteditable="false" draggable="true" data-media-id="'+(id||nid('md'))+'">'+
+      '<figcaption><strong>'+esc(title)+'</strong>'+(legend?' — '+esc(legend):'')+'</figcaption><table>'+body+'</table></figure>'; }
+  function flushImgs(){ pendingImgs.forEach(function(u){ push(figHtml(u,'Figure','')); }); pendingImgs=[]; }
+  var rest=blocks.slice(bodyIdx);
+  for(i=0;i<rest.length;i++){
+    var b2=rest[i];
+    if(b2.kind==='table'){
+      if(mode!=='sec'){ continue; }
+      var capB=rest[i-1]&&rest[i-1].kind==='p'&&/^TABLE\s*(\d+|[IVX]+)/i.test(rest[i-1].text)?rest[i-1]:null;
+      if(!capB&&lastTable&&lastTable.open){ /* continuation of the previous table */
+        lastTable.tb.rows=lastTable.tb.rows.concat(b2.rows); html[lastTable.sec]=html[lastTable.sec].replace(lastTable.markup,(lastTable.markup=tableHtml(lastTable.tb,lastTable.title,lastTable.legend,lastTable.id))); continue; }
+      var t2=capB?capB.text.replace(/^TABLE\s*(\d+|[IVX]+)\s*[.:]?\s*/i,'').trim():'Table';
+      var num=capB?(capB.text.match(/^TABLE\s*(\d+|[IVX]+)/i)||[])[1]:'';
+      if(lastTable&&num&&lastTable.num===num){ /* "TABLE 2 (continued)" */
+        var extra=b2.rows.slice(b2.rows.length>1&&b2.rows[0].every(function(c){return c.head||c.bold})&&lastTable.tb.rows[0]&&JSON.stringify(b2.rows[0].map(function(c){return c.text}))===JSON.stringify(lastTable.tb.rows[0].map(function(c){return c.text}))?1:0);
+        lastTable.tb.rows=lastTable.tb.rows.concat(extra);
+        html[lastTable.sec]=html[lastTable.sec].replace(lastTable.markup,(lastTable.markup=tableHtml(lastTable.tb,lastTable.title,lastTable.legend,lastTable.id))); continue; }
+      var leg=[]; while(rest[i+1]&&rest[i+1].kind==='p'&&/^(Abbreviations?|Notes?|Explanations?|Source|Legend|\*|†|‡|a\s)[:.\s]/i.test(rest[i+1].text)){ leg.push(rest[i+1].text); i++; }
+      tabN++; info.tables++;
+      var id=nid('md'), mk=tableHtml(b2,t2,leg.join(' '),id);
+      flushImgs(); push(mk);
+      lastTable={sec:cur,tb:b2,title:t2,legend:leg.join(' '),markup:mk,num:num,id:id,open:false};
+      continue;
+    }
+    var t=b2.text||'';
+    if(!t&&b2.imgs&&b2.imgs.length){ pendingImgs=pendingImgs.concat(b2.imgs); continue; }
+    if(!t) continue;
+    /* headings */
+    var key=SECTION_KEY(t.replace(/[:.]$/,''));
+    var heading=(isHeadingText(t,b2.allBold)||b2.hlevel===1)&&(!!key||!b2.size||b2.size>=bodySz-3);
+    if(heading&&key){
+      if(listBuf&&cur){ html[cur]+='</'+listBuf+'>'; listBuf=null; }
+      flushImgs();
+      if(back[key]){ mode=key; continue; }
+      if(key==='refs'){ mode='refs'; continue; }
+      if(key==='affil'){ mode='skip'; continue; }
+      var sec=secFor(key,t);
+      if(sec){ cur=sec; mode='sec'; continue; }
+    }
+    if(heading&&!key&&mode!=='sec'&&mode!=='refs'){ mode='skip'; continue; }
+    if(heading&&!key&&mode==='sec'&&t===t.toUpperCase()&&t.length<50){
+      var ci=cur?names.indexOf(cur):-1, nxt=null;
+      for(var ni=ci+1;ni<names.length;ni++){ if(!html[names[ni]]&&names[ni]!=='Acknowledgments'&&names[ni]!=='Notes on Patient Consent'){ nxt=names[ni]; break; } }
+      if(nxt){ if(listBuf&&cur){ html[cur]+='</'+listBuf+'>'; listBuf=null; } flushImgs();
+        cur=nxt; m.sectionTitles[nxt]=titleCase(t); continue; }
+    }
+    if(mode==='refs'){ refTexts.push(t); continue; }
+    if(back[mode]){ back[mode].push(t); continue; }
+    if(mode==='skip') continue;
+    /* figures */
+    var fm=t.match(/^(FIGURE|FIG\.?)\s*(\d+)\s*[.:|—–]\s*(.*)$/i)||t.match(/^(FIGURE)\s*(\d+)\s+(.*)$/);
+    if(fm){
+      var imgs=(b2.imgs||[]).concat(pendingImgs); pendingImgs=[];
+      if(!imgs.length&&rest[i+1]&&rest[i+1].kind==='p'&&!blockText(rest[i+1])&&rest[i+1].imgs&&rest[i+1].imgs.length){ imgs=rest[i+1].imgs; i++; }
+      var lg=[]; while(rest[i+1]&&rest[i+1].kind==='p'&&/^(Explanations?|Abbreviations?|Notes?|Legend|Source|Key)\s*[:.]/i.test(blockText(rest[i+1]))){ lg.push(blockText(rest[i+1])); i++; }
+      if(!imgs.length) warn.push('Figure '+fm[2]+': the image was not found in the file — insert it in the editor ('+(b2.pdf?'PDF import does not carry figures':'it may be a linked or EMF/TIFF picture')+').');
+      push(figHtml(imgs[0]||'',fm[3]||('Figure '+fm[2]),lg.join(' ')));
+      for(var q=1;q<imgs.length;q++) push(figHtml(imgs[q],(fm[3]||'Figure')+' ('+(q+1)+')',''));
+      continue;
+    }
+    if(/^TABLE\s*(\d+|[IVX]+)\s*[.:]/i.test(t)&&rest[i+1]&&rest[i+1].kind==='table') continue;   /* caption, picked up by the table */
+    if(/^TABLE\s*(\d+|[IVX]+)\s*[.:]/i.test(t)&&b2.pdf){ warn.push('Table '+t.match(/\d+|[IVX]+/)[0]+' could not be rebuilt from the PDF — check it in the editor.'); }
+    if(b2.imgs&&b2.imgs.length) pendingImgs=pendingImgs.concat(b2.imgs);
+    if(lastTable&&/^(Abbreviations?|Notes?)\s*[:.]/i.test(t)&&lastTable.sec===cur&&html[cur].slice(-lastTable.markup.length)===lastTable.markup){
+      lastTable.legend=(lastTable.legend?lastTable.legend+' ':'')+t;
+      html[cur]=html[cur].replace(lastTable.markup,(lastTable.markup=tableHtml(lastTable.tb,lastTable.title,lastTable.legend,lastTable.id))); continue; }
+    flushImgs();
+    /* sub-headings: a short, wholly bold line */
+    if((b2.allBold&&t.length<160&&!/[.:]$/.test(t)&&!b2.hasSup)||(b2.hlevel&&b2.hlevel>1)||(heading&&!key)){
+      push('<h3>'+esc(heading&&!key&&t===t.toUpperCase()?titleCase(t):t)+'</h3>'); continue; }
+    if(b2.numbered){
+      var tag=b2.ordered?'ol':'ul';
+      if(listBuf!==tag){ if(listBuf) push('</'+listBuf+'>'); push('<'+tag+'>'); listBuf=tag; }
+      html[cur]+='<li>'+runsToHtml(b2.runs)+'</li>'; continue; }
+    push('<p>'+runsToHtml(b2.runs)+'</p>');
+  }
+  if(listBuf&&cur) html[cur]+='</'+listBuf+'>';
+  flushImgs();
+  Object.keys(html).forEach(function(k){ m.sections[k]=html[k]; });
+  var joined=refTexts.join(' ').replace(/\s+/g,' ').trim();
+  if(/^\[?1[.\])]\s/.test(joined)){
+    /* "1. … 2. … 3. …" — find each number in sequence, so a number inside a reference cannot fool it */
+    var cuts=[], from=0;
+    for(var rn=1;rn<500;rn++){ var rr=new RegExp('(^|\\s)\\[?'+rn+'[.\\])]\\s+(?=\\S)','g'); rr.lastIndex=from; var mm=rr.exec(joined);
+      if(!mm) break; cuts.push(mm.index+mm[1].length); from=mm.index+mm[0].length; }
+    cuts.forEach(function(c,ix){ var piece=joined.slice(c,cuts[ix+1]==null?joined.length:cuts[ix+1]).trim(); if(piece.length>8) refs.push(parseRefText(piece)); });
+  } else refTexts.forEach(function(t){ if(t.length>15) refs.push(parseRefText(t)); });
+  m.references=refs;
+  /* back matter → declarations */
+  var coi=back.coi.join(' ');
+  back.decl.forEach(function(t){ var lm=t.match(/^([^.:]{3,40})[.:]\s*(.+)$/); if(!lm) return; var k2=SECTION_KEY(lm[1]);
+    if(k2&&back[k2]&&k2!=='decl') back[k2].push(lm[2]); });
+  coi=back.coi.join(' ');
+  if(coi){ m.conflictDisclosure.hasConflict=!/\b(no|none|not have any|nothing to disclose|declare(s)? no)\b/i.test(coi); m.conflictDisclosure.conflictDetails=coi; }
+  if(back.funding.length){ var fu=back.funding.join(' ');
+    if(!/\b(no (external |specific )?funding|not receive any|received no)\b/i.test(fu)) m.fundingDetails.explanation=fu; }
+  if(back.ethics.length){ var et=back.ethics.join(' ');
+    var irb=et.match(/(?:approval|protocol|reference)\s*(?:no\.?|number|#)?\s*[:.]?\s*([A-Z0-9][\w\/-]{2,})/i); if(irb) m.ethics.irbApprovalNumber=irb[1];
+    var inst=et.match(/(?:committee|board|council)\s+of\s+(?:the\s+)?([^.,;]+)/i); if(inst) m.ethics.irbInstitution=inst[1].trim(); }
+  var corrTxt=back.corr.join(' ')+' '+(m._email||'');
+  var email=(corrTxt.match(/[\w.+-]+@[\w-]+\.[\w.-]+/)||[])[0];
+  if(!email){ var all=blocks.filter(function(b){return b.kind==='p'}).map(function(b){return b.text}).join(' '); email=(all.match(/[\w.+-]+@[\w-]+\.[\w.-]+/)||[])[0]; }
+  if(email){ email=email.replace(/\.$/,'');
+    var ca=m.authors.filter(function(a){return a.isCorresponding})[0];
+    if(!ca&&back.corr.length){ ca=m.authors.filter(function(a){return back.corr.join(' ').indexOf(a.lastName)>=0})[0]; if(ca) ca.isCorresponding=true; }
+    if(ca) ca.email=email; }
+  delete m._email;
+  /* report */
+  names.forEach(function(s){ if(s!=='Acknowledgments'&&s!=='Notes on Patient Consent'&&!stripTags(m.sections[s]||'')) warn.push('Section "'+s+'" is empty after import.'); });
+  if(!refs.length) warn.push('No reference list was found.');
+  var weak=refs.filter(function(r){return !r.parsed}).length;
+  if(weak) warn.push(weak+' reference'+(weak===1?' is':'s are')+' not in journal-article form (books, laws, web pages). They are kept exactly as written.');
+  if(m.authors.some(function(a){return !a.orcidId})) warn.push('Some authors have no ORCID iD — PMC and the journal require one per author.');
+  if(!m.specialty) warn.push('Primary specialty is not in the file — fill it in step 4.');
+  if(!m.runningTitle) warn.push('Running title is not in the file — fill it in step 4 (max 50 characters).');
+  m.status='Draft';
+  return {m:m,warn:warn,info:info,src:srcName};
+}
+
+/* ── UI: pick a file, read it, show what was found, apply ── */
+async function importManuscriptFile(f){
+  if(!f) return;
+  var isPdf=/\.pdf$/i.test(f.name)||f.type==='application/pdf', isDocx=/\.docx$/i.test(f.name);
+  if(!isPdf&&!isDocx){ notify('Choose a Word (.docx) or PDF file. Old .doc files must be saved as .docx first.','error'); return; }
+  notify('Reading '+f.name+'…','info');
+  try{
+    var buf=await f.arrayBuffer();
+    var blocks=isPdf? await pdfBlocks(buf) : await docxBlocks(buf);
+    var res=manuscriptFromBlocks(blocks,f.name);
+    if(isPdf) res.warn.unshift('PDF import reads the text only: figures must be re-inserted, and tables should be checked. A Word (.docx) file gives a complete import.');
+    showImportReview(res);
+  }catch(err){ console.error(err); notify('Could not read the file: '+(err&&err.message||err),'error'); }
+}
+function showImportReview(res){
+  var m=res.m, cfgT=ARTICLE_TYPES[m.articleType];
+  var secs=cfgT.requiredSections.filter(function(s){return s!=='Keywords'&&stripTags(m.sections[s]||'')}).length;
+  var words=stripTags(m.abstractContents.text||''); words=words?words.split(/\s+/).length:0;
+  var hasData=!!(M.title||M.authors.length||Object.keys(M.sections).some(function(k){return stripTags(M.sections[k]||'')}));
+  $('#modalRoot').innerHTML='<div class="modal"><div class="sheet">'+
+    '<div class="mh"><div><h3>Import from '+esc(res.src)+'</h3><p>Review what was found. Everything stays editable in the steps afterwards.</p></div><button class="x" data-c>&times;</button></div>'+
+    '<div class="mb">'+
+      '<div class="imp-t">'+esc(m.title||'(no title found)')+'</div>'+
+      '<div class="note">'+esc(cfgT.name)+(m.publicationInfo.doi?' · DOI '+esc(m.publicationInfo.doi):'')+
+        (m.preview.vol?' · Vol '+esc(m.preview.vol)+(m.preview.iss?', Issue '+esc(m.preview.iss):''):'')+'</div>'+
+      '<div class="imp-sum">'+
+        [['Authors',m.authors.length],['ORCID iDs',res.info.orcid],['Affiliations',affilListOf(m).length],['Abstract words',words],
+         ['Keywords',(m.sections['Keywords']||'').split(';').filter(function(x){return x.trim()}).length],
+         ['Sections',secs+' / '+cfgT.requiredSections.filter(function(s){return s!=='Keywords'}).length],
+         ['Figures',res.info.figures],['Tables',res.info.tables],['References',m.references.length]]
+        .map(function(x){return '<div><b>'+x[1]+'</b><span>'+x[0]+'</span></div>'}).join('')+'</div>'+
+      (m.authors.length?'<div class="note" style="line-height:1.6">'+m.authors.map(function(a){
+        return esc([a.firstName,a.middleInitial,a.lastName].filter(Boolean).join(' '))+(a.isCorresponding?'*':'')+(a.orcidId?' <span style="color:#6a9a1f">iD</span>':''); }).join(', ')+'</div>':'')+
+      (res.warn.length?'<div class="box" style="background:var(--amber50);border-color:var(--amber200)"><b style="font-size:12px;color:var(--amber900)">Check after import</b><ul class="imp-warn">'+
+        res.warn.map(function(w){return '<li>'+esc(w)+'</li>'}).join('')+'</ul></div>':'')+
+      (hasData?'<div class="note"><b>This replaces the manuscript that is open now.</b> Download it as JSON first if you want to keep it.</div>':'')+
+    '</div>'+
+    '<div class="mf">'+(hasData?'<button class="btn" id="impBackup">Download current as JSON</button>':'')+
+      '<button class="btn" data-c>Cancel</button><button class="btn t" id="impGo">Use this manuscript</button></div>'+
+  '</div></div>';
+  $$('#modalRoot [data-c]').forEach(function(b){ b.onclick=function(){ $('#modalRoot').innerHTML=''; }; });
+  if($('#impBackup')) $('#impBackup').onclick=function(){ exportJson(); };
+  $('#impGo').onclick=function(){
+    var role=M.role; M=res.m; M.role=role;
+    resetAF(); activeSection=''; activeStep='title-meta';
+    $('#modalRoot').innerHTML=''; save(); renderAll();
+    notify('Manuscript imported — check each step, then export.','success');
+  };
+}
+function affilListOf(m){ var o=[]; m.authors.forEach(function(a){ (a.affiliations||[]).forEach(function(x){ if(x&&o.indexOf(x)<0) o.push(x); }); }); return o; }
+
+/* ── New article: clear everything ── */
+function confirmNewArticle(){
+  $('#modalRoot').innerHTML='<div class="modal"><div class="sheet" style="max-width:480px">'+
+    '<div class="mh"><div><h3>Start a new article?</h3><p>Every field, author, figure and reference of the open manuscript is cleared. This cannot be undone.</p></div><button class="x" data-c>&times;</button></div>'+
+    '<div class="mb"><div class="note">Tip: download the current manuscript as JSON first — it can be reopened later with <b>Open a submission file</b> (Editor role).</div></div>'+
+    '<div class="mf"><button class="btn" id="newBackup">Download JSON</button><button class="btn" data-c>Cancel</button><button class="btn rd" id="newGo">Clear and start new</button></div>'+
+  '</div></div>';
+  $$('#modalRoot [data-c]').forEach(function(b){ b.onclick=function(){ $('#modalRoot').innerHTML=''; }; });
+  $('#newBackup').onclick=function(){ exportJson(); };
+  $('#newGo').onclick=function(){
+    var role=M.role; M=blankManuscript(); M.role=role;
+    resetAF(); CF={type:'journal',authors:'',title:'',src:'',year:'',volume:'',issue:'',pages:'',doi:'',url:''};
+    activeSection=''; activeStep='getting-started'; IMG_READY={};
+    $('#modalRoot').innerHTML=''; save(); renderAll();
+    notify('Cleared — ready for a new article.','success');
+  };
+}
+$('#btnNew').addEventListener('click',confirmNewArticle);
+$('#btnImport').addEventListener('click',function(){ $('#importFile').value=''; $('#importFile').click(); });
+$('#importFile').addEventListener('change',function(e){ importManuscriptFile(e.target.files[0]); });
+/* drop a .docx or .pdf anywhere on the window */
+document.addEventListener('dragover',function(e){ if(e.dataTransfer&&Array.prototype.indexOf.call(e.dataTransfer.types||[],'Files')>=0) e.preventDefault(); });
+document.addEventListener('drop',function(e){
+  if(e.target.closest&&e.target.closest('[contenteditable="true"],.rte,.modal')) return;
+  var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+  if(f&&/\.(docx|pdf)$/i.test(f.name)){ e.preventDefault(); importManuscriptFile(f); }
+});
 
 /* ══ document builders — measured against the printed article ══ */
 function affilList(){
@@ -2395,10 +3355,11 @@ function authorsHtml(){
     var nums=(a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation])
       .map(function(x){var k=affs.indexOf(x);return k<0?'':String(k+1)}).filter(Boolean);
     var sup=nums.join(',');
-    if(a.orcidId) sup+=(sup?',':'')+'<a href="'+orcidUrl(a.orcidId)+'" target="_blank" rel="noopener" title="ORCID iD">ID</a>';
     if(a.isCorresponding) sup+=(sup?',':'')+'*';
     var nm=[a.firstName,a.middleInitial,a.lastName].filter(Boolean).join(' ');
-    return esc(nm)+(sup?'<sup>'+sup+'</sup>':'');
+    var oc=a.orcidId?'<a class="orcid" href="'+orcidUrl(a.orcidId)+'" target="_blank" rel="noopener" title="ORCID iD '+esc(a.orcidId)+'">'+
+      '<img src="'+ORCID_ICON+'" alt="ORCID iD"></a>':'';
+    return '<span class="au">'+esc(nm)+(sup?'<sup>'+sup+'</sup>':'')+oc+'</span>';
   }).join(', ');
 }
 function doiHtml(){
@@ -2494,7 +3455,7 @@ function bodyNodes(){
   sectionNames().filter(function(s){return s!=='Acknowledgments'}).forEach(function(name){
     var d=secDom(name), kids=Array.prototype.slice.call(d.children);
     if(!kids.length) return;
-    heading(name);
+    heading(secTitle(name));
     kids.forEach(function(k,i){ var n=blockNode(k,kids[i-1],name,i); if(n) out.push(n); });
   });
   var affs=affilList();
@@ -2513,7 +3474,7 @@ function bodyNodes(){
     out.push(c);
   }
   if((M.sections['Acknowledgments']||'').trim()){
-    heading('Acknowledgements');
+    heading(secTitle('Acknowledgments')==='Acknowledgments'?'Acknowledgements':secTitle('Acknowledgments'));
     var ad=secDom('Acknowledgments'), ak=Array.prototype.slice.call(ad.children);
     ak.forEach(function(k,i){ var n=blockNode(k,ak[i-1],'Acknowledgments',i); if(n) out.push(n); });
   }
@@ -2753,7 +3714,7 @@ function dl(name,blob){ var u=URL.createObjectURL(blob), a=document.createElemen
 function exportJson(){
   var meta={ id:M.id, status:M.status, role:M.role, articleType:M.articleType, title:M.title, runningTitle:M.runningTitle,
     specialty:M.specialty, publicationInfo:M.publicationInfo, preview:M.preview, checklistAgreed:M.checklistAgreed,
-    authors:M.authors, abstractContents:M.abstractContents, sections:M.sections, references:M.references,
+    authors:M.authors, abstractContents:M.abstractContents, sections:M.sections, sectionTitles:M.sectionTitles||{}, references:M.references,
     supplementaryFiles:M.supplementaryFiles, ethics:M.ethics,
     conflictDisclosure:{hasConflict:M.conflictDisclosure.hasConflict,conflictDetails:M.conflictDisclosure.conflictDetails,signedCoiFormName:M.conflictDisclosure.signedCoiFormName},
     fundingDetails:M.fundingDetails, editLog:M.editLog||[], wordCount:wordCount(), updatedAt:M.updatedAt };

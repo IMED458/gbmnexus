@@ -38,6 +38,18 @@ Served from GitHub Pages: open `index.html`.
 Each step carries its own completion state (complete / warning / empty) and
 feeds an overall readiness meter.
 
+**Import from Word or PDF** — *Import Word / PDF* in the sidebar (or drop a file on
+the window) reads a finished manuscript in the browser and fills every step: masthead
+(volume, issue, period), article type, title, authors with affiliation numbers, ORCID
+links and the corresponding-author mark, affiliations, received/accepted/published
+dates, DOI, structured abstract, keywords, body sections with their own headings,
+sub-headings, figures (images included), tables (merged cells, continued tables
+rejoined, notes kept), and the reference list. A review dialog lists what was found
+and what to check. Word (.docx) is read completely; PDF text is read with pdf.js
+(loaded from cdnjs on first use), figures must then be re-inserted.
+
+**New article** clears the open manuscript (with a JSON backup offered first).
+
 **Live document preview** — real A4 pages, laid out to the measurements of a
 published GBMN article and printed from the same DOM, so the PDF is exactly
 what the proof shows:
@@ -81,7 +93,7 @@ carries the editing capability, not the authentication.)
 | **PDF** | Print-to-PDF straight from the browser, in the paginated A4 journal layout |
 | **Word (.docx)** | Real OOXML carrying the same layout and the same measurements: running header with the masthead and issue line, single-column front matter, then a continuous two-column section (706 twips gutter) for the body, running footer, A4 with 794-twip side margins. Built by a built-in ZIP writer; no library, no server |
 | **HTML** | Standalone editorial article page — sticky masthead, metadata strip, contents rail, full-width figures, dark mode, Highwire citation meta tags |
-| **JATS XML package (.zip)** | NISO JATS (Z39.96) Journal Publishing DTD v1.3, plus every figure as a separate file and a deposit README |
+| **JATS XML package (.zip)** | NISO JATS (Z39.96) Journal Publishing DTD v1.3, the article PDF under the same base name, every figure as a separate file and a deposit README. A pre-flight dialog checks what PMC rejects. Citations are linked (`xref bibr`), Figure/Table mentions are cross-referenced, structured abstracts become `<sec>`s, article history and `self-uri` are included |
 | **PubMed citation XML** | PubMed 3.0 DTD (`ArticleSet`) |
 | **JSON** | Full metadata package for the editorial office |
 
@@ -104,6 +116,8 @@ Style Checker.
 PubMed citation deposit uses a different schema from PMC full text, which is
 why both files are produced separately.
 
+Step-by-step OJS upload and PMC application guide (Georgian): [docs/PMC-OJS-GUIDE.md](docs/PMC-OJS-GUIDE.md).
+
 ## Structure
 
 ```
@@ -119,12 +133,13 @@ src/part7.html    steps 10–17
 src/part9.html    ZIP writer, HTML block parser, DOM-to-DOCX builder
 src/part10.html   JATS 1.3 and PubMed 3.0 XML builders
 src/part11.html   the public HTML article page
+src/part12.html   Word/PDF import, New article
 src/part8.html    proof builders, editorial proof editing, validation, exports
 assets/           GBMN masthead artwork
 ```
 
-Everything is plain HTML, CSS and ES5-compatible JavaScript — no build
-toolchain, no dependencies, no runtime network calls. Drafts are kept in
+Everything is plain HTML, CSS and JavaScript — no build toolchain, no
+dependencies. The only network use is optional: pdf.js for PDF import. Drafts are kept in
 `localStorage`. The only outbound requests are optional and user-initiated:
 ORCID author lookup and Crossref DOI lookup.
 

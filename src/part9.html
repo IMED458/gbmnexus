@@ -54,7 +54,8 @@ function parseBlocks(html){
       } else if(el.classList.contains('gbmn-inline-media-table')){
         var tb=el.querySelector('table'), rows=[];
         if(tb) Array.prototype.forEach.call(tb.querySelectorAll('tr'),function(tr){
-          rows.push(Array.prototype.map.call(tr.children,function(c){return {text:c.textContent.trim(),head:c.tagName==='TH'}}));
+          rows.push(Array.prototype.map.call(tr.children,function(c){return {text:c.textContent.trim(),head:c.tagName==='TH',
+            runs:runsOf(c,{}),span:+(c.getAttribute('colspan')||1),rspan:+(c.getAttribute('rowspan')||1)}}));
         });
         out.push({t:'table',title:p.title,legend:p.legend,layout:p.layout,rows:rows});
       } else {
@@ -170,6 +171,7 @@ function domRuns(node,base){
       if(t) out.push({t:t,b:base.b,i:base.i,u:base.u,sup:base.sup,sub:base.sub,sz:base.sz,color:base.color}); return; }
     if(n.nodeType!==1) return;
     if(n.tagName==='BR'){ out.push({br:true}); return; }
+    if(n.classList&&n.classList.contains('orcid')){ out.push({t:'\u2009iD',b:true,sz:15,color:'A6CE39'}); return; }
     var f=Object.assign({},base);
     if(/^(B|STRONG)$/.test(n.tagName)) f.b=true;
     if(/^(I|EM)$/.test(n.tagName)) f.i=true;

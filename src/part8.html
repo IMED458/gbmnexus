@@ -31,10 +31,11 @@ function authorsHtml(){
     var nums=(a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation])
       .map(function(x){var k=affs.indexOf(x);return k<0?'':String(k+1)}).filter(Boolean);
     var sup=nums.join(',');
-    if(a.orcidId) sup+=(sup?',':'')+'<a href="'+orcidUrl(a.orcidId)+'" target="_blank" rel="noopener" title="ORCID iD">ID</a>';
     if(a.isCorresponding) sup+=(sup?',':'')+'*';
     var nm=[a.firstName,a.middleInitial,a.lastName].filter(Boolean).join(' ');
-    return esc(nm)+(sup?'<sup>'+sup+'</sup>':'');
+    var oc=a.orcidId?'<a class="orcid" href="'+orcidUrl(a.orcidId)+'" target="_blank" rel="noopener" title="ORCID iD '+esc(a.orcidId)+'">'+
+      '<img src="'+ORCID_ICON+'" alt="ORCID iD"></a>':'';
+    return '<span class="au">'+esc(nm)+(sup?'<sup>'+sup+'</sup>':'')+oc+'</span>';
   }).join(', ');
 }
 function doiHtml(){
@@ -130,7 +131,7 @@ function bodyNodes(){
   sectionNames().filter(function(s){return s!=='Acknowledgments'}).forEach(function(name){
     var d=secDom(name), kids=Array.prototype.slice.call(d.children);
     if(!kids.length) return;
-    heading(name);
+    heading(secTitle(name));
     kids.forEach(function(k,i){ var n=blockNode(k,kids[i-1],name,i); if(n) out.push(n); });
   });
   var affs=affilList();
@@ -149,7 +150,7 @@ function bodyNodes(){
     out.push(c);
   }
   if((M.sections['Acknowledgments']||'').trim()){
-    heading('Acknowledgements');
+    heading(secTitle('Acknowledgments')==='Acknowledgments'?'Acknowledgements':secTitle('Acknowledgments'));
     var ad=secDom('Acknowledgments'), ak=Array.prototype.slice.call(ad.children);
     ak.forEach(function(k,i){ var n=blockNode(k,ak[i-1],'Acknowledgments',i); if(n) out.push(n); });
   }
@@ -389,7 +390,7 @@ function dl(name,blob){ var u=URL.createObjectURL(blob), a=document.createElemen
 function exportJson(){
   var meta={ id:M.id, status:M.status, role:M.role, articleType:M.articleType, title:M.title, runningTitle:M.runningTitle,
     specialty:M.specialty, publicationInfo:M.publicationInfo, preview:M.preview, checklistAgreed:M.checklistAgreed,
-    authors:M.authors, abstractContents:M.abstractContents, sections:M.sections, references:M.references,
+    authors:M.authors, abstractContents:M.abstractContents, sections:M.sections, sectionTitles:M.sectionTitles||{}, references:M.references,
     supplementaryFiles:M.supplementaryFiles, ethics:M.ethics,
     conflictDisclosure:{hasConflict:M.conflictDisclosure.hasConflict,conflictDetails:M.conflictDisclosure.conflictDetails,signedCoiFormName:M.conflictDisclosure.signedCoiFormName},
     fundingDetails:M.fundingDetails, editLog:M.editLog||[], wordCount:wordCount(), updatedAt:M.updatedAt };
