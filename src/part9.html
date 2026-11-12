@@ -76,11 +76,23 @@ function parseBlocks(html){
   return out;
 }
 /* the whole article as ordered sections of blocks */
+function joinBrokenParas(blocks){
+  var out=[];
+  blocks.forEach(function(b){
+    var pv=out[out.length-1];
+    if(b.t==='p'&&pv&&pv.t==='p'){
+      var a=pv.runs.map(function(r){return r.t||''}).join('').replace(/\s+$/,''), n=b.runs.map(function(r){return r.t||''}).join('').replace(/^\s+/,'');
+      if(a&&n&&!/[.!?:)\]]$/.test(a)&&(/^[a-z]/.test(n)||(/,$/.test(a)&&/^\d/.test(n)))){
+        pv.runs=pv.runs.concat([{t:' '}],b.runs); return; }
+    }
+    out.push(b); });
+  return out;
+}
 function articleModel(){
   var secs=[];
   sectionNames().forEach(function(name){
     var html=(M.sections[name]||'').trim(); if(!html) return;
-    secs.push({name:name,blocks:parseBlocks(html)});
+    secs.push({name:name,blocks:joinBrokenParas(parseBlocks(html))});
   });
   var fign=0,tabn=0;
   secs.forEach(function(s){ s.blocks.forEach(function(b){

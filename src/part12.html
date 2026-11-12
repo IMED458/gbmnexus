@@ -671,6 +671,20 @@ function manuscriptFromBlocks(blocks,srcName){
   if(back.ethics.length){ var et=back.ethics.join(' ');
     var irb=et.match(/(?:approval|protocol|reference)\s*(?:no\.?|number|#)?\s*[:.]?\s*([A-Z0-9][\w\/-]{2,})/i); if(irb) m.ethics.irbApprovalNumber=irb[1];
     var inst=et.match(/(?:committee|board|council)\s+of\s+(?:the\s+)?([^.,;]+)/i); if(inst) m.ethics.irbInstitution=inst[1].trim(); }
+  /* ethics written inside Methods: approval body, protocol number and a consent waiver */
+  var bodyAll=Object.keys(m.sections).map(function(k){return m.sections[k]}).join(' ').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+  var ethS=(bodyAll.match(/[^.]*\b(ethics|ethical|institutional review board|IRB)\b[^.]*\b(approv\w*|exempt\w*)[^.]*\./i)||[])[0];
+  if(ethS){
+    if(/exempt/i.test(ethS)) m.ethics.humanSubjectsApproved='exempt'; else m.ethics.humanSubjectsApproved='yes';
+    if(!m.ethics.irbApprovalNumber){ var pn=bodyAll.match(/(?:protocol|approval|reference|decision)\s*(?:no\.?|number|#)\s*[:.]?\s*([A-Za-z0-9][\w\/.-]*[\w])/i); if(pn) m.ethics.irbApprovalNumber=pn[1]; }
+    if(!m.ethics.irbInstitution){ var bn=ethS.match(/((?:the\s+)?[A-Z][\w\s-]*?(?:Ethics|Review)\s+(?:Committee|Board)(?:\s+of\s+[A-Z][\w\s.-]*?(?=\s+(?:approved|\(|granted|waived|,))|))/);
+      if(bn) m.ethics.irbInstitution=bn[1].replace(/^the\s+/i,'').trim(); } }
+  if(/\b(consent[^.]{0,80}\bwaived|waived[^.]{0,80}\bconsent|waiver of (informed )?consent)/i.test(bodyAll)) m.ethics.informedConsentObtained='waived';
+  else if(/\b(written )?informed consent (was|were) obtained|consent was obtained/i.test(bodyAll)) m.ethics.informedConsentObtained='yes';
+  else if(!back.ethics.length) m.ethics.informedConsentObtained='';
+  /* nothing said about ethics at all → leave it for the editor, never claim an approval the paper does not state */
+  if(!ethS&&!back.ethics.length){ m.ethics.humanSubjectsApproved='';
+    warn.push('No ethics statement was found — choose it in step "Ethics" (e.g. "Not applicable" for a review).'); }
   var corrTxt=back.corr.join(' ')+' '+(m._email||'');
   var email=(corrTxt.match(/[\w.+-]+@[\w-]+\.[\w.-]+/)||[])[0];
   if(!email){ var all=blocks.filter(function(b){return b.kind==='p'}).map(function(b){return b.text}).join(' '); email=(all.match(/[\w.+-]+@[\w-]+\.[\w.-]+/)||[])[0]; }

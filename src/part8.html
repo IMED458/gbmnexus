@@ -55,12 +55,14 @@ function abstractHtml(){
 function frontMatter(){
   return '<h1 class="ptitle">'+esc(M.title||'Article title')+'</h1>'+
     '<div class="pauth">'+authorsHtml()+'</div>'+ abstractHtml()+ doiHtml(); }
+function theBody(s){ return /^(the|a)\s/i.test(s)||!/\b(committee|board|council)\b/i.test(s)?s:'the '+s; }
 function declRows(){
   var E=M.ethics,C=M.conflictDisclosure,F=M.fundingDetails,rows=[],eth=[];
-  if(E.humanSubjectsApproved==='yes') eth.push('Human subjects approval was obtained'+(E.irbInstitution?' from '+E.irbInstitution:'')+(E.irbApprovalNumber?' (approval '+E.irbApprovalNumber+')':'')+'.');
+  if(E.humanSubjectsApproved==='yes') eth.push('Human subjects approval was obtained'+(E.irbInstitution?' from '+theBody(E.irbInstitution):'')+(E.irbApprovalNumber?' (approval '+E.irbApprovalNumber+')':'')+'.');
   else if(E.humanSubjectsApproved==='exempt') eth.push('The study was granted exemption by the ethics board'+(E.irbInstitution?' of '+E.irbInstitution:'')+'.');
   else if(E.humanSubjectsApproved==='not-applicable') eth.push('Ethics approval was not applicable to this work.');
   if(E.informedConsentObtained==='yes') eth.push('Written informed consent was obtained from all subjects.');
+  else if(E.informedConsentObtained==='waived') eth.push('The requirement for informed consent was waived'+(E.irbInstitution?' by '+theBody(E.irbInstitution):' by the ethics committee')+'.');
   else if(E.informedConsentObtained==='not-applicable') eth.push('Informed consent was not applicable.');
   if(eth.length) rows.push(['Ethical compliance',eth.join(' ')]);
   rows.push(['Conflict of interest', C.hasConflict ? (C.conflictDetails||'The authors declare conflicts of interest.') : 'The authors declare no conflict of interest.']);

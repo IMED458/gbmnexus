@@ -155,7 +155,7 @@ var STEPS=[
  {id:'supplementary',label:'Supplementary Files',icon:'clip',title:'11. Optional Appendix Datasets & Protocols',v:function(){return 'complete'}},
  {id:'ethics',label:'Ethics Statement',icon:'heart',title:'12. Institutional Review Board (IRB) Clearance',
    v:function(m){ var c=m.ethics.humanSubjectsApproved&&m.ethics.informedConsentObtained;
-     if(c&&(m.ethics.informedConsentObtained==='no'||m.ethics.humanSubjectsApproved==='not-applicable'||m.ethics.ethicsStatementFileName))return 'complete';
+     if(c&&(m.ethics.informedConsentObtained==='no'||m.ethics.informedConsentObtained==='waived'||m.ethics.humanSubjectsApproved==='not-applicable'||m.ethics.ethicsStatementFileName))return 'complete';
      return c?'warning':'empty'; }},
  {id:'conflicts',label:'Conflict Disclosures',icon:'shield',title:'13. Disclosure of Financial Conflicts (COI)',
    v:function(m){ return (!m.conflictDisclosure.hasConflict||m.conflictDisclosure.signedCoiFormName)?'complete':'warning'; }},

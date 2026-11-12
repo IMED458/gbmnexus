@@ -27,20 +27,26 @@ function citeXref(txt){
 }
 function inlineXrefs(t){
   if(!JX.links) return t;
-  t=t.replace(/\b(Fig(?:ure)?s?\.?|Tables?)(\s|&#160;|\u00a0)+(\d+)\b/gi,function(all,w,sp,n){
+  t=t.replace(/\b(Fig(?:ure)?s?\.?|Tables?|Tab\.)(\s|&#160;|\u00a0)*(\d+)\b/gi,function(all,w,sp,n){
     var tab=/^tab/i.test(w), max=tab?JX.tabs:JX.figs; n=+n;
     if(n<1||n>max) return all;
     return '<xref ref-type="'+(tab?'table':'fig')+'" rid="'+(tab?'tbl':'fig')+n+'">'+all+'</xref>'; });
   /* bracketed citations: [3], [1, 4-6] */
   return t.replace(/\[(\d+(?:\s*[,–\-]\s*\d+)*)\]/g,function(all,inner){ var x=citeXref(inner); return x?'['+x+']':all; });
 }
+function orcidBare(s){ return String(s||'').trim().replace(/^https?:\/\/(www\.)?orcid\.org\//i,'').toUpperCase(); }
+function orcidOk(s){
+  var id=orcidBare(s); if(!/^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/.test(id)) return false;
+  var d=id.replace(/-/g,''), tot=0; for(var i=0;i<15;i++) tot=(tot+ +d[i])*2;
+  var r=(12-tot%11)%11; return d[15]===(r===10?'X':String(r)); }
 function jRuns(runs){
   return runs.map(function(r){
     if(r.br) return ' ';
     var t=xe(r.t), cx=r.sup?citeXref(r.t):null;
     if(cx) t=cx; else if(!r.sup&&!r.sub) t=inlineXrefs(t);
     if(r.sup) t='<sup>'+t+'</sup>'; if(r.sub) t='<sub>'+t+'</sub>';
-    if(r.b) t='<bold>'+t+'</bold>'; if(r.i) t='<italic>'+t+'</italic>'; if(r.u) t='<underline>'+t+'</underline>';
+    var onlyLink=/^(<sup>)?(\[)?(<xref[^>]*>[^<]*<\/xref>[\s,\u2013\-]*)+(\])?(<\/sup>)?$/.test(t);
+    if(!onlyLink){ if(r.b) t='<bold>'+t+'</bold>'; if(r.i) t='<italic>'+t+'</italic>'; if(r.u) t='<underline>'+t+'</underline>'; }
     return t; }).join('');
 }
 function pubDateParts(){
@@ -145,7 +151,7 @@ function buildJats(figNames){
   x+='<contrib-group>';
   M.authors.forEach(function(a,i){
     x+='<contrib contrib-type="author"'+(a.isCorresponding?' corresp="yes"':'')+'>';
-    if(a.orcidId) x+='<contrib-id contrib-id-type="orcid">https://orcid.org/'+xe(a.orcidId.replace(/^https?:\/\/orcid\.org\//i,''))+'</contrib-id>';
+    if(orcidOk(a.orcidId)) x+='<contrib-id contrib-id-type="orcid">https://orcid.org/'+xe(orcidBare(a.orcidId))+'</contrib-id>';
     x+='<name><surname>'+xe(a.lastName)+'</surname><given-names>'+xe([a.firstName,a.middleInitial].filter(Boolean).join(' '))+'</given-names>'+
        (a.academicTitle?'<degrees>'+xe(a.academicTitle)+'</degrees>':'')+'</name>';
     (a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation]).forEach(function(af){
@@ -171,7 +177,7 @@ function buildJats(figNames){
   x+='<pub-date publication-format="electronic" date-type="collection"><year>'+(parseInt(pv.year,10)||pd.y)+'</year></pub-date>';
   if(pv.vol) x+='<volume>'+xe(pv.vol)+'</volume>';
   if(pv.iss) x+='<issue>'+xe(pv.iss)+'</issue>';
-  if(pv.fpage) x+='<fpage>'+xe(pv.fpage)+'</fpage>'+(pv.lpage?'<lpage>'+xe(pv.lpage)+'</lpage>':'');
+  if(pv.fpage) x+='<fpage>'+xe(pv.fpage)+'</fpage><lpage>'+xe(pv.lpage||pv.fpage)+'</lpage>';
   else if(pv.elocation) x+='<elocation-id>'+xe(pv.elocation)+'</elocation-id>';
   var hist=jDate(pv.received,'received')+jDate(pv.accepted,'accepted');
   if(hist) x+='<history>'+hist+'</history>';
@@ -213,11 +219,15 @@ function buildJats(figNames){
         b.items.map(function(it){return '<list-item><p>'+jRuns(it)+'</p></list-item>'}).join('')+'</list>';
       else if(b.t==='fig') x+='<fig id="fig'+b.n+'" position="float"><label>Figure '+b.n+'</label>'+
         '<caption><title>'+xe(b.title)+'</title>'+(b.legend?'<p>'+xe(b.legend)+'</p>':'')+'</caption>'+
-        (b.src?'<graphic xlink:href="'+xe(figNames[b.n]||(base+'-fig'+b.n+'.png'))+'"/>':'')+'</fig>';
+        (b.src?'<graphic xlink:href="'+xe(figNames[b.n]||(base+'-fig'+b.n+'.png'))+'"><alt-text>'+xe('Figure '+b.n+'. '+(b.title||''))+'</alt-text></graphic>':'')+'</fig>';
       else if(b.t==='table'){
         x+='<table-wrap id="tbl'+b.n+'" position="float"><label>Table '+b.n+'</label>'+
            '<caption><title>'+xe(b.title)+'</title></caption><table frame="hsides" rules="groups">';
         var head=b.rows.length&&b.rows[0].every(function(c){return c.head})?b.rows[0]:null;
+        if(!head&&b.rows.length>1){ var r0=b.rows[0];
+          var txt=function(c){ return (c.runs?c.runs.map(function(r){return r.t||''}).join(''):c.text||'').trim(); };
+          var wordy=r0.filter(function(c){ return /[A-Za-z]/.test(txt(c))&&!/^[\d\s.,%()\[\]\u2013\-+±<>=\/:]+$/.test(txt(c)); }).length;
+          if(r0.every(function(c,ci){return txt(c)||ci===0})&&r0.length>1&&wordy>=Math.ceil((r0.length-(txt(r0[0])?0:1))*0.6)) head=r0; }
         var cell=function(c,tg){ return '<'+tg+(c.span>1?' colspan="'+c.span+'"':'')+(c.rspan>1?' rowspan="'+c.rspan+'"':'')+'>'+
           (c.runs?jRuns(c.runs).trim():xe(c.text))+'</'+tg+'>'; };
         if(head) x+='<thead><tr>'+head.map(function(c){return cell(c,'th')}).join('')+'</tr></thead>';
@@ -235,7 +245,7 @@ function buildJats(figNames){
   if(ack&&ack.blocks.length) x+='<ack><title>'+xe(secTitle('Acknowledgments'))+'</title>'+
     ack.blocks.map(function(b){return b.t==='p'?'<p>'+jRuns(b.runs)+'</p>':''}).join('')+'</ack>';
   var E=M.ethics, C=M.conflictDisclosure, fns=[];
-  fns.push('<fn fn-type="COI-statement"><p>'+xe(C.hasConflict?(C.conflictDetails||'The authors declare conflicts of interest.'):'The authors declare no conflict of interest.')+'</p></fn>');
+  fns.push('<fn fn-type="coi-statement"><p>'+xe(C.hasConflict?(C.conflictDetails||'The authors declare conflicts of interest.'):'The authors declare no conflict of interest.')+'</p></fn>');
   var ethTxt=declRows().filter(function(r){return r[0]==='Ethical compliance'})[0];
   if(ethTxt) fns.push('<fn fn-type="other"><label>Ethics approval</label><p>'+xe(ethTxt[1])+'</p></fn>');
   var contrib=declRows().filter(function(r){return r[0]==='Author contributions'})[0];
@@ -252,6 +262,11 @@ function pmcChecks(){
   c(M.title,'Article title');
   c(M.authors.length,'At least one author');
   c(M.authors.length&&M.authors.every(function(a){return a.orcidId}),'ORCID iD for every author','warn');
+  var badOrcid=M.authors.filter(function(a){return a.orcidId&&!orcidOk(a.orcidId)});
+  c(!badOrcid.length,badOrcid.length?'Invalid ORCID iD (left out of the XML): '+badOrcid.map(function(a){return a.lastName+' '+orcidBare(a.orcidId)}).join(', '):'ORCID iDs are valid (checksum)');
+  var bodyTxt=stripTags(Object.keys(M.sections).map(function(k){return M.sections[k]}).join(' '));
+  c(!(M.ethics.informedConsentObtained==='yes'&&/consent[^.]{0,80}waived|waived[^.]{0,80}consent/i.test(bodyTxt)),
+    'Consent statement matches the text (the text says consent was waived — set step "Ethics" to "Waived")');
   c(M.authors.some(function(a){return a.isCorresponding&&a.email}),'Corresponding author with e-mail','warn');
   c(affilList().length,'Author affiliations');
   c((M.publicationInfo||{}).doi,'DOI (Crossref, 10.52340/…)');
