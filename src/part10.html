@@ -179,7 +179,7 @@ function buildJats(figNames){
   if(pv.iss) x+='<issue>'+xe(pv.iss)+'</issue>';
   if(pv.fpage) x+='<fpage>'+xe(pv.fpage)+'</fpage><lpage>'+xe(pv.lpage||pv.fpage)+'</lpage>';
   else if(pv.elocation) x+='<elocation-id>'+xe(pv.elocation)+'</elocation-id>';
-  var hist=jDate(pv.received,'received')+jDate(pv.accepted,'accepted');
+  var hist=jDate(pv.received,'received')+jDate(pv.revised,'rev-recd')+jDate(pv.accepted,'accepted');
   if(hist) x+='<history>'+hist+'</history>';
   x+='<permissions><copyright-statement>&#169; '+pd.y+' '+xe(M.authors.map(function(a){return a.lastName}).filter(Boolean).join(', ')||'The Authors')+'</copyright-statement>'+
      '<copyright-year>'+pd.y+'</copyright-year><copyright-holder>The Authors</copyright-holder>'+

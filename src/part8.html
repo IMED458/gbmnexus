@@ -9,52 +9,72 @@ function volLine(){
   var pv=M.preview||{}, p=[];
   if(pv.vol) p.push('VOLUME '+pv.vol);
   if(pv.iss) p.push('ISSUE '+pv.iss);
-  var s=p.join(' ');
-  return ((s? s+'.' : '')+(pv.period? ' '+pv.period : '')).toUpperCase().trim();
+  return p.join(' · ').toUpperCase();
 }
-function issueText(){ return volLine(); }
+function periodLine(){ var pv=M.preview||{}; return String(pv.period||'').toUpperCase().trim(); }
+function issueText(){ return [volLine(),periodLine()].filter(Boolean).join(' · '); }
 function orcidUrl(o){ var x=String(o||'').replace(/^https?:\/\/(www\.)?orcid\.org\//i,'').trim(); return x?'https://orcid.org/'+encodeURIComponent(x):''; }
 function masthead(){
-  return '<div class="pmast"><img src="'+LOGO+'" alt="Georgian Biomedical and Medical Nexus">'+
-    '<div class="vol">'+esc(volLine())+'</div></div><hr class="prule"><hr class="prule2">'; }
+  return '<div class="pmast"><img src="'+MAST_LOGO+'" alt="Georgian Biomedical and Medical Nexus">'+
+    '<div class="vol">'+esc(volLine())+(periodLine()?'<br>'+esc(periodLine()):'')+'</div></div>'; }
 function footerLines(){
-  var yr=(M.preview&&M.preview.year)||String(new Date().getFullYear());
-  return ['Georgian Biomedical and Medical Nexus (Former Georgian Biomedical News)',
-          'ISSN (Online): 2720-8796  ISSN (Print): 2720-7994',
-          'Downloaded from gbmn.org. For personal use only. No other uses without permission.',
-          'Copyright © '+yr+'. All rights reserved.']; }
+  return ['Georgian Biomedical and Medical Nexus (Former Georgian Biomedical News).',
+          'ISSN (Online): 2720-8796 · ISSN (Print): 2720-7994.',
+          'Downloaded from gbmn.org. For personal use only. No other uses without permission. Copyright © 2022. All rights reserved.']; }
 function footerHtml(){ return '<div class="pfoot">'+footerLines().map(esc).join('<br>')+'</div>'; }
-function authorsHtml(){
+/* author line pieces, shared by the proof and Word: name, affiliation numbers, ORCID, corresponding mark */
+function authorParts(){
   var affs=affilList();
-  if(!M.authors.length) return '<span class="no-content">Authors will appear here.</span>';
   return M.authors.map(function(a){
     var nums=(a.affiliations&&a.affiliations.length?a.affiliations:[a.affiliation])
       .map(function(x){var k=affs.indexOf(x);return k<0?'':String(k+1)}).filter(Boolean);
-    var sup=nums.join(',');
-    if(a.isCorresponding) sup+=(sup?',':'')+'*';
-    var nm=[a.firstName,a.middleInitial,a.lastName].filter(Boolean).join(' ');
-    var oc=a.orcidId?'<a class="orcid" href="'+orcidUrl(a.orcidId)+'" target="_blank" rel="noopener" title="ORCID iD '+esc(a.orcidId)+'">'+
-      '<img src="'+ORCID_ICON+'" alt="ORCID iD"></a>':'';
-    return '<span class="au">'+esc(nm)+(sup?'<sup>'+sup+'</sup>':'')+oc+'</span>';
+    return {name:[a.firstName,a.middleInitial,a.lastName].filter(Boolean).join(' '),
+      nums:nums.join(','), orcid:a.orcidId?orcidUrl(a.orcidId):'', orcidId:a.orcidId||'', corr:!!a.isCorresponding};
+  });
+}
+function authorsHtml(){
+  if(!M.authors.length) return '<span class="no-content">Authors will appear here.</span>';
+  return authorParts().map(function(a){
+    var sup='';
+    if(a.nums) sup+='<span class="n">'+esc(a.nums)+'</span>';
+    if(a.orcid) sup+=(sup?'<span class="c">, </span>':'')+'<a class="orcid" href="'+a.orcid+'" target="_blank" rel="noopener" title="ORCID iD '+esc(a.orcidId)+'">ID</a>';
+    if(a.corr) sup+='<span class="st">*</span>';
+    return '<span class="au">'+esc(a.name)+(sup?'<sup>'+sup+'</sup>':'')+'</span>';
   }).join(', ');
 }
+function affilHtml(){
+  var affs=affilList(); if(!affs.length) return '';
+  return '<div class="paff">'+affs.map(function(a,i){return '<p><sup>'+(i+1)+'</sup> '+esc(a)+'</p>'}).join('')+'</div>';
+}
+/* Received · Revised · Accepted · Published — each shown once it is filled in */
+function datesList(){
+  var pv=M.preview||{};
+  return [['Received',pv.received],['Revised',pv.revised],['Accepted',pv.accepted],['Published',pv.date]]
+    .filter(function(d){return d[1]&&String(d[1]).trim()}).map(function(d){return d[0]+': '+String(d[1]).trim()});
+}
+function datesHtml(){ var d=datesList(); return d.length?'<div class="pdates">'+esc(d.join(' · '))+'</div>':''; }
+function doiClean(){ return ((M.publicationInfo||{}).doi||'').trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i,''); }
 function doiHtml(){
-  var raw=((M.publicationInfo||{}).doi||'').trim(); if(!raw) return '';
-  var clean=raw.replace(/^https?:\/\/(dx\.)?doi\.org\//i,'');
-  return '<div class="pdoi">DOI. <a href="https://doi.org/'+encodeURIComponent(clean)+'" target="_blank" rel="noopener">'+esc(clean.toUpperCase())+'</a></div>';
+  var clean=doiClean(); if(!clean) return '';
+  var u='https://doi.org/'+clean;
+  return '<div class="pdoi">DOI: <a href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(u)+'</a></div>';
 }
 function abstractHtml(){
   var none=cfg()&&cfg().abstractType==='none';
   var txt=(M.abstractContents.text||'').trim(), kw=(M.sections['Keywords']||'').replace(/\.$/,'').trim();
   if((none||!txt)&&!kw) return '';
   var inner='';
-  if(!none&&txt) inner+=txt;
-  if(kw) inner+='<p><span class="lb">KEYWORDS.</span> '+esc(kw)+'.</p>';
-  return (none?'':'<div class="pabs-h">ABSTRACT</div>')+'<div class="pabs">'+inner+'</div>';
+  if(!none&&txt){ var d=document.createElement('div'); d.innerHTML=txt;
+    if(!d.children.length) d.innerHTML='<p>'+txt+'</p>';
+    inner+='<div class="ab">'+d.innerHTML+'</div>'; }
+  if(kw) inner+='<div class="kw"><span class="lb">Keywords.</span> '+esc(kw)+'.</div>';
+  return '<div class="pabs">'+(none?'':'<div class="pabs-h">ABSTRACT</div>')+inner+'</div>';
 }
+function typeLabel(){ var L=M.typeLabel; if(L&&L.text&&L.type===M.articleType) return L.text.toUpperCase(); return cfg()?cfg().name:''; }
 function frontMatter(){
-  return '<h1 class="ptitle">'+esc(M.title||'Article title')+'</h1>'+
-    '<div class="pauth">'+authorsHtml()+'</div>'+ abstractHtml()+ doiHtml(); }
+  return (typeLabel()?'<div class="ptype">'+esc(typeLabel())+'</div>':'')+
+    '<h1 class="ptitle">'+esc(M.title||'Article title')+'</h1>'+
+    '<div class="pauth">'+authorsHtml()+'</div>'+ affilHtml()+ datesHtml()+ abstractHtml()+ doiHtml(); }
 function theBody(s){ return /^(the|a)\s/i.test(s)||!/\b(committee|board|council)\b/i.test(s)?s:'the '+s; }
 function declRows(){
   var E=M.ethics,C=M.conflictDisclosure,F=M.fundingDetails,rows=[],eth=[];
@@ -102,47 +122,48 @@ function blockNode(src,prev,name,i){
       var tb=src.querySelector('table'), head='', body='';
       if(tb){
         var rows=Array.prototype.slice.call(tb.querySelectorAll('tr'));
-        var hasHead=rows.length&&Array.prototype.every.call(rows[0].children,function(c){return c.tagName==='TH'});
+        /* the template's table style always sets the first row as the header row */
+        var hasHead=rows.length>1||(rows.length&&Array.prototype.every.call(rows[0].children,function(c){return c.tagName==='TH'}));
         if(hasHead) head='<thead><tr>'+Array.prototype.map.call(rows[0].children,function(c){return '<th>'+c.innerHTML+'</th>'}).join('')+'</tr></thead>';
         body='<tbody>'+rows.slice(hasHead?1:0).map(function(tr){
           return '<tr>'+Array.prototype.map.call(tr.children,function(c){return '<td>'+c.innerHTML+'</td>'}).join('')+'</tr>'; }).join('')+'</tbody>';
       }
       return mkEl('<div class="tbl'+one+'"'+tagAttr+' data-kind="table">'+
-        '<div class="cap" data-cap><b>Table '+MEDIA.tab+'.</b> '+esc(cap||'Caption')+'</div>'+
-        (tb?'<table>'+head+body+'</table>':'')+'</div>');
+        '<div class="cap" data-cap><b>Table '+MEDIA.tab+'.</b> '+esc(title||'Caption')+'</div>'+
+        (tb?'<table>'+head+body+'</table>':'')+(legend?'<p class="tnote">'+esc(legend)+'</p>':'')+'</div>');
     }
     MEDIA.fig++;
     var img=src.querySelector('img'), pre=src.querySelector('pre');
     var inner = img ? '<img src="'+esc(img.getAttribute('src'))+'" alt="Figure '+MEDIA.fig+'">'
               : '<pre>'+esc(pre?pre.textContent:src.textContent)+'</pre>';
-    return mkEl('<figure class="fg'+one+'"'+tagAttr+' data-kind="fig">'+inner+
-      '<div class="cap" data-cap><b>Figure '+MEDIA.fig+'.</b> '+esc(cap||'Caption')+'</div></figure>');
+    return mkEl('<figure class="fg'+one+'"'+tagAttr+' data-kind="fig">'+
+      '<div class="cap" data-cap><b>Figure '+MEDIA.fig+'.</b> '+esc(cap||'Caption')+'</div>'+inner+'</figure>');
   }
   if(/^H[2-6]$/.test(tag)) return mkEl('<h3'+tagAttr+' data-kind="h">'+src.innerHTML+'</h3>');
   if(tag==='UL'||tag==='OL'){ var n=src.cloneNode(true); n.setAttribute('data-sec',name); n.setAttribute('data-i',i); n.setAttribute('data-kind','list'); return n; }
   var after = prev && /^H[2-6]$/.test(prev.tagName);
   var p=mkEl('<p'+tagAttr+' data-kind="p">'+src.innerHTML+'</p>');
   if(after||i===0) p.className='first';
+  if(!DROP_DONE&&name!=='Acknowledgments'&&/^[A-Za-z]/.test((p.textContent||'').trim())){ p.classList.add('dropcap'); DROP_DONE=true; }
   return p;
 }
 /* every flowable node of the article body, in printed order */
+var DROP_DONE=false;
 function bodyNodes(){
-  MEDIA={fig:0,tab:0};
+  MEDIA={fig:0,tab:0}; DROP_DONE=false;
   var out=[];
   function heading(t){ var h=document.createElement('h2'); h.textContent=t.toUpperCase(); out.push(h); }
   sectionNames().filter(function(s){return s!=='Acknowledgments'}).forEach(function(name){
     var d=secDom(name), kids=Array.prototype.slice.call(d.children);
     if(!kids.length) return;
     heading(secTitle(name));
-    kids.forEach(function(k,i){ var n=blockNode(k,kids[i-1],name,i); if(n) out.push(n); });
+    kids.forEach(function(k,i){
+      var last=out[out.length-1];
+      if(k.tagName==='P'&&last&&last.classList&&last.classList.contains('tbl')&&!last.querySelector('.tnote')&&
+         /^\s*(\*|†|‡|Notes?\b|Abbreviations?\b)/i.test(k.textContent||'')){
+        var tn=document.createElement('p'); tn.className='tnote'; tn.innerHTML=k.innerHTML; last.appendChild(tn); return; }
+      var n=blockNode(k,kids[i-1],name,i); if(n) out.push(n); });
   });
-  var affs=affilList();
-  if(affs.length){
-    heading('Author affiliation');
-    var box=document.createElement('div'); box.className='afflist';
-    box.innerHTML=affs.map(function(a,i){return '<p><sup>'+(i+1)+'</sup> '+esc(a)+'</p>'}).join('');
-    out.push(box);
-  }
   var corr=M.authors.filter(function(a){return a.isCorresponding})[0];
   if(corr){
     heading('Corresponding author');
@@ -167,32 +188,48 @@ function bodyNodes(){
     heading('References');
     M.references.forEach(function(r,i){
       var ol=document.createElement('ol'); ol.className='refs'; ol.setAttribute('start',String(i+1));
+      if(i) ol.style.marginTop='0';
       var li=document.createElement('li'); li.innerHTML=ital(formatAMAReference(r)); ol.appendChild(li); out.push(ol); });
   }
   return out;
 }
 function pageShell(first){
   var pg=document.createElement('div'); pg.className='page';
-  pg.innerHTML = masthead() + (first?'<div class="pfront">'+frontMatter()+'</div>':'') + '<div class="pbody"></div>' + footerHtml();
+  pg.innerHTML = (first?masthead()+'<div class="pfront">'+frontMatter()+'</div>':'') + '<div class="pbody"></div>' + footerHtml();
   return pg;
 }
 
 /* ══ pagination — real A4 pages, masthead and footer on each ══ */
 function fitsIn(box){ return box.scrollWidth <= box.clientWidth + 1 && box.scrollHeight <= box.clientHeight + 1; }
+/* words [from,to) of a paragraph, keeping its inline markup (citations, italics, links) */
+function sliceWords(node,from,to){
+  var c=node.cloneNode(true), tw=document.createTreeWalker(c,NodeFilter.SHOW_TEXT), list=[], idx=0;
+  while(tw.nextNode()) list.push(tw.currentNode);
+  var prevWord=false;
+  list.forEach(function(t){
+    var parts=t.textContent.split(/(\s+)/), out='';
+    parts.forEach(function(p){ if(!p) return;
+      if(/^\s+$/.test(p)){ if(idx>from&&idx<to) out+=p; prevWord=false; return; }
+      if(prevWord) idx--; /* a word continued across two nodes */
+      if(idx>=from&&idx<to) out+=p; idx++; prevWord=true; });
+    t.textContent=out;
+  });
+  return c;
+}
 function splitBlock(box,node){
   if(node.tagName!=='P'||node.querySelector('img,table,figure')) return null;
-  var words=(node.textContent||'').split(/\s+/).filter(Boolean);
-  if(words.length<30) return null;
-  var head=node.cloneNode(false); head.removeAttribute('data-sec'); head.removeAttribute('data-i');
-  box.appendChild(head);
-  var lo=0,hi=words.length,best=0;
-  while(lo<=hi){ var mid=(lo+hi)>>1; head.textContent=words.slice(0,mid).join(' ');
+  var total=(node.textContent||'').split(/\s+/).filter(Boolean).length;
+  if(total<30) return null;
+  var lo=0,hi=total,best=0,head=null;
+  function place(n){ if(head) box.removeChild(head); head=sliceWords(node,0,n);
+    head.removeAttribute('data-sec'); head.removeAttribute('data-i'); box.appendChild(head); }
+  while(lo<=hi){ var mid=(lo+hi)>>1; place(mid);
     if(fitsIn(box)){ best=mid; lo=mid+1; } else hi=mid-1; }
-  if(best<15){ box.removeChild(head); return null; }
-  head.textContent=words.slice(0,best).join(' ');
-  var tail=node.cloneNode(false); tail.textContent=words.slice(best).join(' ');
+  if(best<15){ if(head) box.removeChild(head); return null; }
+  place(best);
+  var tail=sliceWords(node,best,Infinity);
   tail.removeAttribute('data-sec'); tail.removeAttribute('data-i');
-  tail.style.textIndent='0';
+  tail.classList.add('cont'); tail.classList.remove('dropcap');
   return tail;
 }
 function paginate(){
@@ -221,11 +258,11 @@ function titlePageHtml(){
   var affs=affilList(), A=articleModel();
   var corr=M.authors.filter(function(a){return a.isCorresponding})[0];
   return '<div class="page">'+masthead()+
+    (typeLabel()?'<div class="ptype">'+esc(typeLabel())+'</div>':'')+
     '<h1 class="ptitle">'+esc(M.title||'Article title')+'</h1>'+
     '<div class="pauth">'+authorsHtml()+'</div>'+
-    (affs.length?'<div class="pabs" style="margin-top:6mm">'+affs.map(function(a,i){
-      return '<p><sup style="color:#006F68;font-weight:700">'+(i+1)+'</sup> '+esc(a)+'</p>'}).join('')+'</div>':'')+
-    (corr?'<div class="pabs" style="margin-top:3mm"><p><b>*</b> Corresponding author: '+
+    affilHtml()+datesHtml()+
+    (corr?'<div class="paff" style="margin-top:3mm"><p><b>*</b> Corresponding author: '+
       esc([corr.firstName,corr.middleInitial,corr.lastName].filter(Boolean).join(' '))+
       (corr.email?' — '+esc(corr.email):'')+'</p></div>':'')+
     doiHtml()+
@@ -342,7 +379,7 @@ window.addEventListener('resize',function(){ fitPreview(); });
    otherwise an undecoded figure is 0 px tall and the page overfills */
 var IMG_READY={};
 function imageSources(){
-  var out=[LOGO];
+  var out=[LOGO,MAST_LOGO];
   sectionNames().concat(['Acknowledgments']).forEach(function(s){
     var html=M.sections[s]||'';
     var re=/<img[^>]+src="([^"]+)"/g, m;

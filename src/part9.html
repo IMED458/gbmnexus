@@ -114,183 +114,268 @@ function toPng(src){
 }
 function b64bytes(b64){ var bin=atob(b64), a=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i); return a; }
 
-/* ══ DOCX — written from the rendered proof, so Word matches it ══ */
+/* ══ DOCX — the GBMN article template (M222 reference), part for part ══ */
 function xe(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-var TEAL='00786D', RED='B9353A', GREY='686868', INK='1F2A2A';
-function wRuns(runs){
-  return runs.map(function(r){
-    if(r.br) return '<w:r><w:br/></w:r>';
-    var p=[];
-    p.push('<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>');
-    if(r.sz) p.push('<w:sz w:val="'+r.sz+'"/><w:szCs w:val="'+r.sz+'"/>');
-    if(r.color) p.push('<w:color w:val="'+r.color+'"/>');
-    if(r.b) p.push('<w:b/>'); if(r.i) p.push('<w:i/>'); if(r.u) p.push('<w:u w:val="single"/>');
-    if(r.sup) p.push('<w:vertAlign w:val="superscript"/>');
-    if(r.sub) p.push('<w:vertAlign w:val="subscript"/>');
-    return '<w:r><w:rPr>'+p.join('')+'</w:rPr><w:t xml:space="preserve">'+xe(r.t)+'</w:t></w:r>';
-  }).join('');
+var TEAL='006F68', TEAL2='008080', RED='A84950', INK='1F2A2A';
+var WLINK=[];
+function wLink(url){ var id='rIdL'+(WLINK.length+1); WLINK.push({rid:id,url:url}); return id; }
+function wRun(r){
+  if(r.br) return '<w:r><w:br/></w:r>';
+  var p=['<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>'];
+  if(r.b) p.push('<w:b/><w:bCs/>'); if(r.i) p.push('<w:i/><w:iCs/>');
+  if(r.color) p.push('<w:color w:val="'+r.color+'"/>');
+  if(r.spacing) p.push('<w:spacing w:val="'+r.spacing+'"/>');
+  if(r.position) p.push('<w:position w:val="'+r.position+'"/>');
+  if(r.sz) p.push('<w:sz w:val="'+r.sz+'"/><w:szCs w:val="'+r.sz+'"/>');
+  if(r.u) p.push('<w:u w:val="single"/>');
+  if(r.sup) p.push('<w:vertAlign w:val="superscript"/>');
+  if(r.sub) p.push('<w:vertAlign w:val="subscript"/>');
+  var x='<w:r><w:rPr>'+p.join('')+'</w:rPr><w:t xml:space="preserve">'+xe(r.t)+'</w:t></w:r>';
+  return r.link ? '<w:hyperlink r:id="'+wLink(r.link)+'" w:history="1">'+x+'</w:hyperlink>' : x;
 }
+function wRuns(runs){ return runs.map(wRun).join(''); }
+/* o: align, before, after, line (auto, 240 = single), exact, keep, left, hanging, num, pBdr, frame, sect */
 function wP(runs,o){
   o=o||{}; var pr=[];
-  if(o.align) pr.push('<w:jc w:val="'+o.align+'"/>');
-  if(o.indent) pr.push('<w:ind w:firstLine="'+o.indent+'"/>');
-  if(o.hang) pr.push('<w:ind w:left="'+o.hang+'" w:hanging="'+o.hang+'"/>');
-  if(o.bdr) pr.push('<w:pBdr><w:top w:val="single" w:sz="16" w:space="1" w:color="777777"/><w:bottom w:val="single" w:sz="8" w:space="1" w:color="777777"/></w:pBdr>');
-  pr.push('<w:spacing w:before="'+(o.before||0)+'" w:after="'+(o.after==null?90:o.after)+'" w:line="'+(o.line||240)+'" w:lineRule="auto"/>');
   if(o.keep) pr.push('<w:keepNext/>');
-  return '<w:p><w:pPr>'+pr.join('')+'</w:pPr>'+wRuns(runs)+'</w:p>';
+  if(o.frame) pr.push(o.frame);
+  if(o.num) pr.push('<w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="'+o.num+'"/></w:numPr>');
+  if(o.pBdr) pr.push(o.pBdr);
+  if(o.before||o.after||o.line) pr.push('<w:spacing'+(o.before?' w:before="'+o.before+'"':'')+(o.after?' w:after="'+o.after+'"':'')+
+    (o.line?' w:line="'+o.line+'" w:lineRule="'+(o.exact?'exact':'auto')+'"':'')+'/>');
+  if(o.left||o.hanging) pr.push('<w:ind'+(o.left?' w:left="'+o.left+'"':'')+(o.hanging?' w:hanging="'+o.hanging+'"':'')+'/>');
+  if(o.align) pr.push('<w:jc w:val="'+o.align+'"/>');
+  if(o.textAlign) pr.push('<w:textAlignment w:val="'+o.textAlign+'"/>');
+  if(o.sect) pr.push(o.sect);
+  return '<w:p>'+(pr.length?'<w:pPr>'+pr.join('')+'</w:pPr>':'')+wRuns(runs)+'</w:p>';
 }
+function wBlank(){ return '<w:p><w:pPr><w:jc w:val="both"/><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr></w:p>'; }
+/* Grid Table 6 Colorful – Accent 6, as the template's table: green rules, bold header, shaded rows */
 function wTable(el,totalTw){
   var rows=Array.prototype.slice.call(el.rows);
   if(!rows.length) return '';
-  var cols=rows.reduce(function(n,r){return Math.max(n,r.cells.length)},1);
-  var w=Math.floor(totalTw/cols);
+  var cols=rows.reduce(function(n,r){ return Math.max(n,Array.prototype.reduce.call(r.cells,function(k,c){return k+(c.colSpan||1)},0)); },1);
+  var wt=[]; for(var k=0;k<cols;k++) wt[k]=4;
+  rows.forEach(function(r){ var ci=0; Array.prototype.forEach.call(r.cells,function(c){
+    if((c.colSpan||1)===1) wt[ci]=Math.max(wt[ci],Math.min(40,(c.textContent||'').trim().length)); ci+=c.colSpan||1; }); });
+  var sum=wt.reduce(function(a,b){return a+b},0), w=wt.map(function(x){return Math.floor(totalTw*x/sum)});
+  var G='A8D08D';
   var bd='<w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(function(s){
-    return '<w:'+s+' w:val="single" w:sz="4" w:space="0" w:color="AEBABA"/>'}).join('')+'</w:tblBorders>';
-  return '<w:tbl><w:tblPr><w:tblW w:w="'+totalTw+'" w:type="dxa"/><w:tblLayout w:type="fixed"/>'+bd+'</w:tblPr>'+
-    '<w:tblGrid>'+Array.apply(null,Array(cols)).map(function(){return '<w:gridCol w:w="'+w+'"/>'}).join('')+'</w:tblGrid>'+
+    return '<w:'+s+' w:val="single" w:sz="4" w:space="0" w:color="'+G+'"/>'}).join('')+'</w:tblBorders>';
+  return '<w:tbl><w:tblPr><w:tblW w:w="'+totalTw+'" w:type="dxa"/><w:tblLayout w:type="fixed"/>'+bd+
+    '<w:tblCellMar><w:left w:w="108" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr>'+
+    '<w:tblGrid>'+w.map(function(x){return '<w:gridCol w:w="'+x+'"/>'}).join('')+'</w:tblGrid>'+
     rows.map(function(r,ri){
-      var head=r.cells[0]&&r.cells[0].tagName==='TH';
+      var head=ri===0&&rows.length>1||(r.cells[0]&&r.cells[0].tagName==='TH'), ci=0;
       return '<w:tr>'+(head?'<w:trPr><w:tblHeader/></w:trPr>':'')+
         Array.prototype.slice.call(r.cells).map(function(c){
-          var runs=domRuns(c,{sz:18,b:head});
-          return '<w:tc><w:tcPr><w:tcW w:w="'+w+'" w:type="dxa"/>'+(head?'<w:shd w:val="clear" w:fill="DFEEDD"/>':'')+
-            '<w:vAlign w:val="center"/></w:tcPr>'+wP(runs.length?runs:[{t:'',sz:18}],{align:'center',after:0})+'</w:tc>';
+          var span=c.colSpan||1, cw=w.slice(ci,ci+span).reduce(function(a,b){return a+b},0), first=ci===0; ci+=span;
+          var runs=domRuns(c,{sz:16,b:head||undefined});
+          return '<w:tc><w:tcPr><w:tcW w:w="'+cw+'" w:type="dxa"/>'+(span>1?'<w:gridSpan w:val="'+span+'"/>':'')+
+            (head?'<w:tcBorders><w:bottom w:val="single" w:sz="12" w:space="0" w:color="'+G+'"/></w:tcBorders>':'<w:shd w:val="clear" w:color="auto" w:fill="E2EFD9"/>')+
+            '<w:vAlign w:val="center"/></w:tcPr>'+wP(runs.length?runs:[{t:'',sz:16}],{align:(first&&!head)?'left':'center'})+'</w:tc>';
         }).join('')+'</w:tr>';
     }).join('')+'</w:tbl>';
 }
 var WIMG=[];
-function wImage(bytes,wPx,hPx,maxEmu,name){
+function wImage(bytes,wPx,hPx,maxEmu,name,o){
+  o=o||{};
   var id=WIMG.length+1, rid='rIdPic'+id;
   WIMG.push({rid:rid,name:'word/media/pic'+id+'.png',bytes:bytes});
-  var cx=Math.min(maxEmu,wPx*9525), cy=Math.round(cx*hPx/wPx);
-  var maxH=3429000; /* 9.0 cm */
+  var cx=o.cx||Math.min(maxEmu,wPx*9525), cy=o.cy||Math.round(cx*hPx/wPx);
+  var maxH=o.maxH||3960000; /* 11 cm */
   if(cy>maxH){ cy=maxH; cx=Math.round(cy*wPx/hPx); }
-  return '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="60" w:after="60"/></w:pPr><w:r><w:drawing>'+
+  var drawing='<w:r><w:rPr><w:noProof/></w:rPr><w:drawing>'+
     '<wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/>'+
-    '<wp:docPr id="'+(900+id)+'" name="'+xe(name||('Picture '+id))+'"/>'+
+    '<wp:docPr id="'+(900+id)+'" name="'+xe(name||('Picture '+id))+'" descr="'+xe(name||'')+'"/>'+
     '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
     '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="'+xe(name||'pic')+'"/><pic:cNvPicPr/></pic:nvPicPr>'+
     '<pic:blipFill><a:blip r:embed="'+rid+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
     '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm>'+
-    '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+    '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
+  return '<w:p><w:pPr>'+(o.pPr||'<w:spacing w:before="120"/><w:jc w:val="center"/>')+'</w:pPr>'+drawing+'</w:p>';
 }
-/* DOM → runs, carrying the proof's own emphasis and colour */
+/* DOM → runs. base.bc colours bold text (abstract labels); citations are bold teal superscripts */
 function domRuns(node,base){
   base=base||{}; var out=[];
   Array.prototype.forEach.call(node.childNodes,function(n){
     if(n.nodeType===3){ var t=n.textContent.replace(/\s+/g,' ');
-      if(t) out.push({t:t,b:base.b,i:base.i,u:base.u,sup:base.sup,sub:base.sub,sz:base.sz,color:base.color}); return; }
+      if(t) out.push({t:t,b:base.b,i:base.i,u:base.u,sup:base.sup,sub:base.sub,sz:base.sz,color:base.color,link:base.link}); return; }
     if(n.nodeType!==1) return;
     if(n.tagName==='BR'){ out.push({br:true}); return; }
-    if(n.classList&&n.classList.contains('orcid')){ out.push({t:'\u2009iD',b:true,sz:15,color:'A6CE39'}); return; }
     var f=Object.assign({},base);
-    if(/^(B|STRONG)$/.test(n.tagName)) f.b=true;
+    if(/^(B|STRONG)$/.test(n.tagName)||(n.classList&&n.classList.contains('lb'))){ f.b=true; if(base.bc) f.color=base.bc; }
     if(/^(I|EM)$/.test(n.tagName)) f.i=true;
     if(n.tagName==='U') f.u=true;
-    if(n.tagName==='SUP'){ f.sup=true; f.sz=Math.max(14,Math.round((base.sz||22)*0.64)); }
+    if(n.tagName==='SUP'){ f.sup=true; f.b=true; f.color=TEAL2; }
     if(n.tagName==='SUB') f.sub=true;
-    if(n.classList&&(n.classList.contains('lb'))){ f.color=TEAL; f.b=true; }
-    if(n.tagName==='SUP'||n.tagName==='A'){ f.color=f.color||TEAL; }
+    if(n.tagName==='A'&&/^https?:/i.test(n.getAttribute('href')||'')) f.link=n.getAttribute('href');
     out.push.apply(out,domRuns(n,f));
   });
   return out;
 }
-/* one proof element → an array of docx XML blocks */
+var BODY={sz:22,color:INK};
+function capRuns(cap,label){
+  var b=cap.querySelector('b'), lbl=(b?b.textContent:label).toUpperCase().trim();
+  var rest=cap.textContent.replace(b?b.textContent:'','').trim();
+  return [{t:lbl,b:true,color:TEAL2,sz:20},{t:' '+rest,color:INK,sz:20}];
+}
+/* one proof element of the article body → docx XML blocks */
 async function domToDocx(el,colTw,colEmu){
   var out=[], tag=el.tagName, cl=el.classList;
-  if(cl.contains('ptitle')){ out.push(wP(domRuns(el,{sz:39,b:true,color:TEAL}),{align:'center',before:160,after:150})); return out; }
-  if(cl.contains('pauth')){ out.push(wP(domRuns(el,{sz:24,color:GREY}),{align:'center',after:170})); return out; }
-  if(cl.contains('pabs-h')){ out.push(wP([{t:el.textContent,sz:22,b:true,color:RED}],{after:40,keep:true})); return out; }
-  if(cl.contains('pabs')){
-    Array.prototype.forEach.call(el.children,function(p){ out.push(wP(domRuns(p,{sz:20}),{align:'both',after:0,line:230})); });
-    return out; }
-  if(cl.contains('pdoi')){ out.push(wP(domRuns(el,{sz:22,b:true,color:'008080',u:true}),{before:110,after:160})); return out; }
-  if(tag==='H2'){ out.push(wP([{t:el.textContent.toUpperCase(),sz:22,b:true,color:RED}],{before:150,after:30,keep:true})); return out; }
-  if(tag==='H3'){ out.push(wP(domRuns(el,{sz:22,b:true,i:true,color:TEAL}),{before:110,after:30,keep:true})); return out; }
+  if(tag==='H2'){ out.push(wP([{t:el.textContent.toUpperCase(),b:true,color:RED,spacing:9,sz:22}],{keep:true,before:240})); return out; }
+  if(tag==='H3'){ out.push(wP(domRuns(el,{sz:22,b:true,i:true,color:TEAL}),{keep:true})); return out; }
   if(tag==='FIGURE'){
     var img=el.querySelector('img'), pre=el.querySelector('pre'), cap=el.querySelector('.cap');
+    if(cap) out.push(wP(capRuns(cap,'FIGURE'),{align:'both',keep:true}));
     if(img){ var p=await toPng(img.getAttribute('src')); if(p) out.push(wImage(p.bytes,p.w,p.h,colEmu,img.alt||'Figure')); }
-    else if(pre) out.push(wP([{t:pre.textContent,sz:17}],{after:40}));
-    if(cap) out.push(wP(domRuns(cap,{sz:17}),{align:'both',after:120}));
+    else if(pre) out.push(wP([{t:pre.textContent,sz:17}]));
     return out; }
   if(cl.contains('tbl')){
-    var c=el.querySelector('.cap'), t=el.querySelector('table');
-    if(c) out.push(wP(domRuns(c,{sz:17}),{align:'both',after:40,keep:true}));
+    var c=el.querySelector('.cap'), t=el.querySelector('table'), nt=el.querySelector('.tnote');
+    if(c) out.push(wP(capRuns(c,'TABLE'),{keep:true,after:60}));
     if(t) out.push(wTable(t,colTw));
-    out.push(wP([{t:'',sz:10}],{after:80}));
+    if(nt) out.push(wP(domRuns(nt,{i:true,color:INK,sz:18}),{align:'both'}));
     return out; }
-  if(cl.contains('decl')||cl.contains('afflist')){
-    var sz=cl.contains('afflist')?19:22;
-    Array.prototype.forEach.call(el.children,function(p){ out.push(wP(domRuns(p,{sz:sz}),{align:'both',after:60})); });
+  if(cl.contains('decl')){
+    Array.prototype.forEach.call(el.children,function(p,k){ if(k) out.push(wBlank()); out.push(wP(domRuns(p,BODY),{align:'both'})); });
+    return out; }
+  if(cl.contains('afflist')){
+    Array.prototype.forEach.call(el.children,function(p){ out.push(wP(domRuns(p,BODY),{align:'both'})); });
     return out; }
   if(tag==='OL'&&cl.contains('refs')){
-    var start=parseInt(el.getAttribute('start')||'1',10);
-    Array.prototype.forEach.call(el.children,function(li,k){
-      out.push(wP([{t:(start+k)+'. ',sz:19}].concat(domRuns(li,{sz:19})),{align:'both',hang:255,after:30})); });
+    Array.prototype.forEach.call(el.children,function(li){
+      out.push(wP(domRuns(li,{sz:20,color:INK}),{num:1,align:'both'})); });
     return out; }
   if(tag==='OL'||tag==='UL'){
     Array.prototype.forEach.call(el.children,function(li,k){
-      out.push(wP([{t:(tag==='OL'?(k+1)+'. ':'• '),sz:22}].concat(domRuns(li,{sz:22})),{hang:255,after:30})); });
+      out.push(wP([{t:(tag==='OL'?(k+1)+'.\t':'•\t'),sz:22,color:INK}].concat(domRuns(li,BODY)),{left:360,hanging:360,align:'both'})); });
     return out; }
   if(tag==='P'){
-    out.push(wP(domRuns(el,{sz:22}),{align:'both',indent:cl.contains('first')?0:283,after:0,line:273}));
+    var runs=domRuns(el,BODY);
+    if(cl.contains('dropcap')){
+      var r0=runs.filter(function(r){return r.t&&r.t.trim()})[0];
+      if(r0){ var tt=r0.t.replace(/^\s+/,''), ch=tt.charAt(0); r0.t=tt.slice(1);
+        out.push(wP([{t:ch,color:TEAL2,position:-9,sz:107}],{keep:true,line:805,exact:true,align:'both',textAlign:'baseline',
+          frame:'<w:framePr w:dropCap="drop" w:lines="3" w:wrap="around" w:vAnchor="text" w:hAnchor="text"/>'})); }
+    }
+    out.push(wP(runs,{align:'both'}));
     return out; }
   for(var i=0;i<el.children.length;i++) out.push.apply(out,await domToDocx(el.children[i],colTw,colEmu));
   return out;
 }
+/* front matter of the template: masthead table, type, title, authors, affiliations, dates, abstract box, DOI */
+async function docxFront(sect){
+  var x=[], FULL=10316;
+  var logo=await toPng(MAST_LOGO);
+  var logoP = logo ? wImage(logo.bytes,logo.w,logo.h,0,'GBMN journal logo',{cx:1809750,cy:466725,maxH:9e9,pPr:'<w:spacing w:line="288" w:lineRule="auto"/>'})
+                   : wP([{t:'GBMN',sz:30,b:true,color:TEAL}]);
+  var volRuns=[{t:volLine(),b:true,color:'3C514C',sz:17}];
+  if(periodLine()) volRuns.push({br:true},{t:periodLine(),b:true,color:'3C514C',sz:17});
+  x.push('<w:tbl><w:tblPr><w:tblW w:w="'+FULL+'" w:type="dxa"/><w:tblInd w:w="10" w:type="dxa"/>'+
+    '<w:tblBorders><w:bottom w:val="single" w:sz="20" w:space="0" w:color="'+TEAL+'"/></w:tblBorders><w:tblLayout w:type="fixed"/>'+
+    '<w:tblCellMar><w:left w:w="10" w:type="dxa"/><w:bottom w:w="160" w:type="dxa"/><w:right w:w="10" w:type="dxa"/></w:tblCellMar></w:tblPr>'+
+    '<w:tblGrid><w:gridCol w:w="7340"/><w:gridCol w:w="2976"/></w:tblGrid><w:tr>'+
+    '<w:tc><w:tcPr><w:tcW w:w="7340" w:type="dxa"/></w:tcPr>'+logoP+'</w:tc>'+
+    '<w:tc><w:tcPr><w:tcW w:w="2976" w:type="dxa"/></w:tcPr>'+wP(volRuns,{line:360,align:'right'})+'</w:tc></w:tr></w:tbl>');
+  if(typeLabel()) x.push(wP([{t:typeLabel().toUpperCase(),b:true,color:TEAL,spacing:24,sz:16}],{before:255,after:165,line:312,align:'center'}));
+  x.push(wP([{t:M.title||'Article title',b:true,color:TEAL,spacing:-4,sz:39}],{keep:true,align:'center'}));
+  var ar=[];
+  authorParts().forEach(function(a,k){
+    ar.push({t:(k?', ':'')+a.name,b:true,color:'53625D',sz:19});
+    if(a.nums) ar.push({t:a.nums,b:true,color:TEAL,sz:14,sup:true});
+    if(a.orcid){ if(a.nums) ar.push({t:', ',color:INK,sz:14,sup:true}); ar.push({t:'ID',b:true,color:TEAL,sz:14,u:true,sup:true,link:a.orcid}); }
+    if(a.corr) ar.push({t:'*',color:TEAL,sz:14,sup:true});
+  });
+  if(ar.length) x.push(wP(ar,{align:'center'}));
+  affilList().forEach(function(a,i){
+    x.push(wP([{t:String(i+1),color:'697774',sz:14,sup:true},{t:' '+a,color:'697774',sz:17}],{align:'center'})); });
+  var dl=datesList();
+  if(dl.length) x.push(wP([{t:dl.join(' · '),color:'6C7C78',sz:15}],{before:120,align:'center'}));
+  /* abstract box */
+  var none=cfg()&&cfg().abstractType==='none';
+  var txt=(M.abstractContents.text||'').trim(), kw=(M.sections['Keywords']||'').replace(/\.$/,'').trim();
+  if(!(none||!txt)||kw){
+    var inner=[];
+    if(!none) inner.push(wP([{t:'ABSTRACT',b:true,color:TEAL,spacing:13,sz:17}]));
+    if(!none&&txt){ var d=document.createElement('div'); d.innerHTML=txt; if(!d.children.length) d.innerHTML='<p>'+txt+'</p>';
+      Array.prototype.forEach.call(d.children,function(p){ inner.push(wP(domRuns(p,{sz:20,color:INK,bc:TEAL2}),{before:120,align:'both'})); }); }
+    if(kw) inner.push(wP([{t:'Keywords. ',b:true,color:TEAL,sz:20},{t:kw+'.',color:'314440',sz:20}],{before:135}));
+    x.push('<w:tbl><w:tblPr><w:tblW w:w="'+FULL+'" w:type="dxa"/><w:tblInd w:w="210" w:type="dxa"/>'+
+      '<w:tblBorders><w:left w:val="single" w:sz="22" w:space="0" w:color="'+TEAL+'"/></w:tblBorders><w:tblLayout w:type="fixed"/>'+
+      '<w:tblCellMar><w:top w:w="175" w:type="dxa"/><w:left w:w="210" w:type="dxa"/><w:bottom w:w="120" w:type="dxa"/><w:right w:w="210" w:type="dxa"/></w:tblCellMar></w:tblPr>'+
+      '<w:tblGrid><w:gridCol w:w="'+FULL+'"/></w:tblGrid><w:tr><w:tc><w:tcPr><w:tcW w:w="'+FULL+'" w:type="dxa"/>'+
+      '<w:shd w:val="clear" w:color="auto" w:fill="F2F8F6"/></w:tcPr>'+inner.join('')+'</w:tc></w:tr></w:tbl>');
+  }
+  var doi=doiClean();
+  x.push(doi ? wP([{t:'DOI: ',b:true,color:TEAL2,sz:20},{t:'https://doi.org/'+doi,b:true,color:TEAL2,sz:20,u:true,link:'https://doi.org/'+doi}],{before:240,sect:sect})
+             : wP([],{sect:sect}));
+  return x;
+}
 async function exportDocx(){
   notify('Building the Word file...','info');
-  WIMG=[];
+  WIMG=[]; WLINK=[];
   var flow=flowDom();
-  var front=flow.querySelector('.pfront'), body=flow.querySelector('#flowBody');
+  var body=flow.querySelector('#flowBody');
 
-  /* A4, text 40→556pt: margins 800 twips left/right, header band on top */
-  var PAGE='<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1985" w:right="794" w:bottom="1400" w:left="794" w:header="340" w:footer="420" w:gutter="0"/>';
-  var FULL_TW=10318, COL_TW=4806, FULL_EMU=6553200, COL_EMU=3052763;
+  /* A4 · margins 705 / 795 / 975 / 795 twips · footer 480 · column gutter 405 — the template's own */
+  var PAGE='<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="705" w:right="795" w:bottom="975" w:left="795" w:header="380" w:footer="480" w:gutter="0"/>';
+  var FULL_TW=10316, COL_TW=4955, FULL_EMU=FULL_TW*635, COL_EMU=COL_TW*635;
+  function sect(cols,first){ return '<w:sectPr><w:footerReference w:type="default" r:id="rIdFtr"/>'+(first?'':'<w:type w:val="continuous"/>')+PAGE+
+    (cols===2?'<w:cols w:num="2" w:space="405"/>':'<w:cols w:space="405"/>')+'</w:sectPr>'; }
 
-  var intro=[], bodyX=[];
-  for(var i=0;i<front.children.length;i++) intro.push.apply(intro, await domToDocx(front.children[i],FULL_TW,FULL_EMU));
-  for(var j=0;j<body.children.length;j++) bodyX.push.apply(bodyX, await domToDocx(body.children[j],COL_TW,COL_EMU));
-
-  /* running header: masthead + issue line, then the double rule */
-  var logo=await toPng(LOGO);
-  var hdrLogo = logo ? wImage(logo.bytes,logo.w,logo.h,4064000,'GBMN masthead') : '';
-  var hdr='<w:tbl><w:tblPr><w:tblW w:w="'+FULL_TW+'" w:type="dxa"/><w:tblLayout w:type="fixed"/>'+
-    '<w:tblBorders>'+['top','left','bottom','right','insideH','insideV'].map(function(s){return '<w:'+s+' w:val="none" w:sz="0" w:space="0" w:color="auto"/>'}).join('')+'</w:tblBorders></w:tblPr>'+
-    '<w:tblGrid><w:gridCol w:w="6400"/><w:gridCol w:w="3918"/></w:tblGrid><w:tr>'+
-    '<w:tc><w:tcPr><w:tcW w:w="6400" w:type="dxa"/></w:tcPr>'+(hdrLogo||wP([{t:'GBMN',sz:30,b:true,color:TEAL}],{after:0}))+'</w:tc>'+
-    '<w:tc><w:tcPr><w:tcW w:w="3918" w:type="dxa"/><w:vAlign w:val="bottom"/></w:tcPr>'+
-      wP([{t:volLine(),sz:18}],{align:'right',after:40})+'</w:tc></w:tr></w:tbl>'+
-    '<w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="18" w:space="0" w:color="006666"/>'+
-      '<w:bottom w:val="single" w:sz="6" w:space="1" w:color="006666"/></w:pBdr>'+
-      '<w:spacing w:before="40" w:after="0" w:line="20" w:lineRule="exact"/></w:pPr></w:p>';
-  var ftr=footerLines().map(function(t){ return wP([{t:t,sz:16}],{align:'center',after:0,line:230}); }).join('');
-
-  var S1='<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr"/><w:footerReference w:type="default" r:id="rIdFtr"/>'+
-    PAGE+'<w:cols w:space="708"/></w:sectPr>';
-  var S2='<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr"/><w:footerReference w:type="default" r:id="rIdFtr"/>'+
-    '<w:type w:val="continuous"/>'+PAGE+'<w:cols w:num="2" w:space="706" w:equalWidth="1"/></w:sectPr>';
+  var x=await docxFront(sect(1,true));
+  var kids=Array.prototype.slice.call(body.children), prev=null;
+  for(var j=0;j<kids.length;j++){
+    var el=kids[j], tag=el.tagName, cl=el.classList;
+    var gap = prev && !/^H[23]$/.test(prev.tagName) &&
+      ((tag==='P'&&!cl.contains('cont'))||tag==='FIGURE'||cl.contains('tbl')||tag==='H3'||cl.contains('decl')||((tag==='UL'||tag==='OL')&&!cl.contains('refs')));
+    if(cl.contains('one-col')){
+      x.push(wP([],{sect:sect(2)}));          /* close the two-column run */
+      if(gap) x.push(wBlank());
+      x.push.apply(x, await domToDocx(el,FULL_TW,FULL_EMU));
+      x.push(wP([],{sect:sect(1)}));          /* back to two columns */
+    } else {
+      if(gap) x.push(wBlank());
+      x.push.apply(x, await domToDocx(el,COL_TW,COL_EMU));
+    }
+    prev=el;
+  }
+  var ftr=footerLines().map(function(t,k){ return wP([{t:t,color:'687773',sz:13}],{align:'center',
+    pBdr:k?'':'<w:pBdr><w:top w:val="single" w:sz="4" w:space="0" w:color="CFDAD6"/></w:pBdr>'}); }).join('');
+  var S2=sect(2);
 
   var NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '+
    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '+
    'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
   var doc='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document '+NS+'><w:body>'+
-    intro.join('')+'<w:p><w:pPr>'+S1+'</w:pPr></w:p>'+bodyX.join('')+S2+'</w:body></w:document>';
-  var header='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr '+NS+'>'+hdr+'</w:hdr>';
+    x.join('')+S2+'</w:body></w:document>';
   var footer='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr '+NS+'>'+ftr+'</w:ftr>';
   var styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr>'+
-   '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:color w:val="'+INK+'"/>'+
-   '</w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="273" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'+
-   '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>';
+   '<w:rFonts w:ascii="Calibri" w:eastAsia="Times New Roman" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="17"/><w:lang w:val="en-US"/>'+
+   '</w:rPr></w:rPrDefault><w:pPrDefault/></w:docDefaults>'+
+   '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>'+
+   '<w:style w:type="paragraph" w:styleId="ListParagraph"><w:name w:val="List Paragraph"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:ind w:left="720"/><w:contextualSpacing/></w:pPr></w:style>'+
+   '<w:style w:type="character" w:default="1" w:styleId="DefaultParagraphFont"><w:name w:val="Default Paragraph Font"/></w:style>'+
+   '<w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/>'+
+   '<w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>';
+  var numbering='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+   '<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:abstractNum w:abstractNumId="0">'+
+   '<w:multiLevelType w:val="hybridMultilevel"/><w:lvl w:ilvl="0"><w:start w:val="1"/><w:numFmt w:val="decimal"/><w:lvlText w:val="%1."/>'+
+   '<w:lvlJc w:val="left"/><w:pPr><w:ind w:left="720" w:hanging="360"/></w:pPr><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:color w:val="'+INK+'"/><w:sz w:val="20"/></w:rPr></w:lvl></w:abstractNum>'+
+   '<w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num></w:numbering>';
+  var settings='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+   '<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:defaultTabStop w:val="708"/>'+
+   '<w:characterSpacingControl w:val="doNotCompress"/><w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="12"/></w:compat></w:settings>';
   var ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
    '<Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/>'+
    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'+
    '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'+
-   '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>'+
+   '<Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/>'+
+   '<Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>'+
    '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>'+
    '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'+
    '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>';
@@ -300,13 +385,13 @@ async function exportDocx(){
    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>'+
    '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>';
   var imgRels=WIMG.map(function(m){return '<Relationship Id="'+m.rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="'+m.name.replace('word/','')+'"/>'}).join('');
+  var linkRels=WLINK.map(function(l){return '<Relationship Id="'+l.rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="'+xe(l.url)+'" TargetMode="External"/>'}).join('');
   var docRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
    '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
-   '<Relationship Id="rIdHdr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>'+
-   '<Relationship Id="rIdFtr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'+imgRels+'</Relationships>';
-  var hdrRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
-   '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+imgRels+'</Relationships>';
+   '<Relationship Id="rIdNum" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/>'+
+   '<Relationship Id="rIdSet" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/settings" Target="settings.xml"/>'+
+   '<Relationship Id="rIdFtr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'+imgRels+linkRels+'</Relationships>';
   var now=new Date().toISOString().replace(/\.\d+Z$/,'Z');
   var core='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" '+
@@ -320,8 +405,9 @@ async function exportDocx(){
 
   var files=[{name:'[Content_Types].xml',data:ct},{name:'_rels/.rels',data:mainRels},
     {name:'word/document.xml',data:doc},{name:'word/styles.xml',data:styles},
-    {name:'word/header1.xml',data:header},{name:'word/footer1.xml',data:footer},
-    {name:'word/_rels/document.xml.rels',data:docRels},{name:'word/_rels/header1.xml.rels',data:hdrRels},
+    {name:'word/numbering.xml',data:numbering},{name:'word/settings.xml',data:settings},
+    {name:'word/footer1.xml',data:footer},
+    {name:'word/_rels/document.xml.rels',data:docRels},
     {name:'docProps/core.xml',data:core},{name:'docProps/app.xml',data:app}]
     .concat(WIMG.map(function(m){return {name:m.name,data:m.bytes}}));
   dl(slug()+'.docx', new Blob([zipStore(files)],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}));
