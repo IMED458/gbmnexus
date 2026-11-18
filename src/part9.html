@@ -117,9 +117,33 @@ function b64bytes(b64){ var bin=atob(b64), a=new Uint8Array(bin.length); for(var
 /* ══ DOCX — written from the rendered proof, so Word matches it ══ */
 function xe(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 var TEAL='00786D', RED='B9353A', GREY='686868', INK='1F2A2A';
+var WORCID=null, WLINK=[];
+function orcidPng(){
+  return new Promise(function(res){
+    var im=new Image();
+    im.onload=function(){ var c=document.createElement('canvas'); c.width=c.height=96;
+      c.getContext('2d').drawImage(im,0,0,96,96);
+      res(b64bytes(c.toDataURL('image/png').split(',')[1])); };
+    im.onerror=function(){ res(null); };
+    im.src=ORCID_ICON; });
+}
+function wOrcid(href){
+  var n=WLINK.length+1, rid='rIdLink'+n, e=120650; /* 9.5 pt */
+  WLINK.push({rid:rid,url:href});
+  var pic='<w:r><w:rPr><w:position w:val="-2"/></w:rPr><w:t xml:space="preserve"> </w:t></w:r><w:r><w:rPr><w:position w:val="-2"/></w:rPr><w:drawing>'+
+    '<wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+e+'" cy="'+e+'"/>'+
+    '<wp:docPr id="'+(2000+n)+'" name="ORCID iD '+n+'" descr="ORCID iD"/>'+
+    '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="orcid.png"/><pic:cNvPicPr/></pic:nvPicPr>'+
+    '<pic:blipFill><a:blip r:embed="rIdOrcid"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
+    '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+e+'" cy="'+e+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic>'+
+    '</a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
+  return href?'<w:hyperlink r:id="'+rid+'">'+pic+'</w:hyperlink>':pic;
+}
 function wRuns(runs){
   return runs.map(function(r){
     if(r.br) return '<w:r><w:br/></w:r>';
+    if(r.orcid!=null&&WORCID) return wOrcid(r.orcid);
     var p=[];
     p.push('<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>');
     if(r.sz) p.push('<w:sz w:val="'+r.sz+'"/><w:szCs w:val="'+r.sz+'"/>');
@@ -183,7 +207,7 @@ function domRuns(node,base){
       if(t) out.push({t:t,b:base.b,i:base.i,u:base.u,sup:base.sup,sub:base.sub,sz:base.sz,color:base.color}); return; }
     if(n.nodeType!==1) return;
     if(n.tagName==='BR'){ out.push({br:true}); return; }
-    if(n.classList&&n.classList.contains('orcid')){ out.push({t:'\u2009iD',b:true,sz:15,color:'A6CE39'}); return; }
+    if(n.classList&&n.classList.contains('orcid')){ out.push({orcid:n.getAttribute('href')||'',t:'\u2009iD',b:true,sz:15,color:'A6CE39'}); return; }
     var f=Object.assign({},base);
     if(/^(B|STRONG)$/.test(n.tagName)) f.b=true;
     if(/^(I|EM)$/.test(n.tagName)) f.i=true;
@@ -241,7 +265,9 @@ async function domToDocx(el,colTw,colEmu){
 }
 async function exportDocx(){
   notify('Building the Word file...','info');
-  WIMG=[];
+  WIMG=[]; WLINK=[];
+  WORCID=await orcidPng();
+  if(WORCID) WIMG.push({rid:'rIdOrcid',name:'word/media/orcid.png',bytes:WORCID});
   var flow=flowDom();
   var front=flow.querySelector('.pfront'), body=flow.querySelector('#flowBody');
 
@@ -304,7 +330,8 @@ async function exportDocx(){
    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
    '<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
    '<Relationship Id="rIdHdr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>'+
-   '<Relationship Id="rIdFtr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'+imgRels+'</Relationships>';
+   '<Relationship Id="rIdFtr" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'+imgRels+
+   WLINK.map(function(l){return '<Relationship Id="'+l.rid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="'+xe(l.url)+'" TargetMode="External"/>'}).join('')+'</Relationships>';
   var hdrRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+imgRels+'</Relationships>';
   var now=new Date().toISOString().replace(/\.\d+Z$/,'Z');
