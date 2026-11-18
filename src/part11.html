@@ -192,6 +192,7 @@ function webArticleHtml(){
       (corr?'<div><dt>Corresponding author</dt><dd>'+esc([corr.firstName,corr.middleInitial,corr.lastName].filter(Boolean).join(' '))+'</dd>'+
         (corr.email?'<dd><a href="mailto:'+esc(corr.email)+'">'+esc(corr.email)+'</a></dd>':'')+'</div>':'')+
       '<div><dt>Article history</dt>'+(fmtD(pv.received)?'<dd>Received '+esc(fmtD(pv.received))+'</dd>':'')+
+        (fmtD(pv.revised)?'<dd>Revised '+esc(fmtD(pv.revised))+'</dd>':'')+
         (fmtD(pv.accepted)?'<dd>Accepted '+esc(fmtD(pv.accepted))+'</dd>':'')+
         (dateTxt?'<dd>Published '+esc(dateTxt)+'</dd>':'<dd>In press</dd>')+
         (pages?'<dd>'+esc(pages)+'</dd>':'')+'</div>'+

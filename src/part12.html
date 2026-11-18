@@ -443,10 +443,11 @@ function manuscriptFromBlocks(blocks,srcName){
       used[ix]=1; return; }
     if(TYPE_RX.test(t.replace(/[.:]$/,''))){ var tt=t.toLowerCase();
       m.articleType=/review|meta/.test(tt)?'review-articles':(/case/.test(tt)?'clinical-cases':(/comment|editorial|perspective|letter|opinion/.test(tt)?'commentary':(/special report/.test(tt)?'other':'original-research')));
+      m.typeLabel={type:m.articleType,text:t.replace(/[.:]$/,'').trim()}; /* printed as the manuscript has it */
       used[ix]=1; return; }
     if(/\b(received|accepted|published|revised)\b\s*[:.]?\s*\S/i.test(t)&&t.length<220){
       var rx=function(w){ var mm=t.match(new RegExp(w+'\\s*[:.]?\\s*([^·;|•]+?)(?=\\s*(?:[·;|•]|received|revised|accepted|published|online|$))','i')); return mm?toIsoDate(mm[1]):''; };
-      m.preview.received=rx('received')||m.preview.received; m.preview.accepted=rx('accepted')||m.preview.accepted;
+      m.preview.received=rx('received')||m.preview.received; m.preview.revised=rx('revised')||m.preview.revised||''; m.preview.accepted=rx('accepted')||m.preview.accepted;
       var pd=rx('published(?: online)?'); if(pd){ m.preview.date=pd; m.preview.year=pd.slice(0,4); }
       used[ix]=1; return; }
     var dm=t.match(/^DOI\s*[:.]?\s*(?:https?:\/\/(?:dx\.)?doi\.org\/)?(10\.\S+?)\.?$/i)||(t.length<90&&t.match(/(?:doi\.org\/|doi[:.]?\s*)(10\.\d{4,9}\/\S+?)\.?$/i));

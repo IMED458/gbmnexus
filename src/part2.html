@@ -1,70 +1,88 @@
-
-/* ══ the document — measured against the printed GBMN article ══
-   A4 595.3×841.9pt · text 40→556pt · columns 240.3pt, gap 35.3pt
-   body Calibri 11/14.3pt · masthead and footer on every page       */
+/* ══ the document — the GBMN article template (M222 reference), 1:1 ══
+   A4 · margins 12.4 / 14.0 / 17.2 mm · footer 8.5 mm from the edge
+   two columns, 20.25 pt gutter · body Calibri 11 pt, single spacing  */
 .paper{background:transparent}
 .page{width:210mm;height:296mm;background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.28);
-  font-family:var(--doc);color:#1F2A2A;padding:6mm 13.86mm 8.4mm 14.11mm;
-  display:flex;flex-direction:column;overflow:hidden;position:relative}
+  font-family:Calibri,Carlito,var(--doc);color:#1F2A2A;padding:12.44mm 14.02mm 6.6mm;
+  display:flex;flex-direction:column;overflow:hidden;position:relative;line-height:1.22}
 .page + .page{margin-top:18px}
 .page .pbody{flex:1 1 auto;min-height:0;overflow:hidden}
 .page .pfront{flex:0 0 auto}
 
-/* masthead — repeats on every page */
-.pmast{display:flex;align-items:flex-end;justify-content:space-between;gap:10mm;flex:0 0 auto}
-.pmast img{width:112.9mm;height:auto;aspect-ratio:1834/414;display:block;margin-left:-3.53mm}
-.pmast .vol{font-family:var(--cond);font-size:9pt;color:#000;white-space:nowrap;letter-spacing:.01em;padding-bottom:.4mm}
-.prule{border:0;border-top:2.25pt solid #006666;margin:1.6mm 0 0}
-.prule2{border:0;border-top:.75pt solid #006666;margin:.26mm 0 0}
+/* masthead — first page only, as in the template */
+.pmast{display:flex;align-items:flex-start;justify-content:space-between;gap:8mm;flex:0 0 auto;
+  border-bottom:2.5pt solid #006F68;padding-bottom:2.82mm}
+.pmast img{width:50.27mm;height:12.96mm;display:block;object-fit:contain;object-position:left center}
+.pmast .vol{font-size:8.5pt;font-weight:700;color:#3C514C;text-align:right;line-height:1.83;white-space:nowrap}
 
 /* front matter */
-.ptitle{font-size:19.6pt;line-height:1.19;font-weight:700;color:#006F68;text-align:center;margin:9.5mm 0 0;text-wrap:balance}
-.pauth{font-size:12pt;color:#686868;text-align:center;line-height:1.35;margin:6.4mm 0 0}
-.pauth sup{font-size:8pt;font-weight:700;color:#006F68;vertical-align:super}
-.pauth a{color:#006F68;text-decoration:none}
-.pauth .au{white-space:nowrap}
-.pauth a.orcid img{width:9.5pt;height:9.5pt;vertical-align:-1.2pt;margin-left:2.5pt;display:inline-block}
-.pabs-h{font-size:11pt;font-weight:700;color:#B9353A;letter-spacing:.01em;margin:5.3mm 0 .9mm}
-.pabs{font-size:10pt;line-height:1.22;text-align:justify;hyphens:auto}
-.pabs p{margin:0}
-.pabs .lb,.pabs b,.pabs strong{font-weight:700;color:#006F68}
-.pdoi{font-size:11pt;font-weight:700;color:#008080;margin:4.2mm 0 0}
+.ptype{font-size:8pt;font-weight:700;color:#006F68;letter-spacing:1.2pt;text-align:center;
+  text-transform:uppercase;line-height:1.59;margin:12.75pt 0 8.25pt}
+.ptitle{font-size:19.5pt;line-height:1.22;font-weight:700;color:#006F68;letter-spacing:-.2pt;text-align:center;margin:0;text-wrap:balance}
+.pmast + .ptitle{margin-top:12.75pt}
+.pauth{font-size:9.5pt;font-weight:700;color:#53625D;text-align:center;line-height:1.22;margin:0}
+.pauth sup{font-size:7pt;line-height:0;vertical-align:super}
+.pauth sup .n{font-weight:700;color:#006F68}
+.pauth sup .c{font-weight:400;color:#1F2A2A}
+.pauth sup .st{font-weight:400;color:#006F68}
+.pauth sup a.orcid{font-weight:700;color:#006F68;text-decoration:underline}
+.paff{font-size:8.5pt;color:#697774;text-align:center;line-height:1.22;margin:0}
+.paff p{margin:0}
+.paff sup{font-size:7pt;line-height:0;color:#697774}
+.pdates{font-size:7.5pt;color:#6C7C78;text-align:center;line-height:1.22;margin:6pt 0 0}
+.pabs{margin:2mm 0 0;background:#F2F8F6;border-left:2.75pt solid #006F68;padding:8.75pt 10.5pt 6pt}
+.pabs-h{font-size:8.5pt;font-weight:700;color:#006F68;letter-spacing:.65pt;line-height:1.22}
+.pabs .ab{font-size:10pt;line-height:1.22;text-align:justify;hyphens:manual;color:#1F2A2A}
+.pabs .ab p{margin:6pt 0 0}
+.pabs .ab .lb,.pabs .ab b,.pabs .ab strong{font-weight:700;color:#008080}
+.pabs .kw{font-size:10pt;line-height:1.22;color:#314440;margin:6.75pt 0 0}
+.pabs .kw .lb{font-weight:700;color:#006F68}
+.pdoi{font-size:10pt;font-weight:700;color:#008080;margin:12pt 0 0;line-height:1.22}
 .pdoi a,.pdoi span.u{color:#008080;text-decoration:underline}
 
-/* body — two columns, exactly the printed measure */
-.pbody{font-size:11pt;line-height:1.3;text-align:justify;hyphens:auto;
-  column-count:2;column-gap:12.45mm;column-fill:auto;margin-top:4.3mm}
-.pbody p{margin:0;text-indent:5mm}
-.pbody p.first,.pbody .after-heading{text-indent:0}
-.pbody h2{font-size:11pt;font-weight:700;color:#B9353A;letter-spacing:.01em;margin:3.2mm 0 .4mm;break-after:avoid;text-transform:uppercase}
-.pbody h3{font-size:11pt;font-weight:700;color:#006F68;font-style:italic;margin:2.4mm 0 .4mm;break-after:avoid}
-.pbody sup{font-size:7pt;color:#008080;font-weight:700}
-.pbody ul,.pbody ol{margin:0 0 1mm;padding-left:6mm;text-align:left}
-.pbody ol.refs{font-size:9.5pt;line-height:1.26;padding-left:5mm;margin:0}
-.pbody ol.refs li{margin:0 0 .6mm;text-align:justify}
-.pbody .decl p{margin:0 0 1.1mm;text-indent:0}
-.pbody .decl b{color:#006F68}
-.pbody .afflist{font-size:9.5pt;line-height:1.3}
-.pbody .afflist p{margin:0 0 .6mm;text-indent:0}
-.pbody .afflist sup{font-size:7pt;color:#006F68}
+/* body — two columns, 20.25 pt gutter, blank line between paragraphs */
+.pbody{font-size:11pt;line-height:1.22;text-align:justify;hyphens:manual;color:#1F2A2A;
+  column-count:2;column-gap:7.14mm;column-fill:auto;margin-top:0}
+.pbody p{margin:13.42pt 0 0;text-indent:0}
+.pbody > :first-child,.pbody h2 + p,.pbody h2 + *,.pbody h3 + p,.pbody p.cont{margin-top:0}
+.pbody h2{font-size:11pt;line-height:1.22;font-weight:700;color:#A84950;letter-spacing:.45pt;margin:12pt 0 0;break-after:avoid;text-transform:uppercase}
+.pbody > h2:first-child{margin-top:12pt}
+.pbody h3{font-size:11pt;line-height:1.22;font-weight:700;color:#006F68;font-style:italic;margin:13.42pt 0 0;break-after:avoid}
+.pbody p.dropcap::first-letter{float:left;font-size:53.5pt;line-height:.8;color:#008080;font-weight:400;
+  margin:3.2pt 2.5pt 0 0;padding:0}
+.pbody sup{font-size:7.5pt;line-height:0;color:#008080;font-weight:700}
+.pbody ul,.pbody ol{margin:13.42pt 0 0;padding-left:6mm;text-align:left}
+.pbody ol.refs{font-size:10pt;line-height:1.22;padding-left:12.7mm;margin:0;text-align:justify}
+.pbody ol.refs li{margin:0;padding-left:0;text-align:justify}
+.pbody ol.refs li::marker{color:#1F2A2A}
+.pbody .decl p{margin:0;text-indent:0}
+.pbody .decl p + p{margin-top:13.42pt}
+.pbody .decl b{color:#1F2A2A}
+.pbody .afflist{font-size:11pt;line-height:1.22}
+.pbody .afflist p{margin:0;text-indent:0}
+.pbody .afflist sup{color:#1F2A2A;font-weight:400}
 
-/* figures and tables */
-.pbody figure.fg,.pbody .tbl{margin:2.2mm 0 2.8mm;break-inside:avoid;page-break-inside:avoid}
+/* figures and tables — caption above, as in the template */
+.pbody figure.fg,.pbody .tbl{margin:13.42pt 0 0;break-inside:avoid;page-break-inside:avoid}
 .pbody figure.fg{padding:0}
-.pbody figure.fg img{max-width:100%;width:auto;height:auto;display:block;margin:0 auto;max-height:95mm}
-.pbody figure.fg pre{white-space:pre-wrap;font-family:var(--mono);font-size:8pt;background:#f6f8f8;padding:1.5mm;margin:0}
-.pbody .cap{font-size:8.5pt;line-height:1.3;margin:0 0 1mm;text-align:justify;text-indent:0;break-after:avoid}
-.pbody .cap b{color:#006F68}
-.pbody figure.fg .cap{margin:1.1mm 0 0}
-.pbody .tbl table{width:100%;border-collapse:collapse;font-size:8.5pt;table-layout:fixed}
-.pbody .tbl th,.pbody .tbl td{border-top:.6pt solid #9aa5a5;border-bottom:.6pt solid #9aa5a5;padding:.9mm 1.3mm;
-  text-align:center;vertical-align:middle;overflow-wrap:anywhere}
-.pbody .tbl thead th{background:#DFEEDD;font-weight:700;color:#14201e}
+.pbody figure.fg img{width:100%;height:auto;display:block;margin:7pt 0 0;max-height:110mm;object-fit:contain}
+.pbody figure.fg pre{white-space:pre-wrap;font-family:var(--mono);font-size:8pt;background:#f6f8f8;padding:1.5mm;margin:7pt 0 0}
+.pbody .cap{font-size:10pt;line-height:1.22;margin:0;text-align:justify;text-indent:0;break-after:avoid;color:#1F2A2A}
+.pbody .cap b{color:#008080;font-weight:700;text-transform:uppercase}
+.pbody .tbl table{width:100%;border-collapse:collapse;font-size:8pt;line-height:1.22;table-layout:auto;margin-top:4pt;color:#000}
+.pbody .tbl th,.pbody .tbl td{border:.5pt solid #A8D08D;padding:0 5.4pt;text-align:center;vertical-align:middle;overflow-wrap:anywhere}
+.pbody .tbl td:first-child{text-align:left}
+.pbody .tbl thead th{background:#fff;font-weight:700;border-bottom:1.5pt solid #A8D08D}
+.pbody .tbl tbody td{background:#E2EFD9}
+.pbody .tbl .tnote{font-size:9pt;font-style:italic;line-height:1.22;margin:0;text-align:justify;color:#1F2A2A}
 /* full article width beats the column flow */
-.pbody > .one-col{column-span:all;-webkit-column-span:all;width:100%;display:block;break-inside:avoid;margin:2.5mm 0 3mm}
+.pbody > .one-col{column-span:all;-webkit-column-span:all;width:100%;display:block;break-inside:avoid;margin-bottom:13.42pt}
+.pbody > .one-col + *{margin-top:0}
 
 /* footer — on every page */
-.pfoot{margin-top:auto;padding-top:2mm;font-family:var(--cond);font-size:8pt;color:#000;text-align:center;line-height:1.2;flex:0 0 auto}
+.pfoot{margin-top:auto;padding-top:1pt;border-top:.5pt solid #CFDAD6;font-size:6.5pt;color:#687773;
+  text-align:center;line-height:1.22;flex:0 0 auto}
+.pbody + .pfoot{margin-top:0}
 
 /* title page extras */
 .tp-meta{margin-top:7mm;border-top:.9px solid #cfd6d6}
@@ -79,7 +97,7 @@
 @media screen and (max-width:1040px){
   .page{width:100%;height:auto;padding:14px;box-shadow:0 1px 8px rgba(0,0,0,.22);overflow:visible}
   .page .pbody{overflow:visible;column-count:1}
-  .pmast img{width:64%;margin-left:0}
+  .pmast img{width:40%;height:auto}
 }
 
 /* ── print: the proof prints exactly as it reads on screen ── */
@@ -96,6 +114,8 @@
   .page{width:210mm;height:296mm;box-shadow:none;margin:0;overflow:hidden;
     break-inside:avoid;page-break-inside:avoid;break-after:page;page-break-after:always}
   .pfoot{break-inside:avoid;page-break-inside:avoid}
+  /* each page box is one sheet: its columns must not fragment onto the next sheet */
+  .page + .page{margin-top:0}
   .page:last-child{break-after:auto;page-break-after:auto}
   a{color:inherit}
 }

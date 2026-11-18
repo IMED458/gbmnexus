@@ -50,29 +50,25 @@ and what to check. Word (.docx) is read completely; PDF text is read with pdf.js
 
 **New article** clears the open manuscript (with a JSON backup offered first).
 
-**Live document preview** — real A4 pages, laid out to the measurements of a
-published GBMN article and printed from the same DOM, so the PDF is exactly
-what the proof shows:
+**Live document preview** — real A4 pages in the GBMN article template (the M222
+reference article), printed from the same DOM, so the PDF is exactly what the proof shows:
 
 | | |
 |---|---|
-| Page | A4, text block 40→556 pt (14.1 / 13.9 mm side margins) |
-| Columns | two, 240.3 pt wide, 35.3 pt (12.45 mm) gutter |
-| Body | Calibri 11 pt on a 14.3 pt baseline, justified, 5 mm first-line indent |
-| Title | Calibri Bold 19.6 pt, #006F68, centred |
-| Authors | Calibri 12 pt #686868, superscripts Bold 8 pt #006F68 |
-| Abstract | heading Bold 11 pt #B9353A, labels Bold 10 pt #006F68, body 10 pt |
-| DOI | Bold 11 pt #008080, underlined |
-| Section headings | Bold 11 pt #B9353A, uppercase |
-| Rules | 2.25 pt + 0.75 pt, #006666, full measure |
-| Footer | Bahnschrift SemiLight 8 pt, four lines |
-
-The masthead, issue line and footer repeat on every page; the body is
-paginated into page boxes so nothing ever runs over the footer. Figures,
-tables and diagrams sit inline and can be set to **two-column** or **full
-article width**; the article ends with the author affiliations, the
-corresponding author, acknowledgements, declarations and the AMA reference
-list, all in the same two-column flow.
+| Page | A4, margins 12.4 / 14.0 / 17.2 mm, footer 8.5 mm from the edge |
+| Masthead | first page only: logo 50.3 × 13.0 mm, *VOLUME · ISSUE* and period Bold 8.5 pt #3C514C, 2.5 pt #006F68 rule |
+| Article type | Bold 8 pt #006F68, letter-spaced, centred |
+| Title | Calibri Bold 19.5 pt, #006F68, centred |
+| Authors | Bold 9.5 pt #53625D; superscript affiliation number, linked **ID** (ORCID) and `*` in #006F68 |
+| Affiliations | 8.5 pt #697774, centred, under the authors |
+| Dates | *Received · Revised · Accepted · Published*, 7.5 pt #6C7C78 — each printed once it is filled in (step 16) |
+| Abstract | box #F2F8F6 with 2.75 pt #006F68 left rule; labels Bold #008080, 10 pt; Keywords |
+| DOI | Bold 10 pt #008080, full `https://doi.org/…` link |
+| Body | two columns, 20.25 pt gutter, Calibri 11 pt single, justified, blank line between paragraphs, teal drop cap |
+| Section headings | Bold 11 pt #A84950, uppercase |
+| Figures / tables | caption above (*FIGURE 1.* / *TABLE 1.* Bold #008080 10 pt); table in green grid style (#A8D08D rules, #E2EFD9 rows), italic note below |
+| References | 10 pt, numbered, hanging indent |
+| Footer | three lines, 6.5 pt #687773, thin #CFDAD6 rule, every page |
 
 Three preview modes: **PDF** (the A4 proof), **Title page** (the separate,
 anonymisable title page) and **Web** (the exported HTML article, shown in a
@@ -91,7 +87,7 @@ carries the editing capability, not the authentication.)
 | Format | What it is |
 |---|---|
 | **PDF** | Print-to-PDF straight from the browser, in the paginated A4 journal layout |
-| **Word (.docx)** | Real OOXML carrying the same layout and the same measurements: running header with the masthead and issue line, single-column front matter, then a continuous two-column section (706 twips gutter) for the body, running footer, A4 with 794-twip side margins. Built by a built-in ZIP writer; no library, no server |
+| **Word (.docx)** | Real OOXML built part for part like the template: masthead table, single-column front matter with the abstract box, then a continuous two-column section (405-twip gutter), full-width sections for wide tables, drop cap, numbered references, three-line footer, A4 with 705/795/975-twip margins. Built by a built-in ZIP writer; no library, no server |
 | **HTML** | Standalone editorial article page — sticky masthead, metadata strip, contents rail, full-width figures, dark mode, Highwire citation meta tags |
 | **JATS XML package (.zip)** | NISO JATS (Z39.96) Journal Publishing DTD v1.3, the article PDF under the same base name, every figure as a separate file and a deposit README. A pre-flight dialog checks what PMC rejects. Citations are linked (`xref bibr`), Figure/Table mentions are cross-referenced, structured abstracts become `<sec>`s, article history and `self-uri` are included |
 | **PubMed citation XML** | PubMed 3.0 DTD (`ArticleSet`) |
@@ -135,7 +131,7 @@ src/part10.html   JATS 1.3 and PubMed 3.0 XML builders
 src/part11.html   the public HTML article page
 src/part12.html   Word/PDF import, New article
 src/part8.html    proof builders, editorial proof editing, validation, exports
-assets/           GBMN masthead artwork
+assets/           GBMN artwork (gbmn-masthead.* is the article masthead)
 ```
 
 Everything is plain HTML, CSS and JavaScript — no build toolchain, no

@@ -221,18 +221,20 @@ VIEWS['preview']=function(b){
      '<p class="note">Used in the masthead, on the title page and in the XML deposits. The editorial office normally fills these in.</p>'+
      '<div class="g4">'+
        fld('pvVol','Volume',pv.vol,'4')+fld('pvIss','Issue',pv.iss,'3')+
-       fld('pvYear','Year',pv.year,'2026')+fld('pvPeriod','Issue period',pv.period,'JUL–SEP 2026')+
+       fld('pvYear','Year',pv.year,'2026')+fld('pvPeriod','Issue period',pv.period,'OCTOBER-DECEMBER 2026')+
      '</div>'+
      '<div class="g4">'+
        '<div><label class="lbl">Received</label><input class="inp sm" type="date" id="pvRec" value="'+esc(pv.received||'')+'"></div>'+
+       '<div><label class="lbl">Revised</label><input class="inp sm" type="date" id="pvRev" value="'+esc(pv.revised||'')+'"></div>'+
        '<div><label class="lbl">Accepted</label><input class="inp sm" type="date" id="pvAcc" value="'+esc(pv.accepted||'')+'"></div>'+
+       '<div><label class="lbl">Published</label><input class="inp sm" type="date" id="pvDate" value="'+esc(pv.date||'')+'"></div>'+
+     '</div>'+
+     '<p class="note" style="margin:-2px 0 8px">Printed under the affiliations as <i>Received · Revised · Accepted · Published</i>; an empty date is left out.</p>'+
+     '<div class="g4">'+
+       fld('pvFpage','First page',pv.fpage,'23')+fld('pvLpage','Last page',pv.lpage,'31')+
        '<div class="span2"><label class="lbl">PDF URL on OJS (for Google Scholar)</label><input class="inp sm mono" id="pvPdfUrl" value="'+esc(pv.pdfUrl||'')+'" placeholder="https://gbmn.org/index.php/gbmn/article/download/…"></div>'+
      '</div>'+
-     '<div class="g4">'+
-       '<div><label class="lbl">Publication date</label><input class="inp sm" type="date" id="pvDate" value="'+esc(pv.date||'')+'"></div>'+
-       fld('pvFpage','First page',pv.fpage,'23')+fld('pvLpage','Last page',pv.lpage,'31')+
-       fld('pvEloc','E-location ID',pv.elocation,'e0423')+
-     '</div>'+
+     '<div class="g4">'+fld('pvEloc','E-location ID',pv.elocation,'e0423')+'</div>'+
      '<div><label class="lbl">DOI</label><input class="inp sm mono" id="pvDoi" value="'+esc((M.publicationInfo||{}).doi||'')+'" placeholder="10.52340/gbmn.2026.04.03.01"></div>'+
    '</div>'+
    '<div class="box"><h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--s800)">Download</h4>'+
@@ -258,7 +260,7 @@ VIEWS['preview']=function(b){
   function bind(id,key){ var el=$('#'+id); if(!el)return;
     el.addEventListener('input',function(){ M.preview[key]=el.value; save(); renderPreview(); }); }
   bind('pvVol','vol'); bind('pvIss','iss'); bind('pvYear','year'); bind('pvPeriod','period');
-  bind('pvDate','date'); bind('pvRec','received'); bind('pvAcc','accepted'); bind('pvPdfUrl','pdfUrl'); bind('pvFpage','fpage'); bind('pvLpage','lpage'); bind('pvEloc','elocation');
+  bind('pvDate','date'); bind('pvRec','received'); bind('pvRev','revised'); bind('pvAcc','accepted'); bind('pvPdfUrl','pdfUrl'); bind('pvFpage','fpage'); bind('pvLpage','lpage'); bind('pvEloc','elocation');
   $('#pvDoi').addEventListener('input',function(e){ M.publicationInfo.doi=e.target.value; save(); renderPreview(); });
   $('#pvPdf').addEventListener('click',function(){ setMode('print'); setTimeout(function(){window.print()},150); });
   $('#pvDocx').addEventListener('click',function(){ exportDocx(); });
