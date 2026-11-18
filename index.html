@@ -253,7 +253,9 @@ p{margin:0}
 .pauth sup .n{font-weight:700;color:#006F68}
 .pauth sup .c{font-weight:400;color:#1F2A2A}
 .pauth sup .st{font-weight:400;color:#006F68}
-.pauth sup a.orcid{font-weight:700;color:#006F68;text-decoration:underline}
+.pauth .au{white-space:nowrap}
+.pauth a.orcid{text-decoration:none}
+.pauth a.orcid img{width:9.5pt;height:9.5pt;vertical-align:-1.2pt;margin-left:2.5pt;border:0}
 .paff{font-size:8.5pt;color:#697774;text-align:center;line-height:1.22;margin:0}
 .paff p{margin:0}
 .paff sup{font-size:7pt;line-height:0;color:#697774}
@@ -1731,8 +1733,29 @@ function xe(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 var TEAL='006F68', TEAL2='008080', RED='A84950', INK='1F2A2A';
 var WLINK=[];
 function wLink(url){ var id='rIdL'+(WLINK.length+1); WLINK.push({rid:id,url:url}); return id; }
+var WORCID=null;
+function orcidPng(){
+  return new Promise(function(res){
+    var im=new Image();
+    im.onload=function(){ var c=document.createElement('canvas'); c.width=c.height=96;
+      c.getContext('2d').drawImage(im,0,0,96,96); res(b64bytes(c.toDataURL('image/png').split(',')[1])); };
+    im.onerror=function(){ res(null); };
+    im.src=ORCID_ICON; });
+}
+function wOrcidPic(){
+  var e=120650, n=WLINK.length; /* 9.5 pt */
+  return '<w:r><w:t xml:space="preserve"> </w:t></w:r><w:r><w:rPr><w:position w:val="-2"/></w:rPr><w:drawing>'+
+    '<wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+e+'" cy="'+e+'"/>'+
+    '<wp:docPr id="'+(2000+n)+'" name="ORCID iD '+n+'" descr="ORCID iD"/>'+
+    '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'+
+    '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="orcid.png"/><pic:cNvPicPr/></pic:nvPicPr>'+
+    '<pic:blipFill><a:blip r:embed="rIdOrcid"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'+
+    '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+e+'" cy="'+e+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic>'+
+    '</a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
+}
 function wRun(r){
   if(r.br) return '<w:r><w:br/></w:r>';
+  if(r.orcidImg) return r.link?'<w:hyperlink r:id="'+wLink(r.link)+'" w:history="1">'+wOrcidPic()+'</w:hyperlink>':wOrcidPic();
   var p=['<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>'];
   if(r.b) p.push('<w:b/><w:bCs/>'); if(r.i) p.push('<w:i/><w:iCs/>');
   if(r.color) p.push('<w:color w:val="'+r.color+'"/>');
@@ -1896,8 +1919,8 @@ async function docxFront(sect){
   authorParts().forEach(function(a,k){
     ar.push({t:(k?', ':'')+a.name,b:true,color:'53625D',sz:19});
     if(a.nums) ar.push({t:a.nums,b:true,color:TEAL,sz:14,sup:true});
-    if(a.orcid){ if(a.nums) ar.push({t:', ',color:INK,sz:14,sup:true}); ar.push({t:'ID',b:true,color:TEAL,sz:14,u:true,sup:true,link:a.orcid}); }
     if(a.corr) ar.push({t:'*',color:TEAL,sz:14,sup:true});
+    if(a.orcid) ar.push(WORCID?{orcidImg:true,link:a.orcid}:{t:'\u2009iD',b:true,color:'A6CE39',sz:15,link:a.orcid});
   });
   if(ar.length) x.push(wP(ar,{align:'center'}));
   affilList().forEach(function(a,i){
@@ -1927,6 +1950,8 @@ async function docxFront(sect){
 async function exportDocx(){
   notify('Building the Word file...','info');
   WIMG=[]; WLINK=[];
+  WORCID=await orcidPng();
+  if(WORCID) WIMG.push({rid:'rIdOrcid',name:'word/media/orcid.png',bytes:WORCID});
   var flow=flowDom();
   var body=flow.querySelector('#flowBody');
 
@@ -3514,9 +3539,9 @@ function authorsHtml(){
   return authorParts().map(function(a){
     var sup='';
     if(a.nums) sup+='<span class="n">'+esc(a.nums)+'</span>';
-    if(a.orcid) sup+=(sup?'<span class="c">, </span>':'')+'<a class="orcid" href="'+a.orcid+'" target="_blank" rel="noopener" title="ORCID iD '+esc(a.orcidId)+'">ID</a>';
     if(a.corr) sup+='<span class="st">*</span>';
-    return '<span class="au">'+esc(a.name)+(sup?'<sup>'+sup+'</sup>':'')+'</span>';
+    var oc=a.orcid?'<a class="orcid" href="'+a.orcid+'" target="_blank" rel="noopener" title="ORCID iD '+esc(a.orcidId)+'"><img src="'+ORCID_ICON+'" alt="ORCID iD"></a>':'';
+    return '<span class="au">'+esc(a.name)+(sup?'<sup>'+sup+'</sup>':'')+oc+'</span>';
   }).join(', ');
 }
 function affilHtml(){

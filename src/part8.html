@@ -37,9 +37,9 @@ function authorsHtml(){
   return authorParts().map(function(a){
     var sup='';
     if(a.nums) sup+='<span class="n">'+esc(a.nums)+'</span>';
-    if(a.orcid) sup+=(sup?'<span class="c">, </span>':'')+'<a class="orcid" href="'+a.orcid+'" target="_blank" rel="noopener" title="ORCID iD '+esc(a.orcidId)+'">ID</a>';
     if(a.corr) sup+='<span class="st">*</span>';
-    return '<span class="au">'+esc(a.name)+(sup?'<sup>'+sup+'</sup>':'')+'</span>';
+    var oc=a.orcid?'<a class="orcid" href="'+a.orcid+'" target="_blank" rel="noopener" title="ORCID iD '+esc(a.orcidId)+'"><img src="'+ORCID_ICON+'" alt="ORCID iD"></a>':'';
+    return '<span class="au">'+esc(a.name)+(sup?'<sup>'+sup+'</sup>':'')+oc+'</span>';
   }).join(', ');
 }
 function affilHtml(){
